@@ -1,0 +1,74 @@
+--- 
+title: "A Practical Guide to Regression and Classification with R"
+author: "Remko Duursma"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+output: bookdown::gitbook
+documentclass: book
+bibliography: [book.bib]
+biblio-style: apalike
+link-citations: yes
+description: "The HIERmanual has new clothes."
+---
+
+# Preface
+
+This book is not a complete introduction to statistical theory. It should also not be the first statistics book you read. Instead, this book shows you how to implement many useful data analysis routines in R. Sometimes we explain a bit of theory behind the method, but this is an exception. We really assume that you have already learned statistics elsewhere and are here to learn how to actually do the analyses.
+
+We have learned from experience that data practictioners, that means scientists and everyone else who has an interest in learning from data, do not learn statistical analyses by studying the underlying theory. They learn from doing, and from using examples written by others who have learned by doing. For this reason the book in front of you is largely a compendium of examples. We have chosen the examples and the exercises in the hope that they resemble real-world problems. 
+
+We have designed this book so it can be used for self-study. The exercises at the end of each chapter aim to test important skills learned in the chapter. Before you start on the exercises, read through the text, try to run the examples, and play around with the code making small modifications. We have also placed many *Try it yourself* boxes throughout the text to give you some ideas on what to try, but try to be creative and modify the examples to see what happens.
+
+An index with the functions and packages used is provided at the end of this book.
+
+
+## What is data analysis?
+
+Most scientists would answer that this is the part of the work where the p-values are calculated, perhaps alongside a host of other metrics and tables. We take the view that *data analysis* includes every step from raw data to the outputs}, where outputs include figures, tables and statistics. This view is summarized in the figure on the next page.
+
+Because every step from raw data to output affects the outcome, every step should be well documented, and reproducible. By 'reproducible', we mean it should be possible for some other person (even if this is the future you) to re-run the analysis and get the same results. We agree with many others that R is particularly good for reproducible research of this kind [^1] because it has utilities for all steps of data analysis. 
+
+[^1]Gandrud, C. Reproducible Research with R and R Studio. CRC Press, 2015. 2nd Edition.
+
+We stress that it is absolutely vital to a successful data analysis to visualize at every step of the analysis [^2]. When analyzing data, you should apply a continuous loop of statistical inference and visualizing the data (Find a significant effect you did not expect? Visualize it!; Visually find something interesting? Analyze it!).
+
+[^2] Anscombe 1973 "Graphs in Statistical analysis", The American Statistician 27:17-21. 
+
+
+
+```{r eval = FALSE}
+
+# Custom blocks!
+# https://stackoverflow.com/questions/36293511/creating-custom-blocks-in-rstudios-bookdown
+```
+
+
+```{r echo=FALSE}
+
+library(knitr)
+knit_theme$set("earendel")
+opts_chunk$set(background="grey94")
+opts_knit$set(root.dir="data")
+
+# Avoid long output
+hook_output = knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+    if (!is.null(n <- options$out.lines)) {
+        x = unlist(stringr::str_split(x, "\n"))
+        if (length(x) > n) {
+            # truncate the output
+            x = c(head(x, n), "....\n")
+        }
+        x = paste(x, collapse = "\n")  # paste first n lines together
+    }
+    hook_output(x, options)
+})
+
+# Figure size templates
+opts_template$set(smallsquare = list(fig.height = 5, fig.width = 5, fig.align="center", out.width=".6\\linewidth"),
+                  wide        = list(fig.height = 5, fig.width = 9, fig.align="center", out.width=".8\\linewidth"),
+                  largesquare = list(fig.height = 8, fig.width = 8, fig.align="center", out.width=".8\\linewidth"),
+                  extrawide = list(fig.height = 4, fig.width = 10, fig.align="center", out.width=".9\\linewidth"))
+```
+
+

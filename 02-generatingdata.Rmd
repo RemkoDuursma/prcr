@@ -1,0 +1,494 @@
+
+# Reading and subsetting data {#readdata}
+
+
+## Reading data {#readingdata}
+
+There are many ways to read data into R, but we are going to keep things simple and show only a couple of options. Let's assume you have a fairly standard dataset, with variables organized in columns, and individual records in rows, and individual fields separated by a comma (a comma-separated values (CSV) file).  This is a very convenient and safe way to read in data. If your data is not in a CSV file, see Section sec:readingotherdata on how to read other formats into R.
+
+
+### Reading CSV files {#readcsv}
+
+Use the function `read.csv` to read in the first example dataset (Allometry.csv). This assumes that the file `Allometry.csv` is in your current working directory. Make sure you fully understand the concept of a working directory (see Section fileswd) before continuing.
+
+```{r}
+allom <- read.csv("Allometry.csv")
+```
+
+If the file is stored elsewhere, you can specify the entire path (this is known as an *absolute* path). It is generally not recommended to ever use absolute paths, because the script will then depend on an exact location of a datafile. But as always, there are exceptions.
+
+```{r eval=FALSE}
+allom <- read.csv("c:/projects/data/Allometry.csv")
+```
+
+Or, if the file is stored in a sub-directory of your working directory, you can specify the *relative* path.
+
+```{r eval=FALSE}
+allom <- read.csv("data/Allometry.csv")
+```
+
+The latter option is probably useful to keep your data files separate from your scripts and outputs in your working directory. We will not discuss how to organize your files here, but return to this important topic in Chapter chap:projectman.
+
+The previous examples read in an entire dataset, and stored it in an object I called `allom`. This type of object is called a *dataframe*. We will be using dataframes a lot throughout this book. Like matrices, dataframes have two dimensions: they contain both columns and rows. Unlike matrices, each column can hold a different type of data. When you read in a file using `read.csv`, the data is automatically stored in a dataframe. Dataframes can also be created using the function `data.frame`. More on this in Section sec:vecstodfr.
+
+To read a description of this example dataset, see Section sec:allomdata on page sec:allomdata.
+
+To look at the entire dataset after reading, simply type the name of the dataframe. This is called *printing* an object.
+
+```{r results="hide"}
+allom
+```
+
+It is usually a better idea to print only the first (or last) few rows of the dataframe. R offers two convenient functions, `head` and `tail`, for doing this.
+
+```{r }
+head(allom)
+tail(allom)
+```
+
+Note that the row numbers are shown on the left. These can be accessed with `rownames(allom)`. Although some R functions return objects with rownames, I rarely use them, so you can pretty much leave them alone. In the case where the row names include useful information, it is usually a better idea to add them as a new column (with for example, `tibble::rownames_to_column()`).
+
+The function `read.csv` has many options, let's look at some of them. We can skip a number of rows from being read, and only read a fixed number of rows. For example, use this command to read rows 10-15, skipping the header line (which is in the first line of the file) and the next 9 lines. \emph{Note:} you have to skip 10 rows to read rows 10-15, because the header line (which is ignored) counts as a row in the text file! 
+
+```{r}
+allomsmall <- read.csv("Allometry.csv", skip=10, nrows=5, header=FALSE)
+```
+
+### Reading large CSV files
+
+We used the built-in `read.csv` function above, but note that for large files, it is rather slow. The best alternative is to use `fread` from the `data.table` package. The `data.table` is an excellent resource if you need to do data manipulations on large files (though the syntax takes some getting used to).
+
+```{r eval = FALSE}
+library(data.table)
+allom <- fread("Allometry.csv")
+```
+
+Of course, you could use `fread` even for small files, but I generally recommend to keep dependencies to a minimum. In other words, use built-in ('base') functionsif you can, to develop more robust and reproducable code.
+
+
+
+### Reading other data {#readingotherdata}
+
+#### Excel spreadsheets
+
+Excel spreadsheets are *not* a recommended way to store data, but often you don't make that choice yourself. If you do need to read an XLS or XLSX file, the `readxl` package works very well. *Note*: avoid older implementations like the `xlsx` package and `read.xls` in the `gtools` package, which are less reliable.
+
+
+#### Tab-delimited text files {#tabdelimtext}
+
+Sometimes, data files are provided as text files that are TAB-delimited. To read these files, use the following command:
+
+```{r eval=FALSE}
+mydata <- read.table("sometabdelimdata.txt", header=TRUE)
+```
+
+In fact, `read.table` is the more general function - `read.csv` is a specific case for comma-delimited files. When using `read.table`, you must specify whether a header (i.e., a row with column names) is present in the dataset (unlike `read.csv`, it is the default to not read the header). If you have a text file with some other delimiter, for example `;`, use the `sep} argument:
+
+```{r eval=FALSE}
+mydata <- read.table("somedelimdata.txt", header=TRUE, sep=";")
+```
+
+#### Reading typed data
+
+You can also write the dataset in a text file, and read it as in the following example. This is useful if you have (found) a small dataset that you typed in by hand, or for making reproducible code snippets that include the dataset.  
+
+```{r tidy=FALSE}
+read.table(header=TRUE, text="
+a b
+1 2
+3 4
+")
+```
+
+
+
+#### Reading data from the clipboard
+
+A very quick way to read a dataset from Excel is to use your clipboard. In Excel, select the data you want to read (including the header names), and press `Ctrl-C` (Windows), or `Cmd-C` (Mac). Then, in R, type:
+
+```{r eval=FALSE}
+# for Windows:
+mydata <- read.delim("clipboard", header=TRUE)
+
+# or for Mac:
+mydata <- read.delim(pipe("pbpaste"), header=TRUE)
+```
+
+This is not a long-term solution to reading data, but is a very quick way to read (part of) a messy spreadsheet that someone shared with you.
+
+#### Other foreign formats
+
+Finally, if you have a dataset in some unusual format, consider the `foreign` package, which provides a number of tools to read in other formats (such as SAS, SPSS, etc.).
+
+
+#### Convert vectors into a dataframe {#vecstodfr}
+
+Suppose you have two or more vectors (of the same length), and you want to include these in a new dataframe. You can use the function `data.frame}. Here is a simple example:
+
+```{r }
+vec1 <- c(9,10,1,2,45)
+vec2 <- 1:5
+
+data.frame(x=vec1, y=vec2)
+```
+
+Here, we made a dataframe with  columns named `x` and `y`. *Note*: take care to ensure that the vectors have the same length, otherwise it won't work!
+
+> **Try this yourself**
+> Modify the previous example so that the two vectors are \emph{not} the same length. Then, attempt to combine them in a dataframe and inspect the resulting error message.
+
+
+
+## Working with dataframes {#dataframes}
+
+This book focuses heavily on dataframes, because this is the object you will use most of the time in data analysis. The following sections provide a brief introduction, but we will see many examples using dataframes throughout this manual. 
+
+### Variables in the dataframe
+
+Let's first read the `allom} data, if you have not done so already. 
+
+```{r }
+allom <- read.csv("Allometry.csv")
+```
+
+After reading the dataframe, it is good practice to always quickly inspect the dataframe to see if anything went wrong. I routinely look at the first few rows with `head`. Then, to check the types of variables in the dataframe, use the `str` function (short for 'structure'). This function is useful
+for other objects as well, to view in detail what the object contains.
+
+```{r }
+head(allom)
+str(allom)
+```
+
+Individual variables in a dataframe can be extracted using the dollar `$` sign.
+Let's print all the tree diameters here, after rounding to one decimal point:
+
+```{r }
+round(allom$diameter,1)
+```
+
+It is also straightforward to add new variables to a dataframe. Let's convert the tree diameter to inches, and add it to the dataframe
+as a new variable:
+
+```{r }
+allom$diameterInch <- allom$diameter / 2.54
+```
+
+Instead of using the \$-notation every time (which can result in lengthy, messy code, especially when your variable names are long) you can use `with` to indicate where the variables are stored. Let's add a new variable called `volindex`, a volume index defined as the square of tree diameter times height:
+
+```{r }
+allom$volindex <- with(allom, diameter^2 * height)
+```
+
+For comparison, here is the same code using the $-notation. Note that the previous example is probably easier to read.
+
+```{r }
+allom$volindex <- allom$diameter^2 * allom$height
+```
+
+The `with` function allows for more readable code, while at the same time making sure that the variables `diameter` and `height` are read from the dataframe `allom`. 
+
+> **Try this yourself**
+> The above examples are important -- many times throughout this book you will be required to perform similar operations. As an exercise, also add the ratio of height to diameter to the dataframe.
+
+
+A simple summary of the dataframe can be printed with the `summary` function:
+
+```{r }
+summary(allom)
+```
+
+For the numeric variables, the minimum, 1st quantile, median, mean, 3rd quantile, and maximum values are printed. For so-called 'factor' variables (i.e., categorical variables), a simple table is printed (in this case, for the `species} variable). We will come back to factors in Section sec:workingfactors. If the variables have missing values, the number of missing values is printed as well (see Section sec:workingmissing).
+
+To see how many rows and columns your dataframe contains (handy for double-checking you read the data correctly), use `nrow` and `ncol`. Alternatively, `dim` gives the 'dimension' of the dataframe (rows x columns).
+
+```{r }
+nrow(allom)
+ncol(allom)
+```
+
+
+### Changing column names in dataframes {#namesdataframe}
+
+To access the names of a dataframe as a vector, use the `names} function. You can also use this to change the names. Consider this example:
+
+```{r echo=FALSE}
+allom <- read.csv("Allometry.csv")
+```
+```{r }
+# read names:
+names(allom)
+
+# rename all (make sure vector is same length as number of columns!)
+names(allom) <- c("spec","diam","ht","leafarea","branchm")
+```
+
+We can also change some of the names, using simple indexing (see Section sec:vectorindexing)
+
+```{r }
+# rename Second one to 'Diam'
+names(allom)[2] <- "Diam"
+
+# rename 1st and 2nd:
+names(allom)[1:2] <- c("SP","D")
+```
+
+Better yet is to use `rename` from the `dplyr` package, which makes sure you change the right column names (indexing as above can be dangerous if the order of columns has changed!).
+
+```{r eval=FALSE}
+library(dplyr)
+allom <- rename(allom, spec = species,
+                       diam = diameter)
+```
+
+
+## Extracting data from vectors and dataframes
+
+### Vectors {#vectorindexing}
+
+Let's look at reordering or taking subsets of a vector, or `indexing` as it is commonly called. This is an important skill to learn, so we will look at several examples.
+
+Let's define two `numeric vectors`:
+
+```{r }
+nums1 <- c(1,4,2,8,11,100,8)
+nums2 <- c(3.3,8.1,2.5,9.8,21.2,13.8,0.9)
+```
+
+Individual elements of a vector can be extracted using square brackets, `[ ]`. For example, to extract the first and then the fifth element of a vector:
+
+```{r }
+nums1[1]
+nums1[5]
+```
+
+You can also use another object to do the indexing, as long as it contains a integer number. For example,
+
+```{r }
+# Get last element:
+nelements <- length(nums1)
+nums1[nelements]
+```
+
+This last example extracts the last element of a vector. To do this, we first found the length of the vector, and used that to *index* the vector to extract the last element.
+
+We can also select multiple elements, by *indexing* the vector with another vector. Recall how to construct sequences of numbers, explained in Section sec:sequences`.
+
+```{r }
+# Select the first 3:
+nums1[1:3]
+
+# Select a few elements of a vector:
+selectthese <- c(1,5,2)
+nums1[selectthese]
+
+# Select every other element:
+everyother <- seq(1,7,by=2)
+nums1[everyother]
+
+# Select five random elements:
+ranels <- sample(1:length(nums2), 5)
+nums2[ranels]
+
+# Remove the first element:
+nums1[-1]
+
+# Remove the first and last element:
+nums1[-c(1, length(nums1))]
+```
+
+Next, we can look at selecting elements of a vector based on the values in that vector. Suppose we want to make a new vector, based on vector `nums2` but only where the value within certain bounds. We can use simple logical statements to index a vector.
+
+```{r }
+# Subset of nums2, where value is at least 10 :
+nums2[nums2 > 10]
+
+# Subset of nums2, where value is between 5 and 10:
+nums2[nums2 > 5 & nums2 < 10]
+
+# Subset of nums2, where value is smaller than 1, or larger than 20:
+nums2[nums2 < 1 | nums2 > 20]
+
+# Subset of nums1, where value is exactly 8:
+nums1[nums1 == 8]
+
+# Subset nums1 where number is NOT equal to 100
+nums1[nums1 != 100]
+
+# Subset of nums1, where value is one of 1,4 or 11:
+nums1[nums1 %in% c(1,4,11)]
+
+# Subset of nums1, where value is NOT 1,4 or 11:
+nums1[!(nums1 %in% c(1,4,11))]
+```
+
+These examples showed you several new logical operators (<, >, ==, &). See the help page `?Logic` for more details on logical operators. We will return to logical data in Section sec:workinglogic.
+
+
+#### Assigning new values to subsets
+
+All of this becomes very useful if we realize that new values can be easily assigned to subsets. This works for any of the examples above. For instance,
+
+```{r }
+# Where nums1 was 100, make it -100
+nums1[nums1 == 100] <- -100
+
+# Where nums2 was less than 5, make it zero
+nums2[nums2 < 5] <- 0
+```
+
+> **Try this yourself**
+> Using the first set of examples in this section, practice assigning new values to subsets of vectors.
+
+
+### Subsetting dataframes {#subsetdataframes}
+
+In base R, there are two ways to take a subset of a dataframe: using the square bracket notation (`[]`) as in the above examples, or using the `subset` function. We will learn both, as they are both useful from time to time. Later, when we delve into the `dplyr` package, we will also use `filter` - but since the idea and syntax is essentially equivalent to `subset`, we will first use `subset` (which is always available).
+
+Dataframes can be indexed with row and column numbers using `mydataframe[row,column]`.
+
+Here, `row` refers to the row number (which can be a vector of any length), and `column` to the column number (which can also be a vector). You can also refer to the column by its *name* rather than its number, which can be very useful. All this will become clearer after some examples.
+
+Let's look at a few examples using the Allometry dataset (see Section sec:allomdata} for a description of the dataset).
+
+```{r }
+# Read data
+allom <- read.csv("allometry.csv")
+
+# Extract tree diameters: take the 4th observation of the 2nd variable:
+allom[4,2]
+
+# We can also index the dataframe by its variable name:
+allom[4,"diameter"]
+
+# Extract the first 3 rows of 'height':
+allom[1:3, "height"]
+
+# Extract the first 5 rows, of ALL variables
+# Note the use of the comma followed by nothing
+# This means 'every column' and is very useful!
+allom[1:5,]
+
+# Extract the fourth column
+# Here we use nothing, followed by a comma,
+# to indicate 'every row'
+allom[,4]
+
+# Select only 'height' and 'diameter', store in new dataframe:
+allomhd <- allom[,c("height", "diameter")]
+```
+
+As we saw when working with vectors (see Section sec:vectorindexing), we can use expressions to extract data. Because each column in a dataframe is a vector, we can apply the same techniques to dataframes, as in the following examples. 
+
+We can also use one vector in a dataframe to find subsets of another. For example, what if we want to find the value of one vector, if another vector has a particular value?
+
+```{r out.lines=9}
+# Extract diameters larger than 60
+allom$diameter[allom$diameter > 60]
+
+# Extract all rows of allom where diameter is larger than 60.
+# Make sure you understand the difference with the above example!
+allom[allom$diameter > 60,]
+
+# We can use one vector to index another. For example, find the height of the tree
+# that has the largest diameter, we can do:
+allom$height[which.max(allom$diameter)]
+
+# Recalling the previous section, this is identical to:
+allom[which.max(allom$diameter), "height"]
+
+# Get 10 random observations of 'leafarea'. Here, we make a new vector 
+# on the fly with sample(), which we use to index the dataframe.
+allom[sample(1:nrow(allom),10),"leafarea"]
+
+# As we did with vectors, we can also use %in% to select a subset.
+# This example selects only two species in the dataframe.
+allom[allom$species %in% c("PIMO","PIPO"),]
+
+# Extract tree diameters for the PIMO species, as long as diameter > 50
+allom$diameter[allom$species == "PIMO" & allom$diameter > 50]
+
+# (not all output shown)
+```
+
+> **Try this yourself**
+As with vectors, we can quickly assign new values to subsets of data using the `<-} operator. Try this on some of the examples above.
+
+
+### Using `subset`
+
+While the above method to index dataframes is very flexible and concise, sometimes it leads to code that is difficult to understand. It is also easy to make mistakes when you subset dataframes by the column or row number (imagine the situation where the dataset has changed and you redo the analysis). Consider the `subset` function as a convenient and safe alternative. 
+
+With `subset` function, you can select rows that meet a certain criterion, and columns as well. This example uses the pupae data, see Section sec:pupaedata.
+
+```{r out.lines=6}
+# Read data
+pupae <- read.csv("pupae.csv")
+
+# Take subset of pupae, ambient temperature treatment and CO2 is 280.
+subset(pupae, T_treatment == "ambient" & CO2_treatment == 280)
+
+# (not all output shown)
+
+# Take subset where Frass is larger than 2.9. 
+# Also, keep only variables 'PupalWeight' and 'Frass'.
+# Note that you don't quote the column names when using 'subset'. 
+subset(pupae, Frass > 2.6, select=c(PupalWeight,Frass))
+
+```
+
+Let's look at another example, using the cereal data (see Section sec:cerealdata).
+Here, we use `%in%`, which we already saw in Section sec:vectorindexing.
+
+```{r }
+# Read data
+cereal <- read.csv("cereals.csv")
+
+# What are the Manufacturers in this dataset?
+levels(cereal$Manufacturer)
+
+# Take a subset of the data with only 'A', 'N' and 'Q' manufacturers,
+# keep only 'Cereal.name' and 'calories'.
+cerealsubs <- subset(cereal, Manufacturer %in% c("A","N","Q"), select=c(Cereal.name,calories))
+cerealsubs
+```
+
+### Deleting columns from a dataframe
+
+It is rarely necessary to delete columns from a dataframe, unless you want to save a copy of the dataframe to disk (see Section sec:writecsv). Instead of deleting columns, you can take a subset and make a new dataframe to continue with. Also, it should not be necessary to delete columns from the dataframe that you have accidentally created in a reproducible script: when things go wrong, simply clear the workspace and run the entire script again.
+
+That aside, you have the following options to delete a column from a dataframe. We also peek ahead at the `select` function from the `dplyr` package.
+
+```{r eval=FALSE}
+# A simple example dataframe
+dfr <- data.frame(a=-5:0, b=10:15)
+
+# Delete the second column (make a new dataframe 'dfr2' that does not include that column)
+dfr2 <- dfr[,-2]
+
+# Use subset to remove a column
+# Note: this does not work using square-bracket notation!
+dfr2 <- subset(dfr, select = -b)
+
+# In this case, we really delete the column from the existing dataframe, 
+# whereas the two examples above create a new subset *without* that column.
+dfr$b <- NULL
+
+# Using select() from the dplyr, we can drop columns as well:
+dfr2 <- dplyr::select(dfr, -a)
+```
+
+
+
+## Exporting data {#exportingdata}
+
+To write a dataframe to a comma-separated values (CSV) file, use the `write.csv` function. For example,
+
+```{r eval=FALSE}
+# Some data
+dfr <- data.frame(x=1:3, y=2:4)
+
+# Write to disk (row names are generally not wanted in the CSV file).
+write.csv(dfr,"somedata.csv", row.names=FALSE)
+```
+
+If you want more options, or a different delimiter (such as TAB), look at the `write.table` function. 

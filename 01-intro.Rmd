@@ -1,0 +1,11 @@
+# Introduction {#intro}
+
+why this book
+- ISLR is better at machine learning intro, regression (though not non-linear, mixed-effects)
+- predictive modeling (Kuhn) better at predictive modeling with R (caret)
+- car better at regression methods (but no non-linear)
+
+
+this book
+more focus on good R code, good practice in programming
+more practical approach, requiring no math/stat/computer science background

@@ -1,0 +1,95 @@
+# Classification
+
+## Introduction
+
+We have now explored various basic and more advanced regression approaches - each time we were trying to explain variation in a *continuous* (numeric) variable. In classification, we are instead trying to explain a *discrete* (factor) variable. There are many practical applications of classification, and R has many tools to fit, analyze, and visualize classification models.
+
+In the previous chapter, we looked in detail at logistic regression models. These models aim to predict the *probability* of some occurrence (for example, the probability of dying when you travelled on the Titanic's ultimate journey). What if we want to convert a *probability* (a number between 0 and 1) to a *classifier* (either 0 *or* 1)? We will look at this problem in the next section.
+
+After we know how to construct a classifier, we will look at a few different popular classification algorithms, without going into much of the theory underlying them. Instead, we will treat the topic by example.
+
+
+## From probabilities to classification
+
+threshold
+confusion matrix
+
+
+
+```{r eval=FALSE}
+# ROC curve with two confusion matrices plotted,
+# each for a different threshold
+library(plotrix)
+
+testdf <- data.frame(Before = c(10, 7, 5, 9), During = c(8, 6, 2, 5),
+                     After = c(5, 3, 4, 3))
+rownames(testdf) <- c("Red", "Green", "Blue", "Lightblue")
+barp(testdf, main = "Test addtable2plot", ylab = "Value",
+     names.arg = colnames(testdf), col = 2:5)
+# show most of the options including the christmas tree colors
+abg <- matrix(c(2, 3, 5, 6, 7, 8), nrow=4, ncol=3)
+addtable2plot(2, 8, testdf, bty = "o", display.rownames = TRUE, hlines = TRUE,
+              vlines = TRUE, title = "The table", bg = abg)
+
+```
+
+
+
+
+
+
+
+```{r eval=FALSE}
+library(dplyr)
+cereals <- read.csv("Cereals.csv") %>%
+  filter(Manufacturer != "A") %>%
+  droplevels
+
+
+form <- formula(Manufacturer ~ calories + protein + fat + sodium + fiber + carbo + sugars + potass + vitamins)
+
+library(rpart)
+c1 <- rpart(form, data=cereals, method="class")
+
+caret::confusionMatrix(predict(c1, type = "class"), 
+                       cereals$Manufacturer)$table
+
+
+library(randomForest)
+
+# can omit NAs but sucks because we can't make the confusion matrix
+c2 <- randomForest(form, data=cereals, mtry = 3, na.action = na.omit)
+caret::confusionMatrix(predict(c2), 
+                       cereals$Manufacturer)$table
+
+
+cereals2 <- cereals[complete.cases(cereals),]
+c2 <- randomForest(form, data=cereals2, mtry = 3, na.action = na.omit)
+caret::confusionMatrix(predict(c2), 
+                       cereals2$Manufacturer)
+
+# Accuracy
+sum(predict(c2) == cereals2$Manufacturer) / nrow(cereals2)
+
+
+
+library(e1071)
+
+c3 <- naiveBayes(form, data=cereals)
+caret::confusionMatrix(predict(c3, newdata = cereals), 
+                       cereals$Manufacturer)
+
+
+library(AppliedPredictiveModeling)
+transparentTheme(trans = .4)
+library(caret)
+featurePlot(x = cereals[, 4:12], 
+            y = cereals$Manufacturer, 
+            plot = "pairs",
+            ## Add a key at the top
+            auto.key = list(columns = 3))
+
+```
+
+
+
