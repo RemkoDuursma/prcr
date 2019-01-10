@@ -1,0 +1,1007 @@
+
+```{r echo=FALSE, cache=FALSE, results="hide"}
+opts_chunk$set(echo=TRUE)
+set.seed(1234)
+palette("default")
+```
+
+
+# Linear modelling {#linmodel}
+
+## What is linear modelling
+
+Numeric response, with :
+
+- compare means with factor predictors ("Analysis of variance", "t-test")
+- a single numeric predictor (simple linear regression)
+- multiple numeric predictors, and interactions (multiple linear regression)
+- mixture of factors and numeric predictors
+
+Equation linear in the parameters. We can interpret parameters.
+
+
+## A motivating example
+
+It is well known that ice cream sales are higher during warm weather. As an ice cream salesman, you hardly have to apply regression analysis to know this - it is just obvious. Suppose that one year, you sell icecream at Oosterpark in Amsterdam. Sales are pretty good, the summer is nice and warm. The next year you try your luck at the Dappermarkt, a busy market in the east of Amsterdam. You tally your sales every week, and finally make a plot comparing average weekly sales:
+
+```{r fig.cap="Average weekly ice cream sales at two locations, over two years"}
+icecream <- read.csv("icecream_amsterdam.csv")
+
+library(ggplot2)
+library(ggthemes)
+
+ggplot(icecream, aes(x = location, y = sales, fill = location)) + 
+  scale_fill_manual(values=c("white","grey")) + 
+  geom_boxplot() +
+  theme_tufte() +
+  theme(aspect.ratio = 2, legend.position="none") +
+  lims(y=c(0,1200))
+```
+
+Based on this simple boxplot, you would either conclude that there is no difference in sales, or that perhaps sales were slightly better in Oosterpark. We can also perform a *t*-test for two samples, which tests the hypothesis that the two means are not different (in other words, location has no effect on sales).
+
+```{r eval=FALSE}
+t.test(sales ~ location, data=icecream)
+```
+
+```{r echo=FALSE}
+pander::pander(t.test(sales ~ location, data=icecream))
+```
+
+> **Note** If you run the code above yourself, you will see different output from what is shown here. To get this output in an rmarkdown document, use the `pander` package: `pander::pander(t.test(sales ~ location, data=icecream))
+
+From this test we conclude no difference: the P value is very large (meaning the observed sample difference is not unusual, and could have easily arisen by chance).
+
+Of course, there is something rather fishy about this experiment. We are testing the difference between two locations - but both locations were 'tested' in different years, when other conditions may have been different. In other words, we have not performed a proper experiment at all - changing just one variable at a time - location is *confounded* by the year. 
+
+We do not need to get into detail here to design a proper scientific ice cream sales experiment, instead we are going to make the point that we can account for some *confounding variables* via regression analysis. How about temperature? As an astute ice cream salesman, you downloaded weekly average air temperature for Amsterdam, and added these to the data. Now let's make a plot using *air temperature as a covariate*.
+
+
+```{r fig.cap = "Ice cream sales by location, and varying with temperature."}
+# Assuming you have loaded ggplot2 and ggthemes
+ggplot(icecream, aes(x = temperature, y = sales, fill = location)) +
+  geom_point(shape = 21, size=3) +
+  scale_fill_manual(values = c("white","dimgrey")) +
+  theme_tufte() +
+  lims(y=c(0,1200), x=c(0,35))
+```
+
+In this figure we arrive at a completely different conclusion - but only because we have taken into account the covariate weekly temperature. Now, *at a given temperature*, ice cream sales were higher at the new location - Dappermarkt. This is an example of how a confounding variable can mask (or even reverse) effects of some other variable. It seems obvious from the figure that temperature was overall lower when you sold ice cream at the Dappermarkt, explaining why average weekly sales were in the end no different.
+
+> **Try this yourself**
+> Use a *t*-test to test that temperature was lower at the Dappermarkt location.
+
+Using regression analysis, we can test the assertion that ice cream sales are higher at Dappermarkt, *at a given temperature*. But before we do that, we first introduce the tools to test difference between means (as we just did with a simple two-sample t-test), and introduce basic linear regression. We return to the icecream problem in Section XXX.
+
+
+
+### Testing or predicting?
+
+
+*Inference* is answering questions about population parameters based on a sample. The mean of a random sample from a population is an estimate of the population mean. Since it is a single number it is called a point estimate. It is often desirable to estimate a range within which the population parameter lies with high probability. This is called a confidence interval.
+
+In other applications we are not so much interested in testing for difference, but instead want to develop a model that we can use for *prediction* of new values.
+
+...
+
+
+
+## Testing differences between groups
+
+
+
+### Testing a single sample {#singlesample}
+
+In some applications we simply want to know whether the mean of our data (the sample) is equal to some hypothesized value, or whether it is clearly higher or lower. The simplest approach is to compute a 95% *confidence interval for the mean*, and then check whether the hypothesized value falls inside this interval (in which case you cannot conclude the value is different).
+
+One way to get confidence intervals in R is to use the quantile functions for the relevant distribution. A $100(1-\alpha)$\% confidence interval for the mean on normal population is given by,
+
+\[\bar{x} \pm t_{\alpha/2, n-1} \frac{s}{\sqrt{n}}\]
+
+where $\bar{x}$ is the sample mean, $s$ the sample standard deviation and $n$ is the sample size. $t_{\alpha/2, n-1}$ is the $\alpha/2$ tail point of a $t$-distribution on $n-1$ degrees of freedom. That is, if $T$ has a $t$-distribution on $n-1$ degrees of freedom.
+
+\[P(T \leq t_{\alpha/2, n-1}) = 1-\alpha/2 \]
+
+The R code for this confidence interval can be written as,
+
+```{r}
+# Sample data - the pupae data.
+pupae <- read.csv("pupae.csv")
+weight <- pupae$PupalWeight
+
+# 95% confidence interval - set to 0.1 for a 90% interval
+alpha <- 0.05 
+xbar <- mean(weight)
+s <- sd(weight)
+n <- length(weight)
+half.width <- qt(1-alpha/2, n-1)*s/sqrt(n)
+
+# Confidence Interval 
+c(xbar - half.width, xbar + half.width)
+```
+
+Here, we assumed a normal distribution for the population. You may have been taught that if `n` is *large*, say n>30, then you can use a normal approximation. That is, replace `qt(1-alpha/2, n-1)` with `qnorm(1-alpha/2)`, but there is no need, R can use the t-distribution for any *n* (and the results will be the same, as the t-distribution converges to a normal distribution when the df is large).
+
+> **Try this yourself** 
+> Confirm that the $t$-distribution converges to a normal distribution when *n* is large (using `qt` and `qnorm`).
+
+
+
+### Hypothesis testing
+
+There may be a reason to ask whether a dataset is consistent with a certain mean. For example, are the pupae weights consistent with a population mean of 0.29? For normal populations, we can use Student's $t$-test, available in R as the `t.test` function. In all following results, we use the `pander` function (from the `pander`) package to make the output short and readable (and in markdown format). For best results, use it in an rmarkdown document (though it works fine otherwise as well). We assume you have loaded these two packages:
+
+```{r}
+library(pander)
+library(magrittr)
+```
+
+Let's test the null hypothesis that the population mean is 0.29:
+  
+```{r}
+t.test(weight, mu=0.29) %>% pander::pander(.)
+```
+  
+Note that we get the t-statistic, degrees of freedom (n-1) and a P value for the test, with the specified alternative hypothesis (not equal, i.e. two-sided). In addition, `t.test` gives us the estimated mean of the sample.
+
+We can use `t.test` to do one-sided tests,
+
+```{r }
+t.test(weight, mu=0.29, alternative="greater") %>%
+  pander::pander(.)
+```
+
+The `t.test` is appropriate for data that is approximately normally distributed. You can check this using a histogram or a QQ-plot (see Sections sec:hist and sec:diagplots). If the data is not very close to a normal distribution then the `t.test` is often still appropriate, as long as the sample is large.
+
+If the data is not normal and the sample size is small, there are a couple of alternatives: transform the data (often a log transform is enough) or use a *nonparametric* test, in this case the Wilcoxon signed rank test. We can use the `wilcox.test` function for the latter, its interface is similar to `t.test` and it tests the hypothesis that the data is symmetric about the hypothesized population mean. For example,
+
+```{r }
+wilcox.test(weight, mu=0.29) %>% pander::pander(.)
+```
+  
+#### Test for proportions
+
+Sometimes you want to test whether observed proportions are consistent with a hypothesized population proportion. For example, consider a coin tossing experiment where you want to test the hypothesis that you have a fair coin (one with an equal probability of landing heads or tails). In your experiment, you get  60 heads out of 100 coin tosses. Do you have a fair coin? We can use the `prop.test` function:
+  
+```{r}
+# 60 'successes' out of a 100 trials, the hypothesized probability is 0.5.
+prop.test(x=60, n=100, p=0.5) %>% pander::pander(.)
+```
+
+Likewise, we can perform one-sided tests with the argument ` alternative="greater"` (not shown).
+
+
+## Inference for two populations
+
+Commonly, we wish to compare two (or more) populations. For example, the `pupae` dataset has pupal weights for female and male pupae. We may wish to compare the weights of males (`gender=0`) and females (`gender=1`). 
+
+To compare the pupal weights of males and females, we use the *formula* interface for `t.test`. The formula interface is important because we will use it in many other functions, like linear regression and linear modelling. 
+
+```{r }
+# We assume equal variance between the groups, giving slightly more power,
+# but see section 'unequal variances' further below.
+t.test(PupalWeight ~ Gender, data=pupae, var.equal=TRUE)
+```
+  
+
+### Paired data
+
+The `t.test` can also be used when the data are paired, for example, measurements taken before and after some treatment on the same subjects. For this example, we will use the pulse data - data on pulse rates of individuals before and after exercise. We will test the simple idea that pulse rate is different after exercise. To do this, we first extract only those subjects that exercised (`Ran=1`),
+
+```{r }
+pulse <- read.table("ms212.txt", header=TRUE)
+pulse.before <- with(pulse, Pulse1[Ran==1])
+pulse.after <- with(pulse, Pulse2[Ran==1])
+t.test(pulse.after, pulse.before, paired=TRUE)
+```
+  
+### Unequal variances
+
+The default for the two-sample `t.test` is actually to *not* assume equal variances. The theory for this kind of test is quite complex, and the resulting $t$-test is now only approximate, with an adjustment called the 'Satterthwaite' or 'Welch' approximation made to the degrees of freedom.
+
+```{r }
+t.test(PupalWeight ~ Gender,  data=pupae)
+```
+  
+Since this modified $t$-test makes fewer assumptions, you could ask why we ever use the equal variances form. If the assumption is reasonable, then this (equal variances) form will have more power, i.e. will reject the null hypothesis more often when it is actually false.
+
+
+## One-way ANOVA
+
+One-way ANOVA (ANalysis Of VAriance) can be used to compare means across two or more populations. We will not go into the theory here, but the foundation of ANOVA is comparing the variation *between* the group means to the variation *within* the groups (using an F-statistic). 
+
+We can use either the `aov` function or `lm` to perform ANOVAs. We will focus exclusively on the latter as it can be generalized more easily to other models. The use of `aov` is only appropriate when you have a balanced design (i.e., the same sample sizes in each of your groups).
+
+To use `lm` for an ANOVA, we need a dataframe containing a (continuous) response variable and a factor variable that defines the groups. For example, in the Coweeta dataset, the species  variable is a factor that defines groups by species.  We can compute (for example) the mean height by species. Let's look at an example using the Coweeta data, but with only four species to simplify the output.
+
+```{r }
+coweeta <- read.csv("coweeta.csv")
+
+# Take a subset and drop empty levels with droplevels.
+cowsub <- droplevels(subset(coweeta, species %in% c("cofl","bele","oxar","quru")))
+
+# Quick summary table
+with(cowsub, tapply(height, species, mean))
+```
+
+We might want to ask, does the mean height vary by species? Before you do any test for significance, a graphical summary of the data is always useful. For this type of data, box plots are preferred since they visualize not just the means but also the spread of the data (see also Section~\ref{sec:boxplot}) (Fig.~\ref{fig:allombox}).
+
+```{r allombox, fig.cap='Simple box plot for the Coweeta data.', opts.label="smallsquare"}
+boxplot(height~species, data=cowsub)
+```
+
+It seems like some of the species differences are quite large. We can fit a one-way ANOVA with `lm`, like so:
+
+```{r }
+fit1 <- lm(height ~ species, data=cowsub)
+fit1
+```
+
+Notice the four estimated `Coefficients`, these represent the so-called *contrasts*. In this case, `Intercept` represents the mean of the *first* species, `bele`. The next three coefficients are the differences between each species and the first (e.g., species `cofl` has a mean that is \Sexpr{round(fit1$coefficients[[2]],2)} lower than `bele`).
+
+We can get more details of the fit using `summary`.
+
+```{r }
+summary(fit1)
+```
+
+This gives us a $t$-statistic (and p-value) for each coefficient, for a test where the value is compared to zero. Not surprisingly the `Intercept` (i.e., the mean for the first species) is significantly different from zero (as indicated by the very small p-value). Two of the next three coefficients are also significantly different from zero.
+
+At the end of the summary, the $F$-statistic and corresponding p-value are shown. This p-value  tells us whether the whole model is significant. In this case, it is comparing a model with four coefficients (one for each species) to a model that just has the same mean for all groups. In this case, the model is highly significant -- i.e. there is evidence of different means for each group. In other words, a model where the mean varies between the four species performs much better than a model with a single grand mean.
+
+### Multiple comparisons
+{#sec:multcomp}
+
+The ANOVA, as used in the previous section, gives us a single p-value for the overall 'species effect'. The summary statement further shows whether individual species are different from the first level in the model, which is not always useful. If we want to know whether the four species were all different from each other, we can use a multiple comparison test.
+
+*Warning:* Multiple comparisons on linear models where you have more than one factor variable are tricky! Read the help page ?`glht` for more information.
+
+{#page:glht} 
+We will use the `glht` function from the `multcomp` package (as a side note, base R includes the `TukeyHSD` function, but that does not work with `lm`, only with `aov`).
+
+```{r echo=FALSE}
+suppressPackageStartupMessages(library(multcomp))
+```
+```{r }
+# First fit the linear model again (a one-way ANOVA, 
+# because species is a factor)
+lmSpec <- lm(height ~ species, data=cowsub)
+
+# Load package
+library(multcomp)
+
+# Make a 'general linear hypothesis' object, Tukey style.
+# (Note many other options in ?glht)
+tukey_Spec <- glht(lmSpec, linfct=mcp(species="Tukey"))
+
+# Print a summary. This shows p-values for the null hypotheses
+# that species A is no different from species B, and so on.
+summary(tukey_Spec)
+
+# Some of the species are different from each other, but not all.
+```
+
+> **Try this yourself**
+In the above summary of the multiple comparison (`summary(tukey\_Spec)`), the p-values are adjusted for multiple comparisons with the so-called 'single-step method'. To use a different method for the correction (there are many), try the following example:
+\begin{verbatim}
+summary(tukey_Spec, test=adjusted("Shaffer"))
+\end{verbatim}
+Also look at the other options in the help pages for `?adjusted` and `?p.adjust`.
+
+
+We can also produce a quick plot of the multiple comparison, which shows the pair-wise differences between the species with confidence intervals.
+
+This code produces Fig.~\ref{fig:tukeyplot}.
+```{r tukeyplot, opts.label="smallsquare", fig.cap='A standard plot of a multiple comparison.', echo=-1}
+par(mar=c(5,7,4,1))
+
+# A plot of a fitted 'glht' object (multiple comparison)
+plot(tukey_Spec)
+```
+
+
+
+## Two-way ANOVA {#twoway}
+
+Sometimes there are two (or more) *treatment* factors. The 'age and memory' dataset (see Section~\ref{sec:agemem}) includes the number of words remembered from a list for two age groups and five memory techniques. 
+
+This dataset is balanced, as shown below. in a table of counts for each of the combinations. First we fit a linear model of the *main effects*.
+
+ 
+```{r tidy=FALSE}
+# Read tab-delimited data
+memory <- read.table("eysenck.txt", header=TRUE)
+
+# To make the later results easier to interpret, reorder the Process
+# factor by the average number of words remembered.
+memory$Process <- with(memory, reorder(Process, Words, mean))
+
+# Count nr of observations
+xtabs( ~ Age + Process, data=memory)
+
+# Fit linear model
+fit2 <- lm(Words ~ Age + Process, data=memory)
+summary(fit2)
+```
+
+The `summary` of the fitted model displays the individual $t$-statistics for each estimated coefficient. As with the one-way ANOVA, the significance tests for each coefficient are performed relative to the base level (by default, the first level of the factor). In this case, for the `Age` factor, the `Older` is the first level, and for the `Process` factor, `Adjective` is the first level. Thus all other coefficients are tested relative to the "Older/Adjective" group. The $F$-statistic at the end is for the overall model, it tests whether the model is significantly better than a model that includes only a mean count.
+
+If we want to see whether `Age` and/or `Process` have an effect, we need $F$-statistics for these terms. Throughout this book, to compute p-values for terms in linear models, we use the `Anova` function from the `car` package.
+
+```{r }
+# Perform an ANOVA on a fitted model, giving F-statistics
+library(car)
+Anova(fit2)
+```
+
+In this form, the $F$-statistic is formed by comparing models that do not include the term, but include all others. For example, `Age` is tested by comparing the full model against a model that includes all other terms (in this case, just `Process`).
+
+
+### Interactions
+
+An important question when we have more than one factor in an experiment is whether there are any interactions. For example, do `Process` effects differ for the two `Age` groups, or are they simply additive? We can add interactions to a model by modifying the formula. An interaction is indicated using a "`:`". We can also include all *main effects and interactions* using the  `*` operator.
+
+```{r }
+# Two equivalent ways of specifying a linear model that includes all main effects
+# and interactions:
+fit3 <- lm(Words ~ Age + Process + Age:Process, data=memory)
+
+# Is the same as:
+fit3.2 <- lm(Words ~ Age * Process, data=memory)
+Anova(fit3.2)
+```
+
+The `Anova` table shows that the interaction is significant. When an interaction is significant, this tells you nothing about the direction or magnitude of the interaction term. You can inspect the estimated coefficients in the `summary` output, but we recommend to first visualize the interaction with simple plots, as the coefficients can be easily misinterpreted. One way to visualize the interaction is to use the `interaction.plot` function, as in the following example. 
+
+This code produces Fig.~\ref{fig:interactionplot}. If there were no interaction between the two factor variables, you would expect to see a series of parallel lines (because the effects of `Process` and `Age` would simply be additive).
+
+```{r interactionplot, fig.width=7, fig.height=5.5, fig.align='center', fig.cap='An interaction plot for the memory data, indicating a strong interaction (because the lines are not parallel).', out.width="0.6\\textwidth"}
+# Plot the number of words rememberd by Age and Process
+# This standard plot can be customized in various ways, see ?interaction.plot
+with(memory, interaction.plot(Age, Process, Words))
+```
+
+#### More multiple comparisons
+{#sec:emmeans}
+
+In section~\ref{sec:multcomp}, we introduced the `glht` package for conducting multiple comparisons testing the significance of differences between levels within a factor. When there is a signficant interaction term, we might want to know under what levels of one factor is the effect of another factor signficant. This can be done easily using functions in the `emmeans` package.
+
+{#page:emmeans1}
+```{r echo=FALSE}
+suppressPackageStartupMessages(library(emmeans))
+```
+```{r }
+# Load package
+library(emmeans)
+
+# Estimate marginal means associated with 'Age' for each level of 'Process'
+fit3.emm <- emmeans(fit3, ~ Age | Process)
+
+# Calculate p-values for each pairwise contrast
+pairs(fit3.emm)
+```
+
+Using the `pairs` function on an `emmGrid` object returns effect sizes and significance tests for each pairwise contrast. In this example, we can see that older subjects remember signficantly fewer words than younger ones when using the Adjective, Imagery and Intentional processes but not the Counting or Rhyming processes. Alternatively, we may want to contrast different processes within each level of Age. Here it is helpful to use the `cld` function to identify groups of levels that are not significantly different. 
+
+```{r }
+# Estimate marginal means associated with 'Process' for each level of 'Age'
+fit3.emm.2 <- emmeans(fit3, ~ Process | Age)
+
+# Identify groups of processes for which the processes are similar
+cld(fit3.emm.2)
+```
+
+The resulting groups can then be used, for example, to determine which letter(s) should be placed above each treatment in a barplot.
+
+
+### Comparing models
+
+In the above example, we fitted two models for the Memory dataset: one without, and one with the interaction between `Process` and `Age`. We assessed the significance of the interaction by inspecting the p-value for the `Age:Process` term in the `Anova` statement. Another possibility is to perform a likelihood ratio test on two 'nested' models, the model that includes the term, and a model that excludes it. We can perform a likelihood ratio test with the `anova` function, not to be confused with `Anova` from the `car` package!\footnote{You may have seen the use of `anova` on a single model, which also gives an ANOVA table but is confusing because a sequential (Type-I) test is performed, which we strongly advise against as it is never the most intuitive test of effects.}
+
+```{r }
+# We can perform an anova on two models to compare the fit.
+# Note that one model must be a subset of the other model. 
+# In this case, the second model has the same predictors as the first plus
+# the interaction, and the likelihood ratio test thus tests the interaction.
+anova(fit2,fit3)
+```
+
+A second common way to compare different models is by the AIC (*Akaike's Information Criterion*), which is calculated based on the likelihood (a sort of goodness of fit), and penalized for the number of parameters (i.e. number of predictors in the model). The model with the lowest AIC is the preferred model. Calculating the `AIC` is simple,
+
+```{r }
+AIC(fit2, fit3)
+```
+
+We once again conclude that the interaction improved the model fit substantially.
+
+### Diagnostics
+
+The standard ANOVA assumes normality of the residuals, and we should always check this assumption with some diagnostic plots (Fig.~\ref{fig:anovadiag1}). Although R has built-in diagnostic plots, we prefer the use of `qqPlot` and `residualPlot`, both from the `car` package.
+
+```{r anovadiag1,  fig.show='hold', opts.label="wide", fig.cap='Simple diagnostic plots for the Memory ANOVA.'}
+par(mfrow=c(1,2))
+
+library(car)
+
+# Residuals vs. fitted
+residualPlot(fit3)
+
+# QQ-plot of the residuals
+qqPlot(fit3)
+```
+
+The QQ-plot shows some slight non-normality in the upper right. The non-normality probably stems from the fact that the `Words` variable is a 'count' variable. We will return to this in Section~\ref{sec:glm}.
+
+> **Try this yourself**
+Check whether a log-transformation of `Words` makes the residuals closer to normally distributed.
+
+
+
+## Linear regression
+
+
+To fit linear models of varying complexity, we can use the \fun{lm} function. The simplest model is a straight-line relationship between an $x$ and a $y$ variable. In this situation, the assumption is that the $y$-variable (the response) is a linear function of the $x$-variable (the independent variable), plus some random noise or measurement error. For the simplest case, both $x$ and $y$ are assumed to be continuous variables. In statistical notation we write this as,
+\begin{equation}
+y = \alpha+\beta x +\varepsilon \label{eqn:simplelin}
+\end{equation}
+
+Here $\alpha$ and $\beta$ are (population) parameters that need to be estimated from the data. The error ($\epsilon$) is assumed to follow a normal distribution with a mean of zero, and a standard deviation of $\sigma$. It is also assumed that $\sigma$ is constant and does not depend on $x$.
+
+We use this method to study the relationship between two continuous variables: a *response* ('y variable') and a *predictor* (or independent variable) ('x variable'). We can use multiple regression to study the relationship between a response and more than one predictor. For example, in the Allometry dataset (see Section~\ref{sec:allomdata}), we might expect that leaf area depends on both tree diameter and height. We test this idea in the following example.
+
+The first step should always be to inspect the data visually. In this case, let's make two simple scatter plots (Fig.~\ref{fig:allomdiamheight}).
+
+```{r allomdiamheight, fig.show='hold',  fig.cap='Leaf area as a function of height and diameter (note the log-log scale).', opts.label="wide"}
+# Read the data, if you haven't already
+allom <- read.csv("allometry.csv")
+
+# Two simple scatter plots on a log-log scale
+par(mfrow=c(1,2))
+plot(leafarea~diameter, data=allom, log="xy")
+plot(leafarea~height, data=allom, log="xy")
+```
+
+These plots are shown on a log-log scale, and it certainly looks like there is a relationship between leaf area and diameter as well as height. However, since diameter and height are probably correlated we need to take a close look at a linear model to understand what is going on.
+
+We are going to fit a model that looks like, using statistical notation,
+$$
+y = \alpha+\beta_1 x_1 +\beta_2 x_2 +\varepsilon {#eqn:multiplelin}
+$$
+
+where $\alpha$ is the intercept, $x_1$ and $x_2$ are the two predictors (height and diameter), andthe *two* slopes are $\beta_1$ and $\beta_2$. We are particularly interested in testing for significant effect of both predictors, which is akin to saying that we are testing the values of the two slopes against zero. We will first use the original scale (i.e. not log-transformed) and perform some diagnostic plots (shown in Fig.~\ref{fig:allomdiamheight2}).
+
+```{r allomdiamheight2, fig.cap='Diagnostic plots for the multiple regression of the Allometry data.', opts.label="wide"}
+# Fit a multiple regression without interactions, and inspect the summary
+fit4 <- lm(leafarea~diameter+height, data=allom)
+summary(fit4)
+
+# Basic diagnostic plots.
+par(mfrow=c(1,2))
+residualPlot(fit4)
+qqPlot(fit4)
+```
+
+The summary shows that both coefficients ($\beta$s) are significantly different from zero, and the p-value for `diameter` is much smaller. However,  the diagnostic plots indicate some problems. The scale-location plot shows a somewhat increasing trend -- i.e. the variance is not constant, and the QQ-plot shows some departures from normality. 
+
+Let's refit the model using log-transformed variables, and check the diagnostic plots (Fig.~\ref{fig:allomdiamheight3}).
+
+```{r allomdiamheight3,opts.label="wide", fig.cap='Diagnostic plots for the multiple regression of the Allometry data, using log-transformed variables.'}
+# For convenience, add log-transformed variables to the dataframe:
+allom$logLA <- log10(allom$leafarea)
+allom$logD <- log10(allom$diameter)
+allom$logH <- log10(allom$height)
+
+# Refit model, using log-transformed variables.
+fit5 <- lm(logLA ~ logD + logH, data=allom)
+summary(fit5)
+
+# And diagnostic plots.
+par(mfrow=c(1,2))
+residualPlot(fit5)
+qqPlot(fit5)
+```
+
+The coefficients ($\beta$s) are still significant (as shown by small p-values) and the diagnostic plots are better, although the QQ-plot is affected by some outliers.
+
+Of course, we are not restricted to just two predictors, and we can include  interactions as well. For example,
+
+```{r }
+# A multiple regression that includes all main effects as wel as interactions
+fit6 <- lm(logLA ~ logD * logH, data=allom)
+summary(fit6)
+```
+
+In this case, the interaction is not significant.
+
+
+## Linear models with factors and continuous variables
+{#sec:lmfaccont}
+
+So far we have looked at ANOVA, including two-way ANOVA, where a response variable is modelled as dependent on two treatments or factors, and *regression* including multiple linear regression where a response variable is modelled as dependent on two continuous variables. These are just special cases of the *linear model*, and we can extend these simple models by including a mix of factors and continuous predictors. The situation where we have one continuous variable and one factor variable is also known as ANCOVA (analysis of covariance), but using the `lm` function we can specify any model with a combination of predictors.
+
+Returning to the allometry data set once more, we might expect that leaf area depends also on `species`, which is a factor with three levels:
+
+```{r }
+# A linear model combining factors and continuous variables
+fit7 <- lm(logLA ~ species + logD + logH, data=allom)
+summary(fit7)
+```
+
+The summary of this fit shows that `PIPO` differs markedly from the base level species, in this case `PIMO`. However, `PSME` does not differ from `PIMO`. The linear effects in log diameter and log height remain significant.
+
+An ANOVA  table will tell us whether adding species improves the model overall (as a reminder, you need the `car` package loaded for this function).
+
+```{r }
+Anova(fit7)
+```
+
+We see that adding species to the model did improve the model.
+
+Perhaps the slopes on log diameter (and other measures) vary by species. This is an example of an interaction between a factor and a continuous variable. We can fit this as: 
+
+```{r }
+# A linear model that includes an interaction between a factor and 
+# a continuous variable
+fit8 <- lm(logLA ~ species * logD + species * logH, data=allom)
+summary(fit8)
+```
+
+Note that the species effect is still fitted, because we used the `*` operator (where `species*logD` is equivalent to `species + logD + species:logD`).
+
+From the summary, the `logD` (log diameter) coefficient appears to be significant. In this example, this coefficient represents the slope for the base species, `PIMO`. Other terms, including `speciesPIPO:logD`, are also significant. This means that their slopes differ from that of the base species (`PIMO`).
+
+We can also look at the `Anova` to decide whether adding these slope terms improved the model.
+
+```{r }
+Anova(fit8)
+```
+
+
+
+### Predicted effects
+{#sec:predictedeffects}
+
+The coefficients in a linear model are usually contrasts (i.e. differences between factor levels), slopes or intercepts. While this is useful for comparisons of treatments, it is often more instructive to visualize the predictions at various combinations of factor levels.
+
+For balanced designs where the model contains all interactions, the predicted means from a linear model will be the same as the group means calculated from the data. 
+
+However, if the data is not balanced and/or some of the interactions are left out the group mean and the predicted mean will be different. The package `effects` contains a very useful function to calculate and visualise these effects.
+
+For example, consider this example using the memory data (Fig.~\ref{fig:effectsplot1}) with main effects only.
+
+```{r echo=FALSE}
+suppressPackageStartupMessages(library(effects))
+```
+```{r effectsplot1, opts.label="wide", fig.cap='Effects plot of a linear model using the Memory data, including main effects only. Effects of Age (left panel) and Process (right panel) are assumed to be additive.' }
+# Load the effects package
+library(effects)
+
+# Fit linear model, main effects only
+fit9 <- lm(Words ~ Age + Process, data=memory)
+plot(allEffects(fit9))
+```
+
+
+And compare the output when we add all interactions (Fig.~\ref{fig:effectsplot2}),
+
+```{r effectsplot2, opts.label="wide", fig.cap='Effects plot a linear model of the Memory data, including main effects and interactions. The effects of Age and Process are not simply additive.'}
+fit10 <- lm(Words ~ Age * Process, data=memory)
+plot(allEffects(fit10))
+```
+
+> **Try this yourself**
+Use the command `plot(allEffects(...))` on the two model fits from Section~\ref{sec:lmfaccont}, and compare the results. Also, use these plots to double check your interpretation of the model coefficients, as shown in the output of `summary`.
+
+
+
+Another option is to use the `visreg` package, which can be used to make attractive plots of the predictions of a linear model. In the following example we redo Fig.~\ref{fig:effectsplot2} using the `visreg` package.
+
+The following example makes Fig.~\ref{fig:visreg1}.
+```{r visreg1, opts.label="smallsquare", fig.cap='Visualization of a fitted linear model with the visreg package.', warning=FALSE, message=FALSE}
+library(visreg)
+
+# Read tab-delimited data
+memory <- read.table("eysenck.txt", header=TRUE)
+
+# To make the plots easier to interpret, reorder the Process
+# factor by the average number of words remembered (we did this earlier in 
+# the chapter already for this dataset, it is repeated here).
+memory$Process <- with(memory, reorder(Process, Words, mean))
+
+# Refit the linear model as above.
+fit10 <- lm(Words ~ Age*Process, data=memory)
+
+# Here we specify which variable should be on the X axis (Process),
+# and which variable should be added with different colours (Age).
+visreg(fit10, "Process", by="Age", overlay=TRUE)
+```
+
+Here is another example. This time, we include a continuous and a factor variable in the model (Fig.~\ref{fig:visreg2}).
+```{r visreg2, opts.label="smallsquare", fig.cap='Visualization of a fitted linear model with a continuous and factor variable using the \`visreg` package.'}
+# Read data and make sure CO2 treatment is a factor!
+pupae <- read.csv("pupae.csv")
+pupae$CO2_treatment <- as.factor(pupae$CO2_treatment)
+
+# A linear model with a factor and a numeric variable
+fit_b <- lm(Frass ~ PupalWeight * CO2_treatment, data=pupae)
+
+# When plotting a model that has interactions, make sure to specify the variable 
+# that should appear on the X axis (the first argument), and the factor 
+# variable (the 2nd argument).
+visreg(fit_b, "PupalWeight", by="CO2_treatment", overlay=TRUE)
+```
+
+
+### Using predicted effects to make sense of model output
+
+Next we show an example of a model where using predicted effects as introduced in Section~\ref{sec:predictedeffects} is very helpful in understanding model output. For this example, we use measurements of photosynthesis and transpiration of tree leaves in the EucFACE experiment (see Section~\ref{sec:eucgasdata} for a description of the data). We are interested in the relationship between photosynthesis and transpiration (the ratio of which is known as the water-use efficiency), and whether this relationship differs with CO$_2$ treatment. The data are shown in Fig.~\ref{fig:eucgasplot1}.
+
+
+```{r eucgasplot1, opts.label="wide", fig.cap="Photosynthesis and leaf transpiration rate (Trmmol) for leaves in elevated (red) and ambient (blue) CO2 concentration.", fig.show="hold"}
+eucgas <- read.csv("eucface_gasexchange.csv")
+
+palette(c("blue","red"))
+with(eucgas, plot(Trmmol, Photo, pch=19, col=CO2))
+legend("topleft", levels(eucgas$CO2), pch=19, col=palette())
+
+boxplot(Photo ~ CO2, data=eucgas, col=palette(), ylab="Photo")
+```
+
+It seems quite clear from Fig.~\ref{fig:eucgasplot1} that, at a given `Trmmol`, `Photo` is higher in the elevated (`Ele`) CO$_2$ treatment. From the boxplot on the right, it also seems more than reasonable to expect that overall, `Photo` is higher in `Ele` (when not accounting for the `Trmmol` covariate).
+
+Let's fit a linear model to confirm this effect.
+
+```{r echo=FALSE}
+printfixef <- function(model){
+  x <- as.data.frame(summary(model)$coefficients)
+  x$Signif <- symnum(x[,4], corr = FALSE, na = FALSE, 
+                 cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
+                 symbols = c("***", "**", "*", ".", " "))
+  names(x)[ncol(x)] <- ""
+  x[,4] <- format.pval(x[,4])
+print(x)
+}
+```
+
+
+```{r }
+# A linear model with a continuous and a factor predictor, including the interaction.
+lmfit <- lm(Photo ~ CO2*Trmmol, data=eucgas)
+
+# Significance of overall model terms (sequential anova)
+anova(lmfit)
+```
+
+And the coefficients table from `summary`:
+
+```{r echo=FALSE}
+printfixef(lmfit)
+```
+
+```{r eval=FALSE}
+# Significance of the individual coefficients:
+summary(lmfit)
+```
+
+
+Look at the 'coefficients' table in the `summary` statement. Four parameters are shown, they can be interpreted as, 1) the intercept for 'Amb', 2) the slope for 'Amb', 3) the *difference* in the intercept for 'Ele', compared to 'Amb', 4) the *difference* in the slope for 'Ele', compared to 'Amb'.
+
+It seems that neither the intercept or slope effect of `CO2` is significant here, which is surprising. Also confusing is the fact that the `anova` statement showed a clear significant effect of `CO2`, so what is going on here? 
+
+First recall that the sequential anova tests each term against a model that includes *only the terms preceding it*. So, since we added `CO2` as the first predictor, its test in the `anova` is tested against a model that has no predictors. This is similar in approach to simply performing a $t$-test on `Photo` vs. `CO2` (which also shows a significant effect), in other words testing for separation in the right-hand panel of Fig.~\ref{fig:eucgasplot1}. It is clearly a different test from those shown in the `summary` statement.
+
+To understand the tests of the coefficients, we will plot predictions of the model, together with confidence intervals. The following code makes Fig.~\ref{fig:eucgasplot2}, and we introduce the use of the `predict` function to estimate fitted values, and confidence intervals, from a fitted model.
+
+```{r eucgasplot2, opts.label="smallsquare", fig.cap="Predicted relationship between Photo and Trmmol for ambient and elevated CO2 concentrations in the EucFACE leaf gas exchange dataset. Dashed lines are confidence intervals for the regression line."}
+
+# Set up a regular sequence of numbers, for which 'Photo' is to be predicted from
+xval <- seq(0, max(eucgas$Trmmol), length=101)
+
+# Two separate dataframes, one for each treatment/
+amb_dfr <- data.frame(Trmmol=xval, CO2="Amb")
+ele_dfr <- data.frame(Trmmol=xval, CO2="Ele")
+
+# Predictions of the model using 'predict.lm'
+# The first argument is the fitted model, the second argument a dataframe
+# containing values for the predictor variables.
+predamb <- as.data.frame(predict(lmfit, amb_dfr, interval="confidence"))
+predele <- as.data.frame(predict(lmfit, ele_dfr, interval="confidence"))
+
+# Plot. Set up the axis limits so that they start at 0, and go to the maximum.
+palette(c("blue","red"))
+with(eucgas, plot(Trmmol, Photo, pch=19, col=CO2,
+                  xlim=c(0, max(Trmmol)),
+                  ylim=c(0, max(Photo))))
+
+# Add the lines; the fit and lower and upper confidence intervals.
+with(predamb, {
+  lines(xval, fit, col="blue", lwd=2)
+  lines(xval, lwr, col="blue", lwd=1, lty=2)
+  lines(xval, upr, col="blue", lwd=1, lty=2)
+})
+
+with(predele, {
+  lines(xval, fit, col="red", lwd=2)
+  lines(xval, lwr, col="red", lwd=1, lty=2)
+  lines(xval, upr, col="red", lwd=1, lty=2)
+})
+```
+
+> **Try this yourself**
+The above plot can also be easily made with the `visreg` package, as we have seen already. Use the code `visreg(lmfit, "Trmmol", by="CO2", overlay=TRUE)` to make a similar plot. Set the x-axis limit with `xlim` to include the intercept.
+
+
+The intercept in a linear model is of course the value of the Y variable where X is zero. As we can see in Fig.~\ref{fig:eucgasplot2}, the confidence intervals for the regression lines overlap when `Trmmol` is zero - which is the comparison made in the `summary` statement for the intercept. We now see why the intercept was not significant, but it says very little about the treatment difference *in the range of the data*.
+
+Perhaps it is more meaningful to test for treatment differences at a mean value of `Trmmol`. There are four ways to do this.
+
+#### Centering the predictor
+
+The first approach is to recenter the predictor so that the intercept can be interpreted as the value where the predictor (in our case, `Trmmol`) is at its mean value.
+
+```{r }
+# Rescaled transpiration rate
+# This is equivalent to Trmmol - mean(Trmmol)
+eucgas$Trmmol_center <- scale(eucgas$Trmmol, center=TRUE, scale=FALSE)
+
+# Refit using centered predictor
+lmfit2 <- lm(Photo ~ Trmmol_center*CO2, data=eucgas)
+```
+
+The coefficients table in the `summary` statement now shows a highly significant effect for `CO2Ele`, a difference of about 4.22 units. It is also possible to compute confidence intervals on the coefficients via `confint(lmfit2)`, try this yourself.
+
+```{r eval=FALSE}
+# Summary of the fit:
+summary(lmfit2)
+```
+
+```{r echo=FALSE}
+printfixef(lmfit2)
+```
+
+
+#### Using the effects package
+
+Another way is to compute the `CO2` effect at a mean value of `Trmmol`. This avoids having to refit the model with centered data, and is more flexible.
+
+```{r }
+# The effects package calculates effects for a variable by averaging over all other
+# terms in the model
+library(effects)
+Effect("CO2", lmfit)
+
+# confidence intervals can be obtained via
+summary(Effect("CO2", lmfit))
+```
+
+The `effects` package is quite flexible. For example, we can calculate the predicted effects at any specified value of the predictors, like so (output not shown):
+
+```{r results="hide"}
+# For example, what is the CO2 effect when Trmmol was 3?
+summary(Effect("CO2", lmfit, given.values=c(Trmmol=3)))
+```
+
+
+#### Least-square means
+
+The effect size while holding other predictors constant at their mean value is also known as 
+the 'least-square mean' (or even 'estimated marginal means'), and is implemented as such in the `emmeans` package. It is a powerful package, also to make sense of models that are far more complex than the one in this example, as seen in section~\ref{sec:emmeans}.
+
+{#page:emmeans2}
+```{r }
+library(emmeans)
+summary(emmeans(lmfit, "CO2"))
+# emmeans warns that perhaps the results are misleading - this is true for more 
+# complex models but not a simple one as shown here. 
+```
+
+#### Using the `predict` function
+
+Finally, we show that the effects can also be obtained via the use of `predict`, as we already saw in the code to produce Fig.~\ref{fig:eucgasplot2}.
+
+```{r }
+# Predict fitted Photo at the mean of Trmmol, for both CO2 treatments
+predict(lmfit, data.frame(Trmmol=mean(eucgas$Trmmol), 
+                          CO2=levels(eucgas$CO2)), 
+        interval="confidence")
+```
+
+
+```{r echo=FALSE}
+palette("default")
+```
+
+
+> **Further reading**
+This example shows that interpretation of main effects (in this case, `CO2`) is not at all straightforward when the model also includes an interaction term (`CO2:Trmmol`). A readable review of this problem is Engqvist 2005, *Animal Behaviour* 70(4):967-971. There, it is shown that many studies misinterpret the main effects in cases like this.
+
+
+
+
+### Quadratic and polynomial terms
+
+So far we have seen models with just linear terms, but it is straightforward and often necessary to add quadratic ($x^2$) or higher-order terms (e.g. $x^3$) when the response variable is far from linear in the predictors. You can add any transformation of the predictors in an `lm` model by nesting the transformation inside the `I()` function, like so:
+
+```{r eval=FALSE}
+lmq1 <- lm(height ~ diameter + I(diameter^2), data=allom)
+```
+
+This model fits both the linear (`diameter`) and squared terms (`I(diameter\^2)`) of the predictor, as well as the usual intercept term. If you want to fit all polynomial terms up to some order, you can use the `poly` function like so,
+
+```{r eval=FALSE}
+lmq1 <- lm(height ~ poly(diameter, 2), data=allom)
+```
+
+This model specification is exactly equivalent to the above, and is more convenient when you have multiple quadratic / polynomial terms and interactions with factor variables. 
+
+The following example quickly tests whether a quadratic term improves the model fit of `height` vs. `diameter` for the species `PIPO` in the allometry dataset. 
+
+```{r }
+pipo <- subset(allom, species == "PIPO")
+
+# Fit model with the quadratic term:
+lmq2 <- lm(height ~ diameter + I(diameter^2), data=pipo)
+
+# The very small p-value for the quadratic terms shows that the 
+# relationship is clearly not linear, but better described with a 
+# quadratic model.
+Anova(lmq2)
+```
+
+When fitting a quadratic model, it is again very useful to use `visreg` to inspect the model that is estimated, since it becomes even more difficult to make sense of the various linear, quadratic, and intercept terms, especially when interactions with factor variables are added. Consider this example for the allometry dataset, which makes Fig.~\ref{fig:allomquad}.
+
+```{r allomquad, opts.label="smallsquare", fig.cap=""}
+
+# Fit a linear model with linear, quadratic terms, and all species interactions.
+allomquadfit <- lm(height ~ poly(diameter, 2)*species, data=allom)
+
+# Inspect summary(allomquadfit) to confirm you cannot possibly make sense of this
+# many coefficients.
+
+# But plotting the predictions is much easier to understand:
+visreg(allomquadfit, "diameter", by="species", overlay=TRUE)
+```
+
+
+\clearpage
+
+## Generalized Linear Models
+{#sec:glm}
+
+So far we have looked at modelling a continuous response to one or more factor variables (ANOVA), one or more continuous variables (multiple regression), and combinations of factors and continuous variables. We have also assumed that the predictors are normally distributed, and that, as a result, the response will be, too. We used a log-transformation in one of the examples to meet this assumption.
+
+In some cases, there is no obvious way to transform the response or predictors, and in other cases it is nearly impossible. Examples of difficult situations are when the response represents a count or when it is binary (i.e., has only two possible outcomes).  
+
+Generalized linear models (GLMs) \footnote{The term *General Linear Model*, which you may see used sometimes, is not the same as a GLM, although some statistics packages use GLM to mean general linear model, and use another term for generalized linear model.} extend linear models by allowing non-normally distributed errors. The basic idea is as follows. Suppose you have a response variable $y$ and one or more predictors (independent variables) that can be transformed into a linear predictor in the same way as in linear models, which we call $\eta$. Then $y$ is modelled as some distribution with mean $\mu$, which itself is related to the predictors through the linear predictor and a *link*-function, $g$. Formally,
+
+$$
+g(\mu) = \eta
+{#eqn:glm}
+$$
+
+In practice, the distribution for $y$ and the link-function are chosen depending on the problem. Logistic regression is an example of a GLM, with a binomial distribution and the link-function
+\[
+\log\left(\frac{\mu}{1-\mu}\right) = \eta
+\]
+
+Another common GLM uses the Poisson distribution, in which case the most commonly used link-function is $\log$. This is also called Poisson regression, and it is often used when the response represents counts of items. In the following, we will demonstrate two common GLMs: logistic regression and Poisson regression.
+
+### Logistic Regression
+{#sec:logistic}
+
+The Titanic dataset (see Section~\ref{sec:titanic}) contains information on the survival of passengers on the Titanic, including ages, gender and passenger class. Many ages are missing, and for this example we will work with only the non-missing data (but note that this is not always the best choice). Refer to Section~\ref{sec:workingmissing} (p.~\pageref{sec:workingmissing}) for working with and removing missing values.
+
+ 
+```{r }
+# Read tab-delimited data
+titanic <- read.table("titanic.txt", header=TRUE)
+
+# Complete cases only (drops any row that has a missing value anywhere)
+titanic <- titanic[complete.cases(titanic),]
+
+# Construct a factor variable based on 'Survived'
+titanic$Survived <- factor(ifelse(titanic$Survived==1, "yes", "no"))
+
+# Look at a standard summary
+summary(titanic)
+```
+
+The idea here is to find out whether the probability of survival depends on the passenger's `Age`, `Sex` and `PClass` (passenger class). Before we proceed, it is always a good idea to start by visualizing the data to find out what we are dealing with (and to make sure we will interpret the model output correctly). If we plot two factor variables against each other, R produces quite a useful plot, as the following example demonstrates (Fig.~\ref{fig:facfacplot}).
+
+```{r facfacplot, fig.width=8, out.width="0.8\\textwidth", fig.cap="Probability of survival versus passenger class and sex for the titanic data."}
+par(mfrow=c(1,2), mgp=c(2,1,0))
+with(titanic, plot(Sex, Survived, ylab="Survived", xlab="Sex"))
+with(titanic, plot(PClass, Survived, ylab="Survived", xlab="Passenger class"))
+```
+
+In logistic regression we model the probability of the "1" response (in this case the probability of survival). Since probabilities are between 0 and 1, we use a logistic transform of the linear predictor, where the linear predictor is of the form we would like to use in the linear models above. If $\eta$ is the linear predictor and $Y$ is the binary response, the logistic model takes the form,
+
+$$
+P(Y=1) = \frac{1}{1+e^{-\eta}}
+{#eqn:logit}
+$$
+
+These models are easily fit with `glm`. It has a similar interface to `lm` with a couple of additional features. To fit a logistic regression to the (modified) titanic data we use,
+
+```{r }
+# Fit a logistic regression
+fit11 <- glm(Survived~Age+Sex+PClass, data=titanic, family=binomial)
+summary(fit11)
+```
+
+The text `family=binomial` specifies that we wish to perform a *logistic regression*. The `summary` shows that all terms are significant. Interpreting the coefficients has to be done with care. For binary factors (such as `Sex`) they can be interpreted as a log-odds ratio, but this is beyond the scope of this text. The signs of the coefficients tell us about how the factor variable affects the probability of survival. In this example, all of them are negative so we can conclude: 1) an increase in age decreases the chance of survival, 2) being male decreases survival, 3) being in 2nd or 3rd class decrease survival with 3rd being worse than 2nd.
+
+The function `allEffects` from the `effects` package can be used here to visualize the effects (Fig.~\ref{fig:titaniceffects}).
+
+```{r titaniceffects, opts.label="wide", fig.cap='Fitted effects for the Titanic logistic regression example.'}
+# The 'type' argument is used to back-transform the probability
+# (Try this plot without that argument for comparison)
+plot(allEffects(fit11), type="response")
+```
+
+
+#### Tabulated data
+{#sec:tabuldataglm}
+
+Sometimes the available data are not at an individual level (as in the Titanic example above), but counts have already been aggregated into various factors.
+
+We will first aggregate the Titanic data into a table of counts, and then show how we can still fit a `glm` for a logistic regression.
+
+Suppose instead of age we only know the adult status of passengers.  
+```{r }
+titanic$AgeGrp <- factor(ifelse(titanic$Age>18, "Adult", "Child"))
+```
+
+We can then count the numbers of survivors and non-survivors,  
+```{r titanic2make, tidy=FALSE}
+# Count the number of survivors and non-survivors by various factor combinations
+titanic2 <- aggregate(cbind(Survived=="yes",Survived=="no") ~ AgeGrp+Sex+PClass, 
+                      data=titanic, sum)
+titanic2
+
+# Tidy up the names
+names(titanic2)[4:5] <- c("survivors", "nonsurvivors")
+```
+
+Use the following example to fit a logistic regression when your data looks like the above. We will again plot the fitted effects (Fig.~\ref{fig:titaniceffects2}). As you can see, the conclusions are the same as before.
+
+```{r titaniceffects2, opts.label="wide", fig.cap='Fitted effects for the Titanic logistic regression example, when fitted using tabulated data.', tidy=FALSE}
+fit12 <- glm(cbind(survivors, nonsurvivors)~AgeGrp+Sex+PClass, 
+             data=titanic2, family=binomial)
+summary(fit12)
+
+# Effects plot
+plot(allEffects(fit12))
+```
+
+
+
+
+
+### Poisson regression
+
+For this example we return to the Age and Memory dataset. In this dataset, the response variable is a count of the number of words recalled by subjects using one of four different methods for memorization. When the response variable represents a count, a Poisson regression is often appropriate. 
+
+The following code performs a Poisson regression of the Age and Memory data. See Fig.~\ref{fig:glm1} for the fitted effects.
+```{r glm1, opts.label="smallsquare", fig.cap='Fitted effects for a Poisson regression of the Age and Memory data. Note the log scale of the y-axis.'}
+# Fit a generalized linear model
+fit13 <- glm(Words~Age*Process, data=memory, family=poisson)
+summary(fit13)
+
+# Look at an ANOVA of the fitted model, and provide likelihood-ratio tests.
+Anova(fit13)
+
+# Plot fitted effects
+plot(allEffects(fit13))
+```
+
+Remember that when we fit this as a linear model (using `lm`), we found that the interaction term was highly significant. This time, when we used Poisson regression, the interaction is no longer significant. However, the default link for Poisson regression is $\log$. This means that the mean $\mu$ in this case depends on the factors `Age` and `Process` in a multiplicative fashion, whereas in the linear model (using `lm`) it was additive without the interaction. In other words, we have now modelled the interaction implicitly by using the $\log$ link function.
+
+Note that in example above we use the `anova` function with the option `test="LRT"`, which allows us to perform a *Likelihood Ratio Test* (LRT). This is appropriate for GLMs because the usual $F$-tests may not be inaccurate when the distribution is not normal.
+
+
+> **Further reading**
+An excellent book on linear modelling, including many tools that we did not cover in this chapter is:
+Fox, John, and Sanford Weisberg. *An R companion to applied regression*. Sage, 2010. This book describes the `car` package.
+
+
