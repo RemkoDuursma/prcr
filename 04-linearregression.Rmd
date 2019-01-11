@@ -93,8 +93,9 @@ ggplot(icecream, aes(x = temperature, y = sales, fill = location)) +
 
 In this figure we arrive at a completely different conclusion - but only because we have taken into account the covariate weekly temperature. Now, *at a given temperature*, ice cream sales were higher at the new location - Dappermarkt. This is an example of how a confounding variable can mask (or even reverse) effects of some other variable. It seems obvious from the figure that temperature was overall lower when you sold ice cream at the Dappermarkt, explaining why average weekly sales were in the end no different.
 
-> **Try this yourself**
-> Use a *t*-test to test that temperature was lower at the Dappermarkt location.
+```{block2 type="rmdtry"}
+Use a *t*-test to test that temperature was lower at the Dappermarkt location.
+```
 
 Using regression analysis, we can test the assertion that ice cream sales are higher at Dappermarkt, *at a given temperature*. But before we do that, we first introduce the tools to test difference between means (as we just did with a simple two-sample t-test), and introduce basic linear regression. We return to the icecream problem in Section XXX.
 
@@ -165,10 +166,9 @@ c(xbar - half.width, xbar + half.width)
 
 Here, we assumed a normal distribution for the population. You may have been taught that if `n` is *large*, say n>30, then you can use a normal approximation. That is, replace `qt(1-alpha/2, n-1)` with `qnorm(1-alpha/2)`, but there is no need, R can use the t-distribution for any *n* (and the results will be the same, as the t-distribution converges to a normal distribution when the df is large).
 
-> **Try this yourself** 
-> Confirm that the $t$-distribution converges to a normal distribution when *n* is large (using `qt` and `qnorm`).
-
-
+```{block2 type="rmdtry"} 
+Confirm that the $t$-distribution converges to a normal distribution when *n* is large (using `qt` and `qnorm`).
+```
 
 ### Hypothesis testing
 
@@ -258,16 +258,14 @@ We can use either the `aov` function or `lm` to perform ANOVAs. We will focus ex
 To use `lm` for an ANOVA, we need a dataframe containing a (continuous) response variable and a factor variable that defines the groups. For example, in the Coweeta dataset, the species  variable is a factor that defines groups by species.  We can compute (for example) the mean height by species. Let's look at an example using the Coweeta data, but with only four species to simplify the output.
 
 ```{r }
-coweeta <- read.csv("coweeta.csv")
-
 # Take a subset and drop empty levels with droplevels.
-cowsub <- droplevels(subset(coweeta, species %in% c("cofl","bele","oxar","quru")))
+cowsub <- read.csv("coweeta_subset.csv")
 
 # Quick summary table
 with(cowsub, tapply(height, species, mean))
 ```
 
-We might want to ask, does the mean height vary by species? Before you do any test for significance, a graphical summary of the data is always useful. For this type of data, box plots are preferred since they visualize not just the means but also the spread of the data (see also Section~\ref{sec:boxplot}) (Fig.~\ref{fig:allombox}).
+We might want to ask, does the mean height vary by species? Before you do any test for significance, a graphical summary of the data is always useful. For this type of data, box plots are preferred since they visualize not just the means but also the spread of the data (see also Section~\@ref(sec:boxplot)) (Fig.~\@ref(fig:allombox)).
 
 ```{r allombox, fig.cap='Simple box plot for the Coweeta data.', opts.label="smallsquare"}
 boxplot(height~species, data=cowsub)
@@ -323,17 +321,17 @@ summary(tukey_Spec)
 # Some of the species are different from each other, but not all.
 ```
 
-> **Try this yourself**
+```{block2 type="rmdtry"}
 In the above summary of the multiple comparison (`summary(tukey\_Spec)`), the p-values are adjusted for multiple comparisons with the so-called 'single-step method'. To use a different method for the correction (there are many), try the following example:
 \begin{verbatim}
 summary(tukey_Spec, test=adjusted("Shaffer"))
 \end{verbatim}
 Also look at the other options in the help pages for `?adjusted` and `?p.adjust`.
-
+```
 
 We can also produce a quick plot of the multiple comparison, which shows the pair-wise differences between the species with confidence intervals.
 
-This code produces Fig.~\ref{fig:tukeyplot}.
+This code produces Fig.~\@ref(fig:tukeyplot).
 ```{r tukeyplot, opts.label="smallsquare", fig.cap='A standard plot of a multiple comparison.', echo=-1}
 par(mar=c(5,7,4,1))
 
@@ -430,7 +428,7 @@ We once again conclude that the interaction improved the model fit substantially
 
 ### Diagnostics
 
-The standard ANOVA assumes normality of the residuals, and we should always check this assumption with some diagnostic plots (Fig.~\ref{fig:anovadiag1}). Although R has built-in diagnostic plots, we prefer the use of `qqPlot` and `residualPlot`, both from the `car` package.
+The standard ANOVA assumes normality of the residuals, and we should always check this assumption with some diagnostic plots (Fig.~\@ref(fig:anovadiag1)). Although R has built-in diagnostic plots, we prefer the use of `qqPlot` and `residualPlot`, both from the `car` package.
 
 ```{r anovadiag1,  fig.show='hold', opts.label="wide", fig.cap='Simple diagnostic plots for the Memory ANOVA.'}
 par(mfrow=c(1,2))
@@ -444,38 +442,49 @@ residualPlot(fit3)
 qqPlot(fit3)
 ```
 
-The QQ-plot shows some slight non-normality in the upper right. The non-normality probably stems from the fact that the `Words` variable is a 'count' variable. We will return to this in Section~\ref{sec:glm}.
+The QQ-plot shows some slight non-normality in the upper right. The non-normality probably stems from the fact that the `Words` variable is a 'count' variable. We will return to this in Section~\@ref(sec:glm).
 
-> **Try this yourself**
+```{block2 type="rmdtry"}
 Check whether a log-transformation of `Words` makes the residuals closer to normally distributed.
-
+```
 
 
 ## Linear regression
 
 
-To fit linear models of varying complexity, we can use the \fun{lm} function. The simplest model is a straight-line relationship between an $x$ and a $y$ variable. In this situation, the assumption is that the $y$-variable (the response) is a linear function of the $x$-variable (the independent variable), plus some random noise or measurement error. For the simplest case, both $x$ and $y$ are assumed to be continuous variables. In statistical notation we write this as,
+To fit linear models of varying complexity, we can use the `lm` function. The simplest model is a straight-line relationship between an `x` and a `y` variable. In this situation, the assumption is that the `y`-variable (the response) is a linear function of the `x`-variable (the independent variable), plus some random noise or measurement error. For the simplest case, both `x` and `y` are assumed to be continuous variables. In statistical notation we write this as,
 \begin{equation}
-y = \alpha+\beta x +\varepsilon \label{eqn:simplelin}
+y = \alpha+\beta x +\varepsilon 
+(\#eq:simplelin)
 \end{equation}
 
 Here $\alpha$ and $\beta$ are (population) parameters that need to be estimated from the data. The error ($\epsilon$) is assumed to follow a normal distribution with a mean of zero, and a standard deviation of $\sigma$. It is also assumed that $\sigma$ is constant and does not depend on $x$.
 
-We use this method to study the relationship between two continuous variables: a *response* ('y variable') and a *predictor* (or independent variable) ('x variable'). We can use multiple regression to study the relationship between a response and more than one predictor. For example, in the Allometry dataset (see Section~\ref{sec:allomdata}), we might expect that leaf area depends on both tree diameter and height. We test this idea in the following example.
+We use this method to study the relationship between two continuous variables: a *response* ('y variable') and a *predictor* (or independent variable) ('x variable'). We can use multiple regression to study the relationship between one response and more than one predictor. 
 
-The first step should always be to inspect the data visually. In this case, let's make two simple scatter plots (Fig.~\ref{fig:allomdiamheight}).
+We are going to use the Cereals data to inspect the "health rating" (`rating`), and two predictors: fibre content (`fiber`) and sugar content (`sugar`). To start with, let's make two scatter plots, side by side.
 
-```{r allomdiamheight, fig.show='hold',  fig.cap='Leaf area as a function of height and diameter (note the log-log scale).', opts.label="wide"}
+
+```{r allomdiamheight, fig.cap='Leaf area as a function of height and diameter (note the log-log scale).', opts.label="wide"}
 # Read the data, if you haven't already
-allom <- read.csv("allometry.csv")
+cereals <- read.csv("Cereals.csv")
+
+library(scales)
+library(ggpubr)
 
 # Two simple scatter plots on a log-log scale
-par(mfrow=c(1,2))
-plot(leafarea~diameter, data=allom, log="xy")
-plot(leafarea~height, data=allom, log="xy")
+g1 <- ggplot(cereals, aes(y = rating, x = fiber)) +
+  geom_point(pch=15) + theme_tufte() + lims(y=c(0,100)) +
+  geom_smooth(method='lm')
+
+g2 <- ggplot(cereals, aes(y = rating, x = sugars)) +
+  geom_point(pch=19, col="dimgrey") + theme_tufte()  + lims(y=c(0,100)) +
+  geom_smooth(method='lm')
+
+ggpubr::ggarrange(g1, g2) %>% plot
 ```
 
-These plots are shown on a log-log scale, and it certainly looks like there is a relationship between leaf area and diameter as well as height. However, since diameter and height are probably correlated we need to take a close look at a linear model to understand what is going on.
+Here we make use of `ggplot2`'s built-in regression lines, which are easily added to the plot. The default behaviour is to add a 95% confidence band as well. In this case we immediately see that `fiber` is a worse predictor than `sugars` for the health rating, given the wider confidence interval for the location of the mean response (i.e. the regression line). 
 
 We are going to fit a model that looks like, using statistical notation,
 \begin{equation}
@@ -483,92 +492,90 @@ y = \alpha+\beta_1 x_1 +\beta_2 x_2 +\varepsilon
 (\#eq:multiplelin)
 \end{equation}
 
-where $\alpha$ is the intercept, $x_1$ and $x_2$ are the two predictors (height and diameter), andthe *two* slopes are $\beta_1$ and $\beta_2$. We are particularly interested in testing for significant effect of both predictors, which is akin to saying that we are testing the values of the two slopes against zero. We will first use the original scale (i.e. not log-transformed) and perform some diagnostic plots (shown in Fig.~\ref{fig:allomdiamheight2}).
+where $\alpha$ is the intercept, $x_1$ and $x_2$ are the two predictors (fiber and sugars), and the *two* slopes are $\beta_1$ and $\beta_2$. We are particularly interested in testing for significant effect of both predictors, which is akin to saying that we are testing the values of the two slopes against zero. 
 
-```{r allomdiamheight2, fig.cap='Diagnostic plots for the multiple regression of the Allometry data.', opts.label="wide"}
+```{r cerealfit4, fig.cap='Diagnostic plots for the multiple regression of the Allometry data.', opts.label="wide"}
 # Fit a multiple regression without interactions, and inspect the summary
-fit4 <- lm(leafarea~diameter+height, data=allom)
-summary(fit4)
+fit4 <- lm(rating ~ sugars + fiber, data=cereals)
 
+# A detailed summary (not shown for brevity)
+# summary(fit4)
+
+# A clean summary, especially for in an rmarkdown file
+pander::pander(summary(fit4))
+```
+
+As you can see, we again use the `pander` package to give super clean results, which can be used in an `rmarkdown` document. We see here that overall we have an R^2^ of 81% (not bad), and that both predictors contribute significantly (the P values are very low for both).
+
+Next, we perform some diagnostic plots (shown in Fig. \@ref(fig:cerealdiag)). The standard errors (and confidence intervals, and hypothesis tests) will be unreliable if the assumptions of normality (right panel) or linearity (left panel) are seriously violated. If you are only interested in the mean response against your predictors, but not so much their uncertainties, you can usually ignore these plots.
+
+```{r cerealdiag, opts.label="wide"}
 # Basic diagnostic plots.
 par(mfrow=c(1,2))
-residualPlot(fit4)
-qqPlot(fit4)
+car::residualPlot(fit4)
+car::qqPlot(fit4)
 ```
 
-The summary shows that both coefficients ($\beta$s) are significantly different from zero, and the p-value for `diameter` is much smaller. However,  the diagnostic plots indicate some problems. The scale-location plot shows a somewhat increasing trend -- i.e. the variance is not constant, and the QQ-plot shows some departures from normality. 
+Now that we have a fitted model, what do its predictions actually look like? What relationship have we learned between health rating, sugars, and fiber content? The `visreg` package provides a very concise method to visualize (many kinds of) fitted regression models.
 
-Let's refit the model using log-transformed variables, and check the diagnostic plots (Fig.~\ref{fig:allomdiamheight3}).
+In this case, the command `visreg::visreg(fit4)` would show two plots very similar to the ones above - which does not really add much information. What if we can show the effects of both predictors, in just one plot? The following code produces Fig. \@ref(fig:visregcereal).
 
-```{r allomdiamheight3,opts.label="wide", fig.cap='Diagnostic plots for the multiple regression of the Allometry data, using log-transformed variables.'}
-# For convenience, add log-transformed variables to the dataframe:
-allom$logLA <- log10(allom$leafarea)
-allom$logD <- log10(allom$diameter)
-allom$logH <- log10(allom$height)
-
-# Refit model, using log-transformed variables.
-fit5 <- lm(logLA ~ logD + logH, data=allom)
-summary(fit5)
-
-# And diagnostic plots.
-par(mfrow=c(1,2))
-residualPlot(fit5)
-qqPlot(fit5)
+```{r visregcereal}
+library(visreg)
+visreg(fit4, "sugars", by = "fiber", overlay = TRUE,
+       ylim=c(0,100))
 ```
 
-The coefficients ($\beta$s) are still significant (as shown by small p-values) and the diagnostic plots are better, although the QQ-plot is affected by some outliers.
+Here we clearly, and in one panel, visualize the negative effect of adding more sugar in a cereal, and the positive effect of adding more fiber. The `visreg` function plots the *predictions* from our model at an arbitrary selection of predictor values (here, 0, 1.5 and 5). 
 
-Of course, we are not restricted to just two predictors, and we can include  interactions as well. For example,
+```{block2 type="rmdtry"}
+In the call to `visreg`, use the argument `breaks=c(1,5)` to set the predictor values to those of your choice.
+```
+
+We can also make 3D plots, though these are not always useful, and I personally prefer a 'pseudo-3D' plot as in the example above to visualize the contribution of two variables.
+
+Of course, we are not restricted to just two predictors, and we can include  interactions as well. In the previous model (`fit4`) the effects of `fiber` and `sugars` were *additive*, in other words the effect of fiber was independent of the amount of sugars. We can test this assumption by adding the interaction to the model. 
 
 ```{r }
 # A multiple regression that includes all main effects as wel as interactions
-fit6 <- lm(logLA ~ logD * logH, data=allom)
-summary(fit6)
+fit5 <- lm(rating ~ sugars + fiber + fiber:sugars, data=cereals)
+summary(fit5) %>% pander::pander(.)
 ```
 
-In this case, the interaction is not significant.
+(*Note*: the formula can also be written as `fiber*sugars`)
 
+In this case, the interaction is not significant: note the large P value for the *sugars:fiber* interaction. We can also inspect the `AIC`, and notice that the total model AIC has not decreased, which also indicates the model has not improved by adding an interaction term.
 
-## Linear models with factors and continuous variables
-{#sec:lmfaccont}
-
-So far we have looked at ANOVA, including two-way ANOVA, where a response variable is modelled as dependent on two treatments or factors, and *regression* including multiple linear regression where a response variable is modelled as dependent on two continuous variables. These are just special cases of the *linear model*, and we can extend these simple models by including a mix of factors and continuous predictors. The situation where we have one continuous variable and one factor variable is also known as ANCOVA (analysis of covariance), but using the `lm` function we can specify any model with a combination of predictors.
-
-Returning to the allometry data set once more, we might expect that leaf area depends also on `species`, which is a factor with three levels:
-
-```{r }
-# A linear model combining factors and continuous variables
-fit7 <- lm(logLA ~ species + logD + logH, data=allom)
-summary(fit7)
+```{r}
+AIC(fit4, fit5)
 ```
 
-The summary of this fit shows that `PIPO` differs markedly from the base level species, in this case `PIMO`. However, `PSME` does not differ from `PIMO`. The linear effects in log diameter and log height remain significant.
 
-An ANOVA  table will tell us whether adding species improves the model overall (as a reminder, you need the `car` package loaded for this function).
+## Linear models with factors and continuous variables {#lmfaccont}
 
-```{r }
-Anova(fit7)
+So far we have looked at ANOVA, including two-way ANOVA, where a response variable is modelled as dependent on two treatments or factors, and *regression* including multiple linear regression where a response variable is modelled as dependent on two continuous variables. These are just special cases of the *linear model*, and we can extend these simple models by including a mix of factors and continuous predictors. The situation where we have one continuous variable and one factor variable was classically` known as ANCOVA (analysis of covariance), but using the `lm` function we can specify any model with a combination of predictors.
+
+In the following example, we inspect the height of trees against the stem diameter (`DBH`) for the Coweeta example dataset. When plotting all data, we are led to believe that the overall response of height to DBH is highly non-linear (left panel). However, when we fit a simple linear model for each species separately (right panel), the relationship appears to consist of a combination of linear responses.
+
+
+```{r coweeta_twoplots, fig.cap="}
+coweeta <- read.csv("coweeta_subset.csv")
+
+g1 <- ggplot(coweeta, aes(x = DBH, y = height)) +
+  geom_point() + geom_smooth(method="loess", se=FALSE) +
+  theme_tufte() + scale_colour_tableau() + lims(x=c(0,60), y=c(0,30))
+
+g2 <- ggplot(coweeta, aes(x = DBH, y=height, col=species)) +
+  geom_point() + geom_smooth(method="lm", se=FALSE) +
+  theme_tufte() + scale_colour_tableau() + lims(x=c(0,60), y=c(0,30))
+ggpubr::ggarrange(g1, g2) %>% plot
 ```
 
-We see that adding species to the model did improve the model.
 
-Perhaps the slopes on log diameter (and other measures) vary by species. This is an example of an interaction between a factor and a continuous variable. We can fit this as: 
+To fit a model that allows a different response for each species, we use the notation from before:
 
-```{r }
-# A linear model that includes an interaction between a factor and 
-# a continuous variable
-fit8 <- lm(logLA ~ species * logD + species * logH, data=allom)
-summary(fit8)
-```
-
-Note that the species effect is still fitted, because we used the `*` operator (where `species*logD` is equivalent to `species + logD + species:logD`).
-
-From the summary, the `logD` (log diameter) coefficient appears to be significant. In this example, this coefficient represents the slope for the base species, `PIMO`. Other terms, including `speciesPIPO:logD`, are also significant. This means that their slopes differ from that of the base species (`PIMO`).
-
-We can also look at the `Anova` to decide whether adding these slope terms improved the model.
-
-```{r }
-Anova(fit8)
+```{r}
+fit6 <- lm(height ~ species * DBH, data=coweeta)
 ```
 
 
@@ -582,7 +589,7 @@ For balanced designs where the model contains all interactions, the predicted me
 
 However, if the data is not balanced and/or some of the interactions are left out the group mean and the predicted mean will be different. The package `effects` contains a very useful function to calculate and visualise these effects.
 
-For example, consider this example using the memory data (Fig.~\ref{fig:effectsplot1}) with main effects only.
+For example, consider this example using the memory data (Fig.~\@ref(fig:effectsplot1)) with main effects only.
 
 ```{r echo=FALSE}
 suppressPackageStartupMessages(library(effects))
@@ -597,21 +604,22 @@ plot(allEffects(fit9))
 ```
 
 
-And compare the output when we add all interactions (Fig.~\ref{fig:effectsplot2}),
+And compare the output when we add all interactions (Fig.~\@ref(fig:effectsplot2)),
 
 ```{r effectsplot2, opts.label="wide", fig.cap='Effects plot a linear model of the Memory data, including main effects and interactions. The effects of Age and Process are not simply additive.'}
 fit10 <- lm(Words ~ Age * Process, data=memory)
 plot(allEffects(fit10))
 ```
 
-> **Try this yourself**
-Use the command `plot(allEffects(...))` on the two model fits from Section~\ref{sec:lmfaccont}, and compare the results. Also, use these plots to double check your interpretation of the model coefficients, as shown in the output of `summary`.
+```{block2 type="rmdtry"}
+Use the command `plot(allEffects(...))` on the two model fits from Section~\@ref(sec:lmfaccont), and compare the results. Also, use these plots to double check your interpretation of the model coefficients, as shown in the output of `summary`.
+```
 
 
 
-Another option is to use the `visreg` package, which can be used to make attractive plots of the predictions of a linear model. In the following example we redo Fig.~\ref{fig:effectsplot2} using the `visreg` package.
+Another option is to use the `visreg` package, which can be used to make attractive plots of the predictions of a linear model. In the following example we redo Fig.~\@ref(fig:effectsplot2) using the `visreg` package.
 
-The following example makes Fig.~\ref{fig:visreg1}.
+The following example makes Fig.~\@ref(fig:visreg1).
 ```{r visreg1, opts.label="smallsquare", fig.cap='Visualization of a fitted linear model with the visreg package.', warning=FALSE, message=FALSE}
 library(visreg)
 
@@ -631,7 +639,7 @@ fit10 <- lm(Words ~ Age*Process, data=memory)
 visreg(fit10, "Process", by="Age", overlay=TRUE)
 ```
 
-Here is another example. This time, we include a continuous and a factor variable in the model (Fig.~\ref{fig:visreg2}).
+Here is another example. This time, we include a continuous and a factor variable in the model (Fig.~\@ref(fig:visreg2)).
 ```{r visreg2, opts.label="smallsquare", fig.cap='Visualization of a fitted linear model with a continuous and factor variable using the \`visreg` package.'}
 # Read data and make sure CO2 treatment is a factor!
 pupae <- read.csv("pupae.csv")
@@ -649,7 +657,7 @@ visreg(fit_b, "PupalWeight", by="CO2_treatment", overlay=TRUE)
 
 ### Using predicted effects to make sense of model output
 
-Next we show an example of a model where using predicted effects as introduced in Section~\ref{sec:predictedeffects} is very helpful in understanding model output. For this example, we use measurements of photosynthesis and transpiration of tree leaves in the EucFACE experiment (see Section~\ref{sec:eucgasdata} for a description of the data). We are interested in the relationship between photosynthesis and transpiration (the ratio of which is known as the water-use efficiency), and whether this relationship differs with CO$_2$ treatment. The data are shown in Fig.~\ref{fig:eucgasplot1}.
+Next we show an example of a model where using predicted effects as introduced in Section~\@ref(sec:predictedeffects) is very helpful in understanding model output. For this example, we use measurements of photosynthesis and transpiration of tree leaves in the EucFACE experiment (see Section~\@ref(sec:eucgasdata) for a description of the data). We are interested in the relationship between photosynthesis and transpiration (the ratio of which is known as the water-use efficiency), and whether this relationship differs with CO$_2$ treatment. The data are shown in Fig.~\@ref(fig:eucgasplot1).
 
 
 ```{r eucgasplot1, opts.label="wide", fig.cap="Photosynthesis and leaf transpiration rate (Trmmol) for leaves in elevated (red) and ambient (blue) CO2 concentration.", fig.show="hold"}
@@ -662,7 +670,7 @@ legend("topleft", levels(eucgas$CO2), pch=19, col=palette())
 boxplot(Photo ~ CO2, data=eucgas, col=palette(), ylab="Photo")
 ```
 
-It seems quite clear from Fig.~\ref{fig:eucgasplot1} that, at a given `Trmmol`, `Photo` is higher in the elevated (`Ele`) CO$_2$ treatment. From the boxplot on the right, it also seems more than reasonable to expect that overall, `Photo` is higher in `Ele` (when not accounting for the `Trmmol` covariate).
+It seems quite clear from Fig.~\@ref(fig:eucgasplot1) that, at a given `Trmmol`, `Photo` is higher in the elevated (`Ele`) CO$_2$ treatment. From the boxplot on the right, it also seems more than reasonable to expect that overall, `Photo` is higher in `Ele` (when not accounting for the `Trmmol` covariate).
 
 Let's fit a linear model to confirm this effect.
 
@@ -703,9 +711,9 @@ Look at the 'coefficients' table in the `summary` statement. Four parameters are
 
 It seems that neither the intercept or slope effect of `CO2` is significant here, which is surprising. Also confusing is the fact that the `anova` statement showed a clear significant effect of `CO2`, so what is going on here? 
 
-First recall that the sequential anova tests each term against a model that includes *only the terms preceding it*. So, since we added `CO2` as the first predictor, its test in the `anova` is tested against a model that has no predictors. This is similar in approach to simply performing a $t$-test on `Photo` vs. `CO2` (which also shows a significant effect), in other words testing for separation in the right-hand panel of Fig.~\ref{fig:eucgasplot1}. It is clearly a different test from those shown in the `summary` statement.
+First recall that the sequential anova tests each term against a model that includes *only the terms preceding it*. So, since we added `CO2` as the first predictor, its test in the `anova` is tested against a model that has no predictors. This is similar in approach to simply performing a $t$-test on `Photo` vs. `CO2` (which also shows a significant effect), in other words testing for separation in the right-hand panel of Fig.~\@ref(fig:eucgasplot1). It is clearly a different test from those shown in the `summary` statement.
 
-To understand the tests of the coefficients, we will plot predictions of the model, together with confidence intervals. The following code makes Fig.~\ref{fig:eucgasplot2}, and we introduce the use of the `predict` function to estimate fitted values, and confidence intervals, from a fitted model.
+To understand the tests of the coefficients, we will plot predictions of the model, together with confidence intervals. The following code makes Fig.~\@ref(fig:eucgasplot2), and we introduce the use of the `predict` function to estimate fitted values, and confidence intervals, from a fitted model.
 
 ```{r eucgasplot2, opts.label="smallsquare", fig.cap="Predicted relationship between Photo and Trmmol for ambient and elevated CO2 concentrations in the EucFACE leaf gas exchange dataset. Dashed lines are confidence intervals for the regression line."}
 
@@ -742,11 +750,11 @@ with(predele, {
 })
 ```
 
-> **Try this yourself**
+```{block2 type="rmdtry"}
 The above plot can also be easily made with the `visreg` package, as we have seen already. Use the code `visreg(lmfit, "Trmmol", by="CO2", overlay=TRUE)` to make a similar plot. Set the x-axis limit with `xlim` to include the intercept.
+```
 
-
-The intercept in a linear model is of course the value of the Y variable where X is zero. As we can see in Fig.~\ref{fig:eucgasplot2}, the confidence intervals for the regression lines overlap when `Trmmol` is zero - which is the comparison made in the `summary` statement for the intercept. We now see why the intercept was not significant, but it says very little about the treatment difference *in the range of the data*.
+The intercept in a linear model is of course the value of the Y variable where X is zero. As we can see in Fig.~\@ref(fig:eucgasplot2), the confidence intervals for the regression lines overlap when `Trmmol` is zero - which is the comparison made in the `summary` statement for the intercept. We now see why the intercept was not significant, but it says very little about the treatment difference *in the range of the data*.
 
 Perhaps it is more meaningful to test for treatment differences at a mean value of `Trmmol`. There are four ways to do this.
 
@@ -800,7 +808,7 @@ summary(Effect("CO2", lmfit, given.values=c(Trmmol=3)))
 #### Least-square means
 
 The effect size while holding other predictors constant at their mean value is also known as 
-the 'least-square mean' (or even 'estimated marginal means'), and is implemented as such in the `emmeans` package. It is a powerful package, also to make sense of models that are far more complex than the one in this example, as seen in section~\ref{sec:emmeans}.
+the 'least-square mean' (or even 'estimated marginal means'), and is implemented as such in the `emmeans` package. It is a powerful package, also to make sense of models that are far more complex than the one in this example, as seen in section~\@ref(sec:emmeans).
 
 {#page:emmeans2}
 ```{r }
@@ -812,7 +820,7 @@ summary(emmeans(lmfit, "CO2"))
 
 #### Using the `predict` function
 
-Finally, we show that the effects can also be obtained via the use of `predict`, as we already saw in the code to produce Fig.~\ref{fig:eucgasplot2}.
+Finally, we show that the effects can also be obtained via the use of `predict`, as we already saw in the code to produce Fig.~\@ref(fig:eucgasplot2).
 
 ```{r }
 # Predict fitted Photo at the mean of Trmmol, for both CO2 treatments
@@ -863,7 +871,7 @@ lmq2 <- lm(height ~ diameter + I(diameter^2), data=pipo)
 Anova(lmq2)
 ```
 
-When fitting a quadratic model, it is again very useful to use `visreg` to inspect the model that is estimated, since it becomes even more difficult to make sense of the various linear, quadratic, and intercept terms, especially when interactions with factor variables are added. Consider this example for the allometry dataset, which makes Fig.~\ref{fig:allomquad}.
+When fitting a quadratic model, it is again very useful to use `visreg` to inspect the model that is estimated, since it becomes even more difficult to make sense of the various linear, quadratic, and intercept terms, especially when interactions with factor variables are added. Consider this example for the allometry dataset, which makes Fig.~\@ref(fig:allomquad).
 
 ```{r allomquad, opts.label="smallsquare", fig.cap=""}
 
@@ -904,7 +912,7 @@ Another common GLM uses the Poisson distribution, in which case the most commonl
 ### Logistic Regression
 {#sec:logistic}
 
-The Titanic dataset (see Section~\ref{sec:titanic}) contains information on the survival of passengers on the Titanic, including ages, gender and passenger class. Many ages are missing, and for this example we will work with only the non-missing data (but note that this is not always the best choice). Refer to Section~\ref{sec:workingmissing} (p.~\pageref{sec:workingmissing}) for working with and removing missing values.
+The Titanic dataset (see Section~\@ref(sec:titanic)) contains information on the survival of passengers on the Titanic, including ages, gender and passenger class. Many ages are missing, and for this example we will work with only the non-missing data (but note that this is not always the best choice). Refer to Section~\@ref(sec:workingmissing) (p.~\pageref{sec:workingmissing}) for working with and removing missing values.
 
  
 ```{r }
@@ -921,7 +929,7 @@ titanic$Survived <- factor(ifelse(titanic$Survived==1, "yes", "no"))
 summary(titanic)
 ```
 
-The idea here is to find out whether the probability of survival depends on the passenger's `Age`, `Sex` and `PClass` (passenger class). Before we proceed, it is always a good idea to start by visualizing the data to find out what we are dealing with (and to make sure we will interpret the model output correctly). If we plot two factor variables against each other, R produces quite a useful plot, as the following example demonstrates (Fig.~\ref{fig:facfacplot}).
+The idea here is to find out whether the probability of survival depends on the passenger's `Age`, `Sex` and `PClass` (passenger class). Before we proceed, it is always a good idea to start by visualizing the data to find out what we are dealing with (and to make sure we will interpret the model output correctly). If we plot two factor variables against each other, R produces quite a useful plot, as the following example demonstrates (Fig.~\@ref(fig:facfacplot)).
 
 ```{r facfacplot, fig.width=8, out.width="0.8\\textwidth", fig.cap="Probability of survival versus passenger class and sex for the titanic data."}
 par(mfrow=c(1,2), mgp=c(2,1,0))
@@ -946,7 +954,7 @@ summary(fit11)
 
 The text `family=binomial` specifies that we wish to perform a *logistic regression*. The `summary` shows that all terms are significant. Interpreting the coefficients has to be done with care. For binary factors (such as `Sex`) they can be interpreted as a log-odds ratio, but this is beyond the scope of this text. The signs of the coefficients tell us about how the factor variable affects the probability of survival. In this example, all of them are negative so we can conclude: 1) an increase in age decreases the chance of survival, 2) being male decreases survival, 3) being in 2nd or 3rd class decrease survival with 3rd being worse than 2nd.
 
-The function `allEffects` from the `effects` package can be used here to visualize the effects (Fig.~\ref{fig:titaniceffects}).
+The function `allEffects` from the `effects` package can be used here to visualize the effects (Fig.~\@ref(fig:titaniceffects)).
 
 ```{r titaniceffects, opts.label="wide", fig.cap='Fitted effects for the Titanic logistic regression example.'}
 # The 'type' argument is used to back-transform the probability
@@ -978,7 +986,7 @@ titanic2
 names(titanic2)[4:5] <- c("survivors", "nonsurvivors")
 ```
 
-Use the following example to fit a logistic regression when your data looks like the above. We will again plot the fitted effects (Fig.~\ref{fig:titaniceffects2}). As you can see, the conclusions are the same as before.
+Use the following example to fit a logistic regression when your data looks like the above. We will again plot the fitted effects (Fig.~\@ref(fig:titaniceffects2)). As you can see, the conclusions are the same as before.
 
 ```{r titaniceffects2, opts.label="wide", fig.cap='Fitted effects for the Titanic logistic regression example, when fitted using tabulated data.', tidy=FALSE}
 fit12 <- glm(cbind(survivors, nonsurvivors)~AgeGrp+Sex+PClass, 
@@ -997,7 +1005,7 @@ plot(allEffects(fit12))
 
 For this example we return to the Age and Memory dataset. In this dataset, the response variable is a count of the number of words recalled by subjects using one of four different methods for memorization. When the response variable represents a count, a Poisson regression is often appropriate. 
 
-The following code performs a Poisson regression of the Age and Memory data. See Fig.~\ref{fig:glm1} for the fitted effects.
+The following code performs a Poisson regression of the Age and Memory data. See Fig.~\@ref(fig:glm1) for the fitted effects.
 ```{r glm1, opts.label="smallsquare", fig.cap='Fitted effects for a Poisson regression of the Age and Memory data. Note the log scale of the y-axis.'}
 # Fit a generalized linear model
 fit13 <- glm(Words~Age*Process, data=memory, family=poisson)

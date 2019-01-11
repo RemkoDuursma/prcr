@@ -113,7 +113,7 @@ And to remove all objects that are currently loaded, use this command. \textbf{N
 rm(list=ls())
 ```
 
-Finally, when you are ending your R session, but you want to continue exactly at this point the next time, make sure to save the current workspace. In RStudio, find the menu `Session` (at the top). Here you can save the current workspace, and also load a previously saved one. Alternatively, you can use the `save.image` function (see also Section~\ref{sec:savewd}).
+Finally, when you are ending your R session, but you want to continue exactly at this point the next time, make sure to save the current workspace. In RStudio, find the menu `Session` (at the top). Here you can save the current workspace, and also load a previously saved one. Alternatively, you can use the `save.image` function (see also Section~\@ref(sec:savewd)).
 
 
 ## Files in the working directory {#fileswd}

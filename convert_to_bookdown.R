@@ -63,7 +63,10 @@ convert_to_rmd <- function(infile){
     
     replace_slash_commands("begin", content="equation", replacement="$$") %>%
     replace_slash_commands("end", content="equation", replacement="$$") %>%
-    replace_slash_commands("textsuperscript", prefix="^", suffix="^")
+    replace_slash_commands("textsuperscript", prefix="^", suffix="^") %>%
+    replace_slash_commands(readLines(infile),
+                           commands="ref",
+                           prefix="\\\\@ref(", suffix=")")
     
   
   # Replace head of code chunks
@@ -77,3 +80,19 @@ convert_to_rmd <- function(infile){
 
 }
 
+# things that were forgotten to be used on the Rmd
+# Just an example! Only needed if convert_to_rmd missed some fields
+# Edit yourself!
+fix_rmd <- function(infile){
+  
+  outfile <- infile
+  library(magrittr)
+  
+  z <- replace_slash_commands(readLines(infile),
+                              commands="ref",
+                              prefix="\\\\@ref(", suffix=")")
+  writeLines(z, outfile)
+}
+  
+  
+  
