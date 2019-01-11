@@ -182,7 +182,7 @@ library(magrittr)
 Let's test the null hypothesis that the population mean is 0.29:
   
 ```{r}
-t.test(weight, mu=0.29) %>% pander::pander(.)
+t.test(weight, mu=0.29) %>% pander
 ```
   
 Note that we get the t-statistic, degrees of freedom (n-1) and a P value for the test, with the specified alternative hypothesis (not equal, i.e. two-sided). In addition, `t.test` gives us the estimated mean of the sample.
@@ -190,8 +190,7 @@ Note that we get the t-statistic, degrees of freedom (n-1) and a P value for the
 We can use `t.test` to do one-sided tests,
 
 ```{r }
-t.test(weight, mu=0.29, alternative="greater") %>%
-  pander::pander(.)
+t.test(weight, mu=0.29, alternative="greater") %>% pander
 ```
 
 The `t.test` is appropriate for data that is approximately normally distributed. You can check this using a histogram or a QQ-plot (see Sections sec:hist and sec:diagplots). If the data is not very close to a normal distribution then the `t.test` is often still appropriate, as long as the sample is large.
@@ -199,7 +198,7 @@ The `t.test` is appropriate for data that is approximately normally distributed.
 If the data is not normal and the sample size is small, there are a couple of alternatives: transform the data (often a log transform is enough) or use a *nonparametric* test, in this case the Wilcoxon signed rank test. We can use the `wilcox.test` function for the latter, its interface is similar to `t.test` and it tests the hypothesis that the data is symmetric about the hypothesized population mean. For example,
 
 ```{r }
-wilcox.test(weight, mu=0.29) %>% pander::pander(.)
+wilcox.test(weight, mu=0.29) %>% pander
 ```
   
 #### Test for proportions
@@ -208,7 +207,7 @@ Sometimes you want to test whether observed proportions are consistent with a hy
   
 ```{r}
 # 60 'successes' out of a 100 trials, the hypothesized probability is 0.5.
-prop.test(x=60, n=100, p=0.5) %>% pander::pander(.)
+prop.test(x=60, n=100, p=0.5) %>% pander
 ```
 
 Likewise, we can perform one-sided tests with the argument ` alternative="greater"` (not shown).
@@ -220,7 +219,8 @@ Commonly, we wish to compare two (or more) populations. For example, the `pupae`
 
 To compare the pupal weights of males and females, we use the *formula* interface for `t.test`. The formula interface is important because we will use it in many other functions, like linear regression and linear modelling. 
 
-```{r }
+```{r eval = FALSE}
+# (output not shown)
 # We assume equal variance between the groups, giving slightly more power,
 # but see section 'unequal variances' further below.
 t.test(PupalWeight ~ Gender, data=pupae, var.equal=TRUE)
@@ -231,7 +231,8 @@ t.test(PupalWeight ~ Gender, data=pupae, var.equal=TRUE)
 
 The `t.test` can also be used when the data are paired, for example, measurements taken before and after some treatment on the same subjects. For this example, we will use the pulse data - data on pulse rates of individuals before and after exercise. We will test the simple idea that pulse rate is different after exercise. To do this, we first extract only those subjects that exercised (`Ran=1`),
 
-```{r }
+```{r eval=FALSE}
+# (output not shown)
 pulse <- read.table("ms212.txt", header=TRUE)
 pulse.before <- with(pulse, Pulse1[Ran==1])
 pulse.after <- with(pulse, Pulse2[Ran==1])
@@ -243,10 +244,10 @@ t.test(pulse.after, pulse.before, paired=TRUE)
 The default for the two-sample `t.test` is actually to *not* assume equal variances. The theory for this kind of test is quite complex, and the resulting $t$-test is now only approximate, with an adjustment called the 'Satterthwaite' or 'Welch' approximation made to the degrees of freedom.
 
 ```{r }
-t.test(PupalWeight ~ Gender,  data=pupae)
+t.test(PupalWeight ~ Gender,  data=pupae) %>% pander
 ```
   
-Since this modified $t$-test makes fewer assumptions, you could ask why we ever use the equal variances form. If the assumption is reasonable, then this (equal variances) form will have more power, i.e. will reject the null hypothesis more often when it is actually false.
+Since this modified t-test makes fewer assumptions, you could ask why we ever use the equal variances form. If the assumption is reasonable, then this (equal variances) form will have more power, i.e. will reject the null hypothesis more often when it is actually false.
 
 
 ## One-way ANOVA
@@ -261,11 +262,12 @@ To use `lm` for an ANOVA, we need a dataframe containing a (continuous) response
 # Take a subset and drop empty levels with droplevels.
 cowsub <- read.csv("coweeta_subset.csv")
 
-# Quick summary table
-with(cowsub, tapply(height, species, mean))
+# Quick summary table (uses dplyr)
+group_by(cowsub, species) %>%
+  summarize(height = mean(height))
 ```
 
-We might want to ask, does the mean height vary by species? Before you do any test for significance, a graphical summary of the data is always useful. For this type of data, box plots are preferred since they visualize not just the means but also the spread of the data (see also Section~\@ref(sec:boxplot)) (Fig.~\@ref(fig:allombox)).
+We might want to ask, does the mean height vary by species? Before you do any test for significance, a graphical summary of the data is always useful. For this type of data, box plots are preferred since they visualize not just the means but also the spread of the data (see also Section \@ref(sec:boxplot)) (Fig. \@ref(fig:allombox)).
 
 ```{r allombox, fig.cap='Simple box plot for the Coweeta data.', opts.label="smallsquare"}
 boxplot(height~species, data=cowsub)
@@ -278,7 +280,7 @@ fit1 <- lm(height ~ species, data=cowsub)
 fit1
 ```
 
-Notice the four estimated `Coefficients`, these represent the so-called *contrasts*. In this case, `Intercept` represents the mean of the *first* species, `bele`. The next three coefficients are the differences between each species and the first (e.g., species `cofl` has a mean that is \Sexpr{round(fit1$coefficients[[2]],2)} lower than `bele`).
+Notice the four estimated `Coefficients`, these represent the so-called *contrasts*. In this case, `Intercept` represents the mean of the *first* species, `bele`. The next three coefficients are the differences between each species and the first (e.g., species `cofl` has a mean that is `r round(fit1$coefficients[[2]],2)` lower than `bele`).
 
 We can get more details of the fit using `summary`.
 
@@ -286,17 +288,16 @@ We can get more details of the fit using `summary`.
 summary(fit1)
 ```
 
-This gives us a $t$-statistic (and p-value) for each coefficient, for a test where the value is compared to zero. Not surprisingly the `Intercept` (i.e., the mean for the first species) is significantly different from zero (as indicated by the very small p-value). Two of the next three coefficients are also significantly different from zero.
+This gives us a t-statistic (and p-value) for each coefficient, for a test where the value is compared to zero. Not surprisingly the `Intercept` (i.e., the mean for the first species) is significantly different from zero (as indicated by the very small p-value). Two of the next three coefficients are also significantly different from zero.
 
-At the end of the summary, the $F$-statistic and corresponding p-value are shown. This p-value  tells us whether the whole model is significant. In this case, it is comparing a model with four coefficients (one for each species) to a model that just has the same mean for all groups. In this case, the model is highly significant -- i.e. there is evidence of different means for each group. In other words, a model where the mean varies between the four species performs much better than a model with a single grand mean.
+At the end of the summary, the F-statistic and corresponding p-value are shown. This p-value  tells us whether the whole model is significant. In this case, it is comparing a model with four coefficients (one for each species) to a model that just has the same mean for all groups. In this case, the model is highly significant -- i.e. there is evidence of different means for each group. In other words, a model where the mean varies between the four species performs much better than a model with a single grand mean.
 
-### Multiple comparisons {#sec:multcomp}
+### Multiple comparisons {#multcomp}
 
 The ANOVA, as used in the previous section, gives us a single p-value for the overall 'species effect'. The summary statement further shows whether individual species are different from the first level in the model, which is not always useful. If we want to know whether the four species were all different from each other, we can use a multiple comparison test.
 
 *Warning:* Multiple comparisons on linear models where you have more than one factor variable are tricky! Read the help page ?`glht` for more information.
 
-{#page:glht} 
 We will use the `glht` function from the `multcomp` package (as a side note, base R includes the `TukeyHSD` function, but that does not work with `lm`, only with `aov`).
 
 ```{r echo=FALSE}
@@ -322,16 +323,14 @@ summary(tukey_Spec)
 ```
 
 ```{block2 type="rmdtry"}
-In the above summary of the multiple comparison (`summary(tukey\_Spec)`), the p-values are adjusted for multiple comparisons with the so-called 'single-step method'. To use a different method for the correction (there are many), try the following example:
-\begin{verbatim}
-summary(tukey_Spec, test=adjusted("Shaffer"))
-\end{verbatim}
+In the above summary of the multiple comparison (`summary(tukey_Spec)`), the p-values are adjusted for multiple comparisons with the so-called 'single-step method'. To use a different method for the correction (there are many), try the following example: `summary(tukey_Spec, test=adjusted("Shaffer"))`
 Also look at the other options in the help pages for `?adjusted` and `?p.adjust`.
 ```
 
 We can also produce a quick plot of the multiple comparison, which shows the pair-wise differences between the species with confidence intervals.
 
-This code produces Fig.~\@ref(fig:tukeyplot).
+This code produces Fig. \@ref(fig:tukeyplot).
+
 ```{r tukeyplot, opts.label="smallsquare", fig.cap='A standard plot of a multiple comparison.', echo=-1}
 par(mar=c(5,7,4,1))
 
@@ -361,7 +360,12 @@ xtabs( ~ Age + Process, data=memory)
 
 # Fit linear model
 fit2 <- lm(Words ~ Age + Process, data=memory)
-summary(fit2)
+
+# Full output (not shown)
+# summary(fit2)
+
+# Instead, show just coefficient summary table in nice format
+broom::tidy(fit2)
 ```
 
 The `summary` of the fitted model displays the individual t-statistics for each estimated coefficient. As with the one-way ANOVA, the significance tests for each coefficient are performed relative to the base level (by default, the first level of the factor). In this case, for the `Age` factor, the `Older` is the first level, and for the `Process` factor, `Adjective` is the first level. Thus all other coefficients are tested relative to the "Older/Adjective" group. The $F$-statistic at the end is for the overall model, it tests whether the model is significantly better than a model that includes only a mean count.
@@ -371,7 +375,7 @@ If we want to see whether `Age` and/or `Process` have an effect, we need F-stati
 ```{r }
 # Perform an ANOVA on a fitted model, giving F-statistics
 library(car)
-Anova(fit2)
+Anova(fit2) %>% pander
 ```
 
 In this form, the $F$-statistic is formed by comparing models that do not include the term, but include all others. For example, `Age` is tested by comparing the full model against a model that includes all other terms (in this case, just `Process`).
@@ -388,7 +392,7 @@ fit3 <- lm(Words ~ Age + Process + Age:Process, data=memory)
 
 # Is the same as:
 fit3.2 <- lm(Words ~ Age * Process, data=memory)
-Anova(fit3.2)
+Anova(fit3.2) %>% pander
 ```
 
 The `Anova` table shows that the interaction is significant. When an interaction is significant, this tells you nothing about the direction or magnitude of the interaction term. You can inspect the estimated coefficients in the `summary` output, but we recommend to first visualize the interaction with simple plots, as the coefficients can be easily misinterpreted. One way to visualize the interaction is to use the `interaction.plot` function, as in the following example. 
@@ -502,7 +506,7 @@ fit4 <- lm(rating ~ sugars + fiber, data=cereals)
 # summary(fit4)
 
 # A clean summary, especially for in an rmarkdown file
-pander::pander(summary(fit4))
+fit4 %>% pander
 ```
 
 As you can see, we again use the `pander` package to give super clean results, which can be used in an `rmarkdown` document. We see here that overall we have an R^2^ of 81% (not bad), and that both predictors contribute significantly (the P values are very low for both).
@@ -580,8 +584,9 @@ fit6 <- lm(height ~ species * DBH, data=coweeta)
 
 
 
-### Predicted effects
-{#sec:predictedeffects}
+### Understanding effects {#predictedeffects}
+
+
 
 The coefficients in a linear model are usually contrasts (i.e. differences between factor levels), slopes or intercepts. While this is useful for comparisons of treatments, it is often more instructive to visualize the predictions at various combinations of factor levels.
 

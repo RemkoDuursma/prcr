@@ -194,10 +194,10 @@ The `with` function allows for more readable code, while at the same time making
 A simple summary of the dataframe can be printed with the `summary` function:
 
 ```{r }
-summary(allom)
+summary(allom) %>% pander
 ```
 
-For the numeric variables, the minimum, 1st quantile, median, mean, 3rd quantile, and maximum values are printed. For so-called 'factor' variables (i.e., categorical variables), a simple table is printed (in this case, for the `species} variable). We will come back to factors in Section sec:workingfactors. If the variables have missing values, the number of missing values is printed as well (see Section sec:workingmissing).
+For the numeric variables, the minimum, 1st quantile, median, mean, 3rd quantile, and maximum values are printed. For so-called 'factor' variables (i.e., categorical variables), a simple table is printed (in this case, for the `species` variable). We will come back to factors in Section sec:workingfactors. If the variables have missing values, the number of missing values is printed as well (see Section \@ref(workingmissing)).
 
 To see how many rows and columns your dataframe contains (handy for double-checking you read the data correctly), use `nrow` and `ncol`. Alternatively, `dim` gives the 'dimension' of the dataframe (rows x columns).
 
@@ -222,7 +222,7 @@ names(allom)
 names(allom) <- c("spec","diam","ht","leafarea","branchm")
 ```
 
-We can also change some of the names, using simple indexing (see Section sec:vectorindexing)
+We can also change some of the names, using simple indexing (see Section \@ref(vectorindexing)).
 
 ```{r }
 # rename Second one to 'Diam'
@@ -236,6 +236,8 @@ Better yet is to use `rename` from the `dplyr` package, which makes sure you cha
 
 ```{r eval=FALSE}
 library(dplyr)
+
+# The names on the right are the original names, on the left are the new ones.
 allom <- rename(allom, spec = species,
                        diam = diameter)
 ```
@@ -336,9 +338,9 @@ nums1[nums1 == 100] <- -100
 nums2[nums2 < 5] <- 0
 ```
 
-> **Try this yourself**
-> Using the first set of examples in this section, practice assigning new values to subsets of vectors.
-
+```{block2 type="rmdtry"}
+Using the first set of examples in this section, practice assigning new values to subsets of vectors.
+```
 
 ### Subsetting dataframes {#subsetdataframes}
 
@@ -410,47 +412,36 @@ allom$diameter[allom$species == "PIMO" & allom$diameter > 50]
 # (not all output shown)
 ```
 
-> **Try this yourself**
+```{block2 type="rmdtry"}
 As with vectors, we can quickly assign new values to subsets of data using the `<-} operator. Try this on some of the examples above.
+```
 
+### A faster method
 
-### Using `subset`
+While the above method to index dataframes is very flexible and concise, sometimes it leads to code that is difficult to understand. It is also easy to make mistakes when you subset dataframes by the column or row number (imagine the situation where the dataset has changed and you redo the analysis). Consider the `filter` function as a convenient and safe alternative, from the `dplyr` package. (Note that base R provides a nearly identical function, `subset`, but `filter` is much faster).
 
-While the above method to index dataframes is very flexible and concise, sometimes it leads to code that is difficult to understand. It is also easy to make mistakes when you subset dataframes by the column or row number (imagine the situation where the dataset has changed and you redo the analysis). Consider the `subset` function as a convenient and safe alternative. 
-
-With `subset` function, you can select rows that meet a certain criterion, and columns as well. This example uses the pupae data, see Section sec:pupaedata.
+With `filter`, you can select rows that meet a certain criterion, and columns as well. This example uses the pupae data, see Section \@ref(pupaedata). The last example shows the use of `select` from `dplyr` to keep only certain columns, conveniently with the pipe operator.
 
 ```{r out.lines=6}
 # Read data
 pupae <- read.csv("pupae.csv")
 
 # Take subset of pupae, ambient temperature treatment and CO2 is 280.
-subset(pupae, T_treatment == "ambient" & CO2_treatment == 280)
+# Note: statements separated by commas are interpreted as AND by filter()
+filter(pupae, 
+       T_treatment == "ambient",
+       CO2_treatment == 280)
 
 # (not all output shown)
 
 # Take subset where Frass is larger than 2.9. 
 # Also, keep only variables 'PupalWeight' and 'Frass'.
-# Note that you don't quote the column names when using 'subset'. 
-subset(pupae, Frass > 2.6, select=c(PupalWeight,Frass))
+filter(pupae, Frass > 2.6) %>%
+  dplyr::select(PupalWeight,Frass)
 
 ```
 
-Let's look at another example, using the cereal data (see Section sec:cerealdata).
-Here, we use `%in%`, which we already saw in Section sec:vectorindexing.
-
-```{r }
-# Read data
-cereal <- read.csv("cereals.csv")
-
-# What are the Manufacturers in this dataset?
-levels(cereal$Manufacturer)
-
-# Take a subset of the data with only 'A', 'N' and 'Q' manufacturers,
-# keep only 'Cereal.name' and 'calories'.
-cerealsubs <- subset(cereal, Manufacturer %in% c("A","N","Q"), select=c(Cereal.name,calories))
-cerealsubs
-```
+Note that for `select`, we habitually make sure to load it from `dplyr` (Hmisc and other packages cause frequent conflicts).
 
 ### Deleting columns from a dataframe
 
