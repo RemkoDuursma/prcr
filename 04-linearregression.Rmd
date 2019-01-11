@@ -24,6 +24,28 @@ Equation linear in the parameters. We can interpret parameters.
 
 It is well known that ice cream sales are higher during warm weather. As an ice cream salesman, you hardly have to apply regression analysis to know this - it is just obvious. Suppose that one year, you sell icecream at Oosterpark in Amsterdam. Sales are pretty good, the summer is nice and warm. The next year you try your luck at the Dappermarkt, a busy market in the east of Amsterdam. You tally your sales every week, and finally make a plot comparing average weekly sales:
 
+```{r eval=FALSE, include=FALSE}
+set.seed(1)
+n <- 20
+x1 <- runif(n, 10, 30)
+x2 <- runif(n, 7,25)
+y1 <- 100 + 30*x1 + rnorm(n, mean = 0, sd=45)
+y2 <- 110 + 35*x2  + rnorm(n, mean = 0, sd=50)
+
+plot(x1, y1, xlim=c(0,30), ylim=c(0,1200))
+points(x2, y2, pch=19)
+
+data <- data.frame(temperature =c(x1, x2), sales = c(y1, y2),
+                   location = c(rep("Oosterpark",n),rep("Dappermarkt",n)))
+write.csv(data, "data/icecream_amsterdam.csv", row.names=FALSE)
+
+library(broom)
+library(magrittr)
+t.test(y1, y2)
+
+```
+
+
 ```{r fig.cap="Average weekly ice cream sales at two locations, over two years"}
 icecream <- read.csv("icecream_amsterdam.csv")
 
@@ -48,7 +70,10 @@ t.test(sales ~ location, data=icecream)
 pander::pander(t.test(sales ~ location, data=icecream))
 ```
 
-> **Note** If you run the code above yourself, you will see different output from what is shown here. To get this output in an rmarkdown document, use the `pander` package: `pander::pander(t.test(sales ~ location, data=icecream))
+```{block2, type='rmdnote'}
+If you run the code above yourself, you will see different output from what is shown here. To get this output in an rmarkdown document, use the `pander` package: `pander::pander(t.test(sales ~ location, data=icecream))`
+```
+
 
 From this test we conclude no difference: the P value is very large (meaning the observed sample difference is not unusual, and could have easily arisen by chance).
 
@@ -83,6 +108,24 @@ Using regression analysis, we can test the assertion that ice cream sales are hi
 In other applications we are not so much interested in testing for difference, but instead want to develop a model that we can use for *prediction* of new values.
 
 ...
+
+**Testing: p-values and confidence intervals**
+
+
+**Predicting: cross-validation**
+
+The real quality of a predictive model is assessed by a completely independent test dataset. We can use the model to predict new outcomes, given the test data, and compare the predictions to the true values. In practice, however, a truly independent test dataset is rarely if ever available. Instead, we can use a trick to pretend we have lots of 'independent' test datasets: split the original data into a 'training' set (the data used to fit the model), and a 'test' set (the data used to test the model).
+
+Rather than treat this topic exhaustively, we will show one very popular method to assess predictive power of models: k-fold cross validation. 
+
+...
+
+(separate chapter with p-values, confidence intervals? Or mixed in here?
+cross validation also applies to non-linear models, classification)
+
+
+
+
 
 
 
@@ -249,8 +292,7 @@ This gives us a $t$-statistic (and p-value) for each coefficient, for a test whe
 
 At the end of the summary, the $F$-statistic and corresponding p-value are shown. This p-value  tells us whether the whole model is significant. In this case, it is comparing a model with four coefficients (one for each species) to a model that just has the same mean for all groups. In this case, the model is highly significant -- i.e. there is evidence of different means for each group. In other words, a model where the mean varies between the four species performs much better than a model with a single grand mean.
 
-### Multiple comparisons
-{#sec:multcomp}
+### Multiple comparisons {#sec:multcomp}
 
 The ANOVA, as used in the previous section, gives us a single p-value for the overall 'species effect'. The summary statement further shows whether individual species are different from the first level in the model, which is not always useful. If we want to know whether the four species were all different from each other, we can use a multiple comparison test.
 
@@ -303,7 +345,7 @@ plot(tukey_Spec)
 
 ## Two-way ANOVA {#twoway}
 
-Sometimes there are two (or more) *treatment* factors. The 'age and memory' dataset (see Section~\ref{sec:agemem}) includes the number of words remembered from a list for two age groups and five memory techniques. 
+Sometimes there are two (or more) *treatment* factors. The 'age and memory' dataset (see Section \@ref(agemem))  includes the number of words remembered from a list for two age groups and five memory techniques. 
 
 This dataset is balanced, as shown below. in a table of counts for each of the combinations. First we fit a linear model of the *main effects*.
 
@@ -324,9 +366,9 @@ fit2 <- lm(Words ~ Age + Process, data=memory)
 summary(fit2)
 ```
 
-The `summary` of the fitted model displays the individual $t$-statistics for each estimated coefficient. As with the one-way ANOVA, the significance tests for each coefficient are performed relative to the base level (by default, the first level of the factor). In this case, for the `Age` factor, the `Older` is the first level, and for the `Process` factor, `Adjective` is the first level. Thus all other coefficients are tested relative to the "Older/Adjective" group. The $F$-statistic at the end is for the overall model, it tests whether the model is significantly better than a model that includes only a mean count.
+The `summary` of the fitted model displays the individual t-statistics for each estimated coefficient. As with the one-way ANOVA, the significance tests for each coefficient are performed relative to the base level (by default, the first level of the factor). In this case, for the `Age` factor, the `Older` is the first level, and for the `Process` factor, `Adjective` is the first level. Thus all other coefficients are tested relative to the "Older/Adjective" group. The $F$-statistic at the end is for the overall model, it tests whether the model is significantly better than a model that includes only a mean count.
 
-If we want to see whether `Age` and/or `Process` have an effect, we need $F$-statistics for these terms. Throughout this book, to compute p-values for terms in linear models, we use the `Anova` function from the `car` package.
+If we want to see whether `Age` and/or `Process` have an effect, we need F-statistics for these terms. Throughout this book, to compute p-values for terms in linear models, we use the `Anova` function from the `car` package.
 
 ```{r }
 # Perform an ANOVA on a fitted model, giving F-statistics
@@ -353,45 +395,17 @@ Anova(fit3.2)
 
 The `Anova` table shows that the interaction is significant. When an interaction is significant, this tells you nothing about the direction or magnitude of the interaction term. You can inspect the estimated coefficients in the `summary` output, but we recommend to first visualize the interaction with simple plots, as the coefficients can be easily misinterpreted. One way to visualize the interaction is to use the `interaction.plot` function, as in the following example. 
 
-This code produces Fig.~\ref{fig:interactionplot}. If there were no interaction between the two factor variables, you would expect to see a series of parallel lines (because the effects of `Process` and `Age` would simply be additive).
+This code produces Fig. \@ref(fig:interactionplot). If there were no interaction between the two factor variables, you would expect to see a series of parallel lines (because the effects of `Process` and `Age` would simply be additive).
 
-```{r interactionplot, fig.width=7, fig.height=5.5, fig.align='center', fig.cap='An interaction plot for the memory data, indicating a strong interaction (because the lines are not parallel).', out.width="0.6\\textwidth"}
+```{r interactionplot, fig.cap='An interaction plot for the memory data, indicating a strong interaction (because the lines are not parallel).'}
 # Plot the number of words rememberd by Age and Process
 # This standard plot can be customized in various ways, see ?interaction.plot
 with(memory, interaction.plot(Age, Process, Words))
 ```
 
-#### More multiple comparisons
-{#sec:emmeans}
-
-In section~\ref{sec:multcomp}, we introduced the `glht` package for conducting multiple comparisons testing the significance of differences between levels within a factor. When there is a signficant interaction term, we might want to know under what levels of one factor is the effect of another factor signficant. This can be done easily using functions in the `emmeans` package.
-
-{#page:emmeans1}
-```{r echo=FALSE}
-suppressPackageStartupMessages(library(emmeans))
+```{block2 type='rmdtry'}
+When there is a signficant interaction term, we might want to know under what levels of one factor is the effect of another factor signficant. This can be done easily using functions in the `emmeans` package. Load the `emmeans` package, and run the code `fit3.emm <- emmeans(fit3, ~ Age | Process)`, followed by `pairs(fit3.emm)`. You can now inspect in great detail differences between levels of your predictors.
 ```
-```{r }
-# Load package
-library(emmeans)
-
-# Estimate marginal means associated with 'Age' for each level of 'Process'
-fit3.emm <- emmeans(fit3, ~ Age | Process)
-
-# Calculate p-values for each pairwise contrast
-pairs(fit3.emm)
-```
-
-Using the `pairs` function on an `emmGrid` object returns effect sizes and significance tests for each pairwise contrast. In this example, we can see that older subjects remember signficantly fewer words than younger ones when using the Adjective, Imagery and Intentional processes but not the Counting or Rhyming processes. Alternatively, we may want to contrast different processes within each level of Age. Here it is helpful to use the `cld` function to identify groups of levels that are not significantly different. 
-
-```{r }
-# Estimate marginal means associated with 'Process' for each level of 'Age'
-fit3.emm.2 <- emmeans(fit3, ~ Process | Age)
-
-# Identify groups of processes for which the processes are similar
-cld(fit3.emm.2)
-```
-
-The resulting groups can then be used, for example, to determine which letter(s) should be placed above each treatment in a barplot.
 
 
 ### Comparing models
@@ -464,9 +478,10 @@ plot(leafarea~height, data=allom, log="xy")
 These plots are shown on a log-log scale, and it certainly looks like there is a relationship between leaf area and diameter as well as height. However, since diameter and height are probably correlated we need to take a close look at a linear model to understand what is going on.
 
 We are going to fit a model that looks like, using statistical notation,
-$$
-y = \alpha+\beta_1 x_1 +\beta_2 x_2 +\varepsilon {#eqn:multiplelin}
-$$
+\begin{equation}
+y = \alpha+\beta_1 x_1 +\beta_2 x_2 +\varepsilon
+(\#eq:multiplelin)
+\end{equation}
 
 where $\alpha$ is the intercept, $x_1$ and $x_2$ are the two predictors (height and diameter), andthe *two* slopes are $\beta_1$ and $\beta_2$. We are particularly interested in testing for significant effect of both predictors, which is akin to saying that we are testing the values of the two slopes against zero. We will first use the original scale (i.e. not log-transformed) and perform some diagnostic plots (shown in Fig.~\ref{fig:allomdiamheight2}).
 

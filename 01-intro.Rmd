@@ -1,11 +1,245 @@
 # Introduction {#intro}
 
-why this book
-- ISLR is better at machine learning intro, regression (though not non-linear, mixed-effects)
-- predictive modeling (Kuhn) better at predictive modeling with R (caret)
-- car better at regression methods (but no non-linear)
+
+We assume you have installed R and Rstudio. We occassionally give some tips on how to use Rstudio effectively, but since Rstudio is likely to change more quickly than R - we instead suggest you keep an eye on their documentation (link).
+
+We go through some of the basics below, because of any of this is unclear, you are going to have a bad time.
 
 
-this book
-more focus on good R code, good practice in programming
-more practical approach, requiring no math/stat/computer science background
+### Scripts or rmarkdown?
+
+Script files are good for simple analyses, and they are great for storing small amounts of code that you would like to use in lots of different projects. But, they are not the best way to share your results with others. Most of all, R scripts, no matter how well commented, are not suitable for submission as journal articles. For that, we need to incorporate all our exciting results and beautiful figures into a document with an introduction, methods, results, and discussion and conclusions.
+
+Fortunately, there is an easy way to do this. It also makes a great way to keep track of your work as you are developing an analysis. This is know as an R markdown file. Markdown is a simple set of rules for formatting text files so that they are both human-readable and processable by software. The `knitr` package (as used by RStudio) will take a markdown-formatted text file and produce nicely-formatted output. The output can be a Word document, HTML page, or PDF file. If you need to install `knitr`, instructions for installing new packages can be found in Section \@ref(packages). In the next example, we will show you how to use R markdown to output a word file. Word files are excellent for collaborating with your colleagues when writing manuscripts. HTML files can also be very useful -- RStudio produces them quickly, and they are great for emailing and viewing online. They can also be used to present results in an informal meeting. PDF files are good for publishing finished projects. However, producing PDFs using RStudio and knitr requires installing other packages, which we won't cover here (see the Further Reading for more suggestions if you are interested in doing this.)
+
+
+RStudio offers a handy editor for markdown files. Start a new markdown file by choosing `File > New File > R Markdown...`. For now, leave the default settings. The new R markdown document (which is just a text file with the extension `.Rmd`) already contains some example code. Run this example by clicking the button just above the markdown document (Knit HTML). The example code will generate a new document, which opens in your browser You can see that the output contains text, R code, and even a plot.
+
+We suggest using R markdown to organize your code. 
+
+- extensions: blogdown, bookdown, pkgdown, presentations, and more!
+
+
+
+### Vectorized operations
+
+In the above section, we introduced a number of functions that you can use to do calculations on a vector of numbers. In R, a number of operations can be done on two vectors, and the result is a vector itself. Basically, R knows to apply these operations one element at a time. This is best illustrated by some examples:
+
+```{r }
+# Make two vectors,
+vec1 <- c(1,2,3,4,5)
+vec2 <- c(11,12,13,14,15)
+
+# Add a number, element-wise
+vec1 + 10
+
+# Element-wise quadratic:
+vec1^2
+
+# Pair-wise multiplication:
+vec1 * vec2
+
+# Pair-wise sum:
+vec1 + vec2
+
+# Compare the pair-wise sum to the sum of both vectors:
+sum(vec1) + sum(vec2)
+```
+
+In each of the above examples, the operators (like `+` and so on) 'know' to make the calculations one element at a time (if one vector), or pair-wise (when two vectors). Clearly, for all examples where two vectors were used, the two vectors need to be the same length (i.e., have the same number of elements).
+
+
+
+### Applying multiple functions at once {#multifunctions}
+
+In R, we can apply functions and operators in combination. In the following examples, the *innermost* expressions are always evaluated first. This will make sense after some examples:
+
+```{r }
+# Mean of the vector 'vec1', *after* squaring the values:
+mean(vec1^2)
+
+# Mean of the vector, *then* square it:
+mean(vec1)^2
+
+# Mean of the log of vec2:
+mean(log(vec2))
+
+# Log of the mean of vec2:
+log(mean(vec2))
+```
+
+Alternatively, we can use the `pipe` operator, which allows us to write the operators in order of application. For the pipe operator, we need to load the `magrittr` package (see \@ref(packages) on how to install and load packages).
+
+```{r}
+library(magrittr)
+
+# Identical to mean(log(vec2))
+vec2 %>% log %>% mean
+```
+
+The above code can be written in at least two other equivalent ways: `log(vec2) %>% mean`, and even `log(vec2) %>% mean(.)`, where the `.` indicates explicitly the result from the previous operator.
+
+The pipe operator has become very popular, and we use it when it greatly simplifies code, making it easier to follow what the code actually does (and in which order).
+
+
+
+## Objects in the workspace
+
+In the examples above, we have created a few new objects. These objects are kept in memory for the remainder of your session (that is, until you close R).
+
+In RStudio, you can browse all objects that are currently loaded in memory. Objects that are currently loaded in memory make up your *workspace*. Find the window that has the tab 'Environment'. Here you see a list of all the objects you have created in this R session. When you click on an object, a window opens that shows the contents of the object.
+
+Alternatively, to see which objects you currently have in your workspace, use the following command:
+```{r echo=FALSE}
+ls <- function()print(c("nums1","vec1","vec2","words","x","y","a","b","numbers"))
+```
+```{r }
+ls()
+```
+
+```{r echo=FALSE}
+ls <- base::ls
+```
+
+
+To remove objects,
+```{r eval=FALSE}
+rm(nums1, nums2)
+```
+
+
+And to remove all objects that are currently loaded, use this command. \textbf{Note:} you want to use this wisely!
+```{r eval=FALSE}
+rm(list=ls())
+```
+
+Finally, when you are ending your R session, but you want to continue exactly at this point the next time, make sure to save the current workspace. In RStudio, find the menu `Session` (at the top). Here you can save the current workspace, and also load a previously saved one. Alternatively, you can use the `save.image` function (see also Section~\ref{sec:savewd}).
+
+
+## Files in the working directory {#fileswd}
+
+Each time you run R, it 'sees' one of your folders ('directories') and all the files in it. This folder is called the *working directory*. You can change the working directory in RStudio in a couple of ways. 
+
+The first option, in Rstudio, is to go to the menu `Session > Set Working Directory > Choose Directory...`. 
+
+Or, find the 'Files' tab in one of the RStudio windows (usually bottom-right). Here you can browse to the directory you want to use (by clicking on the small `...` button on the right ), and click `More > Set as working directory`.
+
+You can also set or query the current working directory by typing the following code:
+```{r eval=FALSE}
+
+# Set working directory to C:/myR
+setwd("C:/myR")
+
+# What is the current working directory?
+getwd()
+```
+*Note:* For Windows users, use a forward slash (that is, /), not a back slash!
+
+Finally, you can see which files are available in the current working directory, as well as in subdirectories, using the `dir` function (*Note*: a synonym for this function is `list.files`).
+
+```{r eval=FALSE}
+# Show files in the working directory:
+dir()
+
+# List files in some other directory:
+dir("c:/work/projects/data/")
+
+# Show files in the subdirectory "data":
+dir("data")
+
+# Show files in the working directory that end in csv.
+# (The ignore.case=TRUE assures that we find files that end in 'CSV' as well as 'csv',
+# and the '[]' is necessary to find the '.' in '.csv'.
+dir(pattern="[.]csv", ignore.case=TRUE)
+```
+
+
+
+## Packages {#packages}
+
+Throughout this tutorial, we will focus on the basic functionality of R, but we will also call on a number of add-on 'packages' that include additional functions. We will tell you which packages you need as they are called for. If, after running code from the book, you get "Error: could not find function 'example'", you can look up the function in the table at the end of the chapter to find out which package it comes from. You can find a full list of packages available for R on the CRAN site (<http://cran.r-project.org/>, navigate to 'Packages'), but be warned -- it's a very long list! A more palatable index of packages is provided at <http://r-pkg.org/>. 
+
+In RStudio, click on the `Packages` tab in the lower-right hand panel. There you can see which packages are already installed, and you can install more by clicking on the `Install` button.
+
+Alternatively, to install a particular package, simply type:
+```{r eval=FALSE}
+install.packages("gplots")
+```
+
+```{block2 type="rmdcaution"}
+Never use `install.packages` in an rmarkdown file (it simply does not work), and it is generally bad practice to add it to a script, since you don't want the packages to be installed every time the script is run. Instead, make it clear what the dependencies are in a README file, or use the approach outlines in 'loading many packages' further below.
+```
+
+The package needs to be installed only once. To use the package in your current R session, type:
+
+```{r eval=FALSE}
+library(gplots)
+```
+
+This loads the gplots package from your library into working memory. You can now use the functions available in the `gplots` package. If you close and reopen R, you will need to load the package again (but you don't have to install it again).
+
+To quickly learn about the functions included in a package, type:
+```{r eval=FALSE}
+library(help=gplots)
+```
+
+
+### Conflicts
+
+It is fairly common that certain functions appear in multiple packages. For example, `summarize` is a function in `Hmisc` and in `dplyr`. If you have loaded `Hmisc` first, and then load `dplyr`, you will see (among others), the following message:
+
+```
+The following objects are masked from ‘package:Hmisc’:
+
+    src, summarize
+```
+
+This means that if you now use `summarize()`, it will be used from the `dplyr` package. As a consequence of this, *package conflicts are resolved based on the order in which you load the packages*. This can be very confusing (and dangerous!). It is better to use the `::` operator, when you want to make sure to use a function from a certain package:
+
+```{r eval=FALSE}
+# Use summarize from dplyr
+dplyr::summarize(...)
+```
+
+In fact, it can be considered very good practice to *always* use the `::` (called a *namespace directive*) to make it clear in your code where the function is used from. We refrain from using the operator very often in this book though, as it makes the code a bit messy and longer. 
+
+
+### Loading many packages
+
+If you are using packages in a script file, it is usually considered a good idea to load any packages you will be using at the *start* of the script. Usually you will see a long list of `library(this)`, and `library(that)`, but we like to use the `pacman` package at the top of a script, like this:
+
+```{r eval=FALSE}
+if(!require(pacman))install.packages("pacman")
+pacman::p_load(gplots, geometry, rgl, remotes, svglite)
+```
+
+The first line checks whether the `pacman` package is available (`require` is like `library`, except it returns `TRUE` if the package could be loaded), and if not (`!`), it is installed. Next, `p_load` from `pacman` can be used to load many packages in one line, *installing the ones that are not available*. This approach is a very concise way to make your script reproducible.
+
+
+
+
+## Accessing the help files {#helpfiles}
+
+Every function that you use in R has its own built-in help file. For example, to access the help file for the arithmetic mean, type `?mean`.
+
+This opens up the help file in your default browser (but does not require an internet connection). Functions added by loading new packages also have built-in help files. For example, to read about the function `bandplot` in the `gplots` package, type:
+
+```{r eval=FALSE, tidy=FALSE}
+library(gplots)
+?bandplot
+
+# Alternatively:
+?gplots::bandplot
+```
+
+Don't get overwhelmed when looking at the help files. Much of R's reputation for a steep learning curve has to do with the rather obscure and often confusing help files. A good tip for beginners is to not read the help files, but skip straight to the Example section at the bottom of the help file. The first line of the help file, which shows what kind of input, or arguments, the function takes, can also be helpful.
+
+If you know what type of function that you are looking for but do not know its name, use `??`. This searches the help files for a given keyword:
+
+```{r eval=FALSE, tidy=FALSE}
+??ANOVA
+```
+
+This is allright, but an internet search is usually far more effective.
+
+

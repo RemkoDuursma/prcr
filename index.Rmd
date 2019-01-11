@@ -13,6 +13,28 @@ description: "The HIERmanual has new clothes."
 
 # Preface
 
+why this book
+- ISLR is better at machine learning intro, regression (though not non-linear, mixed-effects)
+- predictive modeling (Kuhn) better at predictive modeling with R (caret)
+- car better at regression methods (but no non-linear)
+
+
+this book
+more focus on good R code, good practice in programming
+more practical approach, requiring no math/stat/computer science background
+
+
+
+visualizing data
+- base vs. ggplot2.
+- here mostly ggplot2 unless base is easier (less code)
+- no introduction to ggplot2, see these resources (why copy them?)
+- see appendix for base graphics
+- learn from examples! and use google effectively
+- http://varianceexplained.org/r/why-I-use-ggplot2/
+
+
+
 This book is not a complete introduction to statistical theory. It should also not be the first statistics book you read. Instead, this book shows you how to implement many useful data analysis routines in R. Sometimes we explain a bit of theory behind the method, but this is an exception. We really assume that you have already learned statistics elsewhere and are here to learn how to actually do the analyses.
 
 We have learned from experience that data practictioners, that means scientists and everyone else who has an interest in learning from data, do not learn statistical analyses by studying the underlying theory. They learn from doing, and from using examples written by others who have learned by doing. For this reason the book in front of you is largely a compendium of examples. We have chosen the examples and the exercises in the hope that they resemble real-world problems. 
