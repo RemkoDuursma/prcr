@@ -17,6 +17,9 @@ bookdown::gitbook:
       instapaper: no
       vk: no
       all: ['twitter', 'linkedin']
+    favicon: favicon.ico
+    githubrepo: RemkoDuursma/prcr
+    description: "Practical Regression and Classification with R: a comprehensive, practical guide from introductory to intermediate levels."
       
 bookdown::pdf_book:
   includes:

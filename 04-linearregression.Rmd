@@ -558,7 +558,7 @@ So far we have looked at ANOVA, including two-way ANOVA, where a response variab
 In the following example, we inspect the height of trees against the stem diameter (`DBH`) for the Coweeta example dataset. When plotting all data, we are led to believe that the overall response of height to DBH is highly non-linear (left panel). However, when we fit a simple linear model for each species separately (right panel), the relationship appears to consist of a combination of linear responses.
 
 
-```{r coweeta_twoplots, fig.cap="}
+```{r coweeta_twoplots, fig.cap=""}
 coweeta <- read.csv("coweeta_subset.csv")
 
 g1 <- ggplot(coweeta, aes(x = DBH, y = height)) +
