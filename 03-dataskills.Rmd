@@ -14,9 +14,8 @@ There are a few useful functions to print general summaries of a dataframe, to s
 
 The most basic function is `summary`, which works on many types of objects. 
 
-Let's look at the output for the `allom} dataset.
-
-```{r}
+```{r eval=FALSE}
+# output not shown
 allom <- read.csv("Allometry.csv")
 summary(allom)
 ```
@@ -29,7 +28,7 @@ To simply see what types of variables your dataframe contains (or, for objects o
 str(allom)
 ```
 
-Finally, there are two very useful functions in the `Hmisc} package (recall how to install and load packages from Section sec:packages}). The first, `describe`, is much like `summary`, but offers slightly more sophisticated statistics.
+Finally, there are two very useful functions in the `Hmisc` package (recall how to install and load packages from Section \@ref(packages)). The first, `describe`, is much like `summary`, but offers slightly more sophisticated statistics.
 
 The second, `contents`, is similar to `str`, but does a very nice job of summarizing the `factor} variables in your dataframe, prints the number of missing variables, the number of rows, and so on. 
 
@@ -49,6 +48,9 @@ library(Hmisc)
 contents(pupae)
 ```
 
+```{r echo=FALSE}
+detach("package:Hmisc")
+```
 
 Here, `storage` refers to the internal storage type of the variable: note that the factor variables are stored as 'integer', and other numbers as 'double' (this refers to the precision of the number).
 
@@ -57,7 +59,7 @@ Here, `storage` refers to the internal storage type of the variable: note that t
 
 ### Summarizing vectors with `tapply` {#tapply}
 
-If we have the following dataset called `plantdat},
+If we have the following dataset called `plantdat`,
 
 ```{r echo=FALSE, out.width='33%'}
 knitr::include_graphics("screenshots/exampledata.png")
@@ -253,14 +255,25 @@ Making summary tables as we did in the above examples requires two steps:
 
 As is the norm, we use the pipe operator (`%>%`) to keep the steps apart. Here is a simple example to get started.
 
-```{r}
+```{r eval=TRUE, echo=TRUE}
 library(dplyr)
 
 group_by(pupae, CO2_treatment, T_treatment) %>%
   summarize(Frass_mean = mean(Frass, na.rm=TRUE),
-            Frass_sd = sd(Frass, na.rm=TRUE)) %>%
-  as.data.frame
+            Frass_sd = sd(Frass, na.rm=TRUE)) 
+#%>%
+ # as.data.frame
 ```
+
+```{r eval=TRUE, echo=TRUE}
+library(dplyr)
+
+group_by(pupae, CO2_treatment, T_treatment) %>%
+  dplyr::summarize(Frass_mean = mean(Frass, na.rm=TRUE),
+            Frass_sd = sd(Frass, na.rm=TRUE)) %>%
+  as.data.frame %>% pander
+```
+
 
 I used `as.data.frame` at the end, so we arrive at an actual dataframe, not a tibble (only for the reason so you can compare the output to the previous examples). The `dplyr` package (and others) always produce tibbles, which are really just dataframes but with some adjusted printing methods.
 
@@ -280,17 +293,17 @@ The result is identical to our last example with `summaryBy`.
 
 Let's look at a more advanced example using weather data collected at the Hawkesbury Forest Experiment in 2008 (see Section sec:hfemet}). The data given are in half-hourly time steps. It is a reasonable request to provide data as daily averages (for temperature) and daily sums (for precipitation). 
 
-The following code produces a daily weather dataset, and Fig. fig:hfemetaggregate.
+The following code produces a daily weather dataset, and Fig. \@ref(fig:hfemetaggregate).
 
 ```{r hfemetaggregate,  fig.cap='Daily rainfall at the HFE in 2008', opts.label="smallsquare"}
 
 # Read data, convert DateTime field to a proper Datetime class using
 # lubridate's mdy_hm function, and add a Date column with as.Date.
-library(dplyr)
-library(lubridate)
+# Instead of loading packages, we use :: in the example below to make sure
+# the functions are used from the right package.
 
 hfemet <- read.csv("HFEmet2008.csv") %>%
-  mutate(DateTime = mdy_hm(DateTime),
+  mutate(DateTime = lubridate::mdy_hm(DateTime),
          Date = as.Date(DateTime))
 
 # Summarize data into daily variables, total daily rain, and average temperature
@@ -305,7 +318,6 @@ ggplot(hfemet_agg, aes(x = Date, y = Rain)) +
   theme_minimal()
 
 ```
-
 
 
 
@@ -352,9 +364,9 @@ head(allom)
 
 Note that you can use any function in place of `max`, as long as that function can take a vector as an argument, and returns a single number. 
 
-> **Try this yourself**
-> If you want results similar to `ave`, you can use `summaryBy` with the argument `full.dimension=TRUE`. Try `summaryBy` on the `pupae` dataset with that argument set, and compare the result to `full.dimension=FALSE`, which is the default. 
-
+```{block2 type="rmdtry"}
+If you want results similar to `ave`, you can use `summaryBy` with the argument `full.dimension=TRUE`. Try `summaryBy` on the `pupae` dataset with that argument set, and compare the result to `full.dimension=FALSE`, which is the default. 
+```
 
 
 ## Reordering factor levels based on a summary variable {#reorder}
@@ -385,11 +397,12 @@ with(cereal, tapply(sodium, Manufacturer, median))
 
 This trick comes in handy when making barplots; it is customary to plot them in ascending order if there is no specific order to the factor levels, as in this example.
 
-The following code produces Fig. fig:coweetabar.
+The following code produces Fig. \@ref(fig:coweetabar).
 
 ```{r echo = FALSE}
 suppressPackageStartupMessages(library(gplots))
 suppressPackageStartupMessages(library(doBy))
+suppressPackageStartupMessages(library(dplyr))
 ```
 
 ```{r coweetabar, fig.cap='An ordered barplot for the coweeta tree data (error bars are 1 SD).', warning=FALSE, opts.label="largesquare"}
@@ -399,7 +412,7 @@ suppressPackageStartupMessages(library(doBy))
 coweeta_table <- read.csv("coweeta.csv") %>%
   mutate(species = reorder(species, height, mean, na.rm=TRUE)) %>%
   group_by(species) %>%
-  summarize(height_mean = mean(height, na.rm=TRUE),
+  dplyr::summarize(height_mean = mean(height, na.rm=TRUE),
             height_sd = sd(height, na.rm=TRUE))
 
 ggplot(coweeta_table, aes(x = species, y = height_mean)) +

@@ -258,13 +258,19 @@ We can use either the `aov` function or `lm` to perform ANOVAs. We will focus ex
 
 To use `lm` for an ANOVA, we need a dataframe containing a (continuous) response variable and a factor variable that defines the groups. For example, in the Coweeta dataset, the species  variable is a factor that defines groups by species.  We can compute (for example) the mean height by species. Let's look at an example using the Coweeta data, but with only four species to simplify the output.
 
-```{r }
+```{r}
+search()
+```
+
+
+```{r}
 # Take a subset and drop empty levels with droplevels.
 cowsub <- read.csv("coweeta_subset.csv")
 
-# Quick summary table (uses dplyr)
-group_by(cowsub, species) %>%
-  summarize(height = mean(height))
+# # Quick summary table (uses dplyr)
+# library(dplyr)
+# group_by(cowsub, species) %>%
+#   summarize(height = mean(height))
 ```
 
 We might want to ask, does the mean height vary by species? Before you do any test for significance, a graphical summary of the data is always useful. For this type of data, box plots are preferred since they visualize not just the means but also the spread of the data (see also Section \@ref(sec:boxplot)) (Fig. \@ref(fig:allombox)).

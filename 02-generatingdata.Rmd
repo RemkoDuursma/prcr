@@ -145,7 +145,7 @@ This book focuses heavily on dataframes, because this is the object you will use
 
 ### Variables in the dataframe
 
-Let's first read the `allom} data, if you have not done so already. 
+Let's first read the `allom` data, if you have not done so already. 
 
 ```{r }
 allom <- read.csv("Allometry.csv")
@@ -187,14 +187,26 @@ allom$volindex <- allom$diameter^2 * allom$height
 
 The `with` function allows for more readable code, while at the same time making sure that the variables `diameter` and `height` are read from the dataframe `allom`. 
 
-> **Try this yourself**
-> The above examples are important -- many times throughout this book you will be required to perform similar operations. As an exercise, also add the ratio of height to diameter to the dataframe.
+Another, even more readable approach is to use `mutate` from the `dplyr` package (similar to base R's `transform`, but with a useful advantage).
 
+```{r}
+library(dplyr)
+allom <- mutate(allom, 
+                diameterInch = diameter / 2.54,
+                volindex = diameterInch^2 * height)
+```
 
-A simple summary of the dataframe can be printed with the `summary` function:
+Where `mutate` adds new variables to the dataframe, and it is able to use variables used just before in the same call (note `diameterInch`).
+
+```{block2 type="rmdtry"}
+The above examples are important -- many times throughout this book you will be required to perform similar operations. As an exercise, also add the ratio of height to diameter to the dataframe.
+```
+
+A simple summary of the dataframe can be printed with the `summary` function; where we use `pander` (from the `pander` package) to give readable output in rmarkdown (which we assume you use anyway), and indexing (`[,1:3]`) to use the first three columns of `allom` only.
 
 ```{r }
-summary(allom) %>% pander
+library(pander)
+summary(allom[,1:3]) %>% pander
 ```
 
 For the numeric variables, the minimum, 1st quantile, median, mean, 3rd quantile, and maximum values are printed. For so-called 'factor' variables (i.e., categorical variables), a simple table is printed (in this case, for the `species` variable). We will come back to factors in Section sec:workingfactors. If the variables have missing values, the number of missing values is printed as well (see Section \@ref(workingmissing)).
@@ -418,13 +430,16 @@ As with vectors, we can quickly assign new values to subsets of data using the `
 
 ### A faster method
 
-While the above method to index dataframes is very flexible and concise, sometimes it leads to code that is difficult to understand. It is also easy to make mistakes when you subset dataframes by the column or row number (imagine the situation where the dataset has changed and you redo the analysis). Consider the `filter` function as a convenient and safe alternative, from the `dplyr` package. (Note that base R provides a nearly identical function, `subset`, but `filter` is much faster).
+While the above method to index dataframes is very flexible and concise, sometimes it leads to code that is difficult to understand. It is also easy to make mistakes when you subset dataframes by the column or row number (imagine the situation where the dataset has changed and you redo the analysis). Consider the `filter` function as a convenient and safe alternative, from the `dplyr` package. (Note that base R provides a nearly identical function, `subset`, but `filter` is much faster). 
 
 With `filter`, you can select rows that meet a certain criterion, and columns as well. This example uses the pupae data, see Section \@ref(pupaedata). The last example shows the use of `select` from `dplyr` to keep only certain columns, conveniently with the pipe operator.
 
 ```{r out.lines=6}
 # Read data
 pupae <- read.csv("pupae.csv")
+
+# For filter(), select().
+library(dplyr)
 
 # Take subset of pupae, ambient temperature treatment and CO2 is 280.
 # Note: statements separated by commas are interpreted as AND by filter()
@@ -437,7 +452,7 @@ filter(pupae,
 # Take subset where Frass is larger than 2.9. 
 # Also, keep only variables 'PupalWeight' and 'Frass'.
 filter(pupae, Frass > 2.6) %>%
-  dplyr::select(PupalWeight,Frass)
+  select(PupalWeight,Frass)
 
 ```
 

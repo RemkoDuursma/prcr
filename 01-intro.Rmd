@@ -8,9 +8,9 @@ We go through some of the basics below, because of any of this is unclear, you a
 
 ### Scripts or rmarkdown?
 
-Script files are good for simple analyses, and they are great for storing small amounts of code that you would like to use in lots of different projects. But, they are not the best way to share your results with others. Most of all, R scripts, no matter how well commented, are not suitable for submission as journal articles. For that, we need to incorporate all our exciting results and beautiful figures into a document with an introduction, methods, results, and discussion and conclusions.
+Script files are good for simple analyses, and they are great for storing small amounts of code that you would like to use in lots of different projects. But, they are not the best way to share your results with others. 
 
-Fortunately, there is an easy way to do this. It also makes a great way to keep track of your work as you are developing an analysis. This is know as an R markdown file. Markdown is a simple set of rules for formatting text files so that they are both human-readable and processable by software. The `knitr` package (as used by RStudio) will take a markdown-formatted text file and produce nicely-formatted output. The output can be a Word document, HTML page, or PDF file. If you need to install `knitr`, instructions for installing new packages can be found in Section \@ref(packages). In the next example, we will show you how to use R markdown to output a word file. Word files are excellent for collaborating with your colleagues when writing manuscripts. HTML files can also be very useful -- RStudio produces them quickly, and they are great for emailing and viewing online. They can also be used to present results in an informal meeting. PDF files are good for publishing finished projects. However, producing PDFs using RStudio and knitr requires installing other packages, which we won't cover here (see the Further Reading for more suggestions if you are interested in doing this.)
+This is know as an R markdown file. Markdown is a simple set of rules for formatting text files so that they are both human-readable and processable by software. The `knitr` package (as used by RStudio) will take a markdown-formatted text file and produce nicely-formatted output. The output can be a Word document, HTML page, or PDF file. If you need to install `knitr`, instructions for installing new packages can be found in Section \@ref(packages). In the next example, we will show you how to use R markdown to output a word file. Word files are excellent for collaborating with your colleagues when writing manuscripts. HTML files can also be very useful -- RStudio produces them quickly, and they are great for emailing and viewing online. They can also be used to present results in an informal meeting. PDF files are good for publishing finished projects. However, producing PDFs using RStudio and knitr requires installing other packages, which we won't cover here (see the Further Reading for more suggestions if you are interested in doing this.)
 
 
 RStudio offers a handy editor for markdown files. Start a new markdown file by choosing `File > New File > R Markdown...`. For now, leave the default settings. The new R markdown document (which is just a text file with the extension `.Rmd`) already contains some example code. Run this example by clicking the button just above the markdown document (Knit HTML). The example code will generate a new document, which opens in your browser You can see that the output contains text, R code, and even a plot.
@@ -79,6 +79,8 @@ vec2 %>% log %>% mean
 
 The above code can be written in at least two other equivalent ways: `log(vec2) %>% mean`, and even `log(vec2) %>% mean(.)`, where the `.` indicates explicitly the result from the previous operator.
 
+In any of the following, we assume you have loaded either `magrittr`, or some package that loads it for you (for example, `dplyr`). If you have not, you will see the error message `could not find function "%>%"`.
+
 The pipe operator has become very popular, and we use it when it greatly simplifies code, making it easier to follow what the code actually does (and in which order).
 
 
@@ -113,7 +115,7 @@ And to remove all objects that are currently loaded, use this command. \textbf{N
 rm(list=ls())
 ```
 
-Finally, when you are ending your R session, but you want to continue exactly at this point the next time, make sure to save the current workspace. In RStudio, find the menu `Session` (at the top). Here you can save the current workspace, and also load a previously saved one. Alternatively, you can use the `save.image` function (see also Section~\@ref(sec:savewd)).
+Finally, when you are ending your R session, but you want to continue exactly at this point the next time, make sure to save the current workspace. In RStudio, find the menu `Session` (at the top). Here you can save the current workspace, and also load a previously saved one.
 
 
 ## Files in the working directory {#fileswd}
@@ -167,7 +169,7 @@ install.packages("gplots")
 ```
 
 ```{block2 type="rmdcaution"}
-Never use `install.packages` in an rmarkdown file (it simply does not work), and it is generally bad practice to add it to a script, since you don't want the packages to be installed every time the script is run. Instead, make it clear what the dependencies are in a README file, or use the approach outlines in 'loading many packages' further below.
+Never use `install.packages` in an rmarkdown file (it simply does not work), and it is generally bad practice to add it to a script, since you don't want the packages to be installed every time the script is run. Instead, make it clear what the dependencies are in a README file, or use the approach outlined in "Loading many packages" further below, or in "Install missing packages". 
 ```
 
 The package needs to be installed only once. To use the package in your current R session, type:
@@ -182,6 +184,29 @@ To quickly learn about the functions included in a package, type:
 ```{r eval=FALSE}
 library(help=gplots)
 ```
+
+
+### Updating packages
+
+Besides updating R and Rstudio itself (which is recommended at least every couple of months or so), it is also a very good idea to keep all packages up to date. If your workflow ends up depending on an older version of the package, your code may not work on a different system. To update all *installed* packages, you can run the following command - make sure to do this right after opening Rstudio:
+
+```{r eval=FALSE}
+update.packages(ask=FALSE)
+```
+
+It is usually best to type 'no' when the installation process asks if you want to compile some updated packages. Also, occasionally this process fails - usually stating e.g. 'package Rcpp not found'. Then first install those packages (the usual way), and retry `update.packages`.
+
+
+### Install missing packages
+
+The `reinstallr` package can be used to install all packages that are 'mentioned' in any of the source files in your working directory. That is, all those that are loaded in an R script, rmarkdown file, and some others, using `library` or `require`. You can simply do,
+
+```{r eval=FALSE}
+library(reinstallr)
+reinstallr()
+```
+
+
 
 
 ### Conflicts
@@ -202,6 +227,8 @@ dplyr::summarize(...)
 ```
 
 In fact, it can be considered very good practice to *always* use the `::` (called a *namespace directive*) to make it clear in your code where the function is used from. We refrain from using the operator very often in this book though, as it makes the code a bit messy and longer. 
+
+
 
 
 ### Loading many packages
