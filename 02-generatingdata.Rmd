@@ -198,7 +198,7 @@ allom <- mutate(allom,
 
 Where `mutate` adds new variables to the dataframe, and it is able to use variables used just before in the same call (note `diameterInch`).
 
-```{block2 type="rmdtry"}
+```{block2, type="rmdtry"}
 The above examples are important -- many times throughout this book you will be required to perform similar operations. As an exercise, also add the ratio of height to diameter to the dataframe.
 ```
 
@@ -350,7 +350,7 @@ nums1[nums1 == 100] <- -100
 nums2[nums2 < 5] <- 0
 ```
 
-```{block2 type="rmdtry"}
+```{block2, type="rmdtry"}
 Using the first set of examples in this section, practice assigning new values to subsets of vectors.
 ```
 
@@ -424,7 +424,7 @@ allom$diameter[allom$species == "PIMO" & allom$diameter > 50]
 # (not all output shown)
 ```
 
-```{block2 type="rmdtry"}
+```{block2, type="rmdtry"}
 As with vectors, we can quickly assign new values to subsets of data using the `<-} operator. Try this on some of the examples above.
 ```
 

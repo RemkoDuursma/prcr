@@ -168,7 +168,7 @@ Alternatively, to install a particular package, simply type:
 install.packages("gplots")
 ```
 
-```{block2 type="rmdcaution"}
+```{block2, type="rmdcaution"}
 Never use `install.packages` in an rmarkdown file (it simply does not work), and it is generally bad practice to add it to a script, since you don't want the packages to be installed every time the script is run. Instead, make it clear what the dependencies are in a README file, or use the approach outlined in "Loading many packages" further below, or in "Install missing packages". 
 ```
 

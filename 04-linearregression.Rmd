@@ -93,7 +93,7 @@ ggplot(icecream, aes(x = temperature, y = sales, fill = location)) +
 
 In this figure we arrive at a completely different conclusion - but only because we have taken into account the covariate weekly temperature. Now, *at a given temperature*, ice cream sales were higher at the new location - Dappermarkt. This is an example of how a confounding variable can mask (or even reverse) effects of some other variable. It seems obvious from the figure that temperature was overall lower when you sold ice cream at the Dappermarkt, explaining why average weekly sales were in the end no different.
 
-```{block2 type="rmdtry"}
+```{block2, type="rmdtry"}
 Use a *t*-test to test that temperature was lower at the Dappermarkt location.
 ```
 
@@ -166,7 +166,7 @@ c(xbar - half.width, xbar + half.width)
 
 Here, we assumed a normal distribution for the population. You may have been taught that if `n` is *large*, say n>30, then you can use a normal approximation. That is, replace `qt(1-alpha/2, n-1)` with `qnorm(1-alpha/2)`, but there is no need, R can use the t-distribution for any *n* (and the results will be the same, as the t-distribution converges to a normal distribution when the df is large).
 
-```{block2 type="rmdtry"} 
+```{block2, type="rmdtry"} 
 Confirm that the $t$-distribution converges to a normal distribution when *n* is large (using `qt` and `qnorm`).
 ```
 
@@ -328,7 +328,7 @@ summary(tukey_Spec)
 # Some of the species are different from each other, but not all.
 ```
 
-```{block2 type="rmdtry"}
+```{block2, type="rmdtry"}
 In the above summary of the multiple comparison (`summary(tukey_Spec)`), the p-values are adjusted for multiple comparisons with the so-called 'single-step method'. To use a different method for the correction (there are many), try the following example: `summary(tukey_Spec, test=adjusted("Shaffer"))`
 Also look at the other options in the help pages for `?adjusted` and `?p.adjust`.
 ```
@@ -411,7 +411,7 @@ This code produces Fig. \@ref(fig:interactionplot). If there were no interaction
 with(memory, interaction.plot(Age, Process, Words))
 ```
 
-```{block2 type='rmdtry'}
+```{block2, type='rmdtry'}
 When there is a signficant interaction term, we might want to know under what levels of one factor is the effect of another factor signficant. This can be done easily using functions in the `emmeans` package. Load the `emmeans` package, and run the code `fit3.emm <- emmeans(fit3, ~ Age | Process)`, followed by `pairs(fit3.emm)`. You can now inspect in great detail differences between levels of your predictors.
 ```
 
@@ -454,7 +454,7 @@ qqPlot(fit3)
 
 The QQ-plot shows some slight non-normality in the upper right. The non-normality probably stems from the fact that the `Words` variable is a 'count' variable. We will return to this in Section~\@ref(sec:glm).
 
-```{block2 type="rmdtry"}
+```{block2, type="rmdtry"}
 Check whether a log-transformation of `Words` makes the residuals closer to normally distributed.
 ```
 
@@ -538,7 +538,7 @@ visreg(fit4, "sugars", by = "fiber", overlay = TRUE,
 
 Here we clearly, and in one panel, visualize the negative effect of adding more sugar in a cereal, and the positive effect of adding more fiber. The `visreg` function plots the *predictions* from our model at an arbitrary selection of predictor values (here, 0, 1.5 and 5). 
 
-```{block2 type="rmdtry"}
+```{block2, type="rmdtry"}
 In the call to `visreg`, use the argument `breaks=c(1,5)` to set the predictor values to those of your choice.
 ```
 
@@ -622,7 +622,7 @@ fit10 <- lm(Words ~ Age * Process, data=memory)
 plot(allEffects(fit10))
 ```
 
-```{block2 type="rmdtry"}
+```{block2, type="rmdtry"}
 Use the command `plot(allEffects(...))` on the two model fits from Section~\@ref(sec:lmfaccont), and compare the results. Also, use these plots to double check your interpretation of the model coefficients, as shown in the output of `summary`.
 ```
 
@@ -761,7 +761,7 @@ with(predele, {
 })
 ```
 
-```{block2 type="rmdtry"}
+```{block2, type="rmdtry"}
 The above plot can also be easily made with the `visreg` package, as we have seen already. Use the code `visreg(lmfit, "Trmmol", by="CO2", overlay=TRUE)` to make a similar plot. Set the x-axis limit with `xlim` to include the intercept.
 ```
 

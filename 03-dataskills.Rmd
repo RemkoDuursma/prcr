@@ -260,18 +260,8 @@ library(dplyr)
 
 group_by(pupae, CO2_treatment, T_treatment) %>%
   summarize(Frass_mean = mean(Frass, na.rm=TRUE),
-            Frass_sd = sd(Frass, na.rm=TRUE)) 
-#%>%
- # as.data.frame
-```
-
-```{r eval=TRUE, echo=TRUE}
-library(dplyr)
-
-group_by(pupae, CO2_treatment, T_treatment) %>%
-  dplyr::summarize(Frass_mean = mean(Frass, na.rm=TRUE),
             Frass_sd = sd(Frass, na.rm=TRUE)) %>%
-  as.data.frame %>% pander
+  pander
 ```
 
 
@@ -283,7 +273,7 @@ In `summarize` you can specify each of the new variables that should be produced
 group_by(pupae, CO2_treatment, T_treatment) %>%
   summarize_at(.vars = c("Frass", "PupalWeight"),
                 .funs = c("mean", "sd")) %>%
-  as.data.frame
+  pander
 ```
 
 The result is identical to our last example with `summaryBy`.
@@ -364,7 +354,7 @@ head(allom)
 
 Note that you can use any function in place of `max`, as long as that function can take a vector as an argument, and returns a single number. 
 
-```{block2 type="rmdtry"}
+```{block2, type="rmdtry"}
 If you want results similar to `ave`, you can use `summaryBy` with the argument `full.dimension=TRUE`. Try `summaryBy` on the `pupae` dataset with that argument set, and compare the result to `full.dimension=FALSE`, which is the default. 
 ```
 
