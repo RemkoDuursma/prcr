@@ -20,7 +20,7 @@ Numeric response, with :
 Equation linear in the parameters. We can interpret parameters.
 
 
-## A motivating example
+## A motivating example {#icecream}
 
 It is well known that ice cream sales are higher during warm weather. As an ice cream salesman, you hardly have to apply regression analysis to know this - it is just obvious. Suppose that one year, you sell icecream at Oosterpark in Amsterdam. Sales are pretty good, the summer is nice and warm. The next year you try your luck at the Dappermarkt, a busy market in the east of Amsterdam. You tally your sales every week, and finally make a plot comparing average weekly sales:
 
@@ -97,7 +97,7 @@ In this figure we arrive at a completely different conclusion - but only because
 Use a *t*-test to test that temperature was lower at the Dappermarkt location.
 ```
 
-Using regression analysis, we can test the assertion that ice cream sales are higher at Dappermarkt, *at a given temperature*. But before we do that, we first introduce the tools to test difference between means (as we just did with a simple two-sample t-test), and introduce basic linear regression. We return to the icecream problem in Section XXX.
+Using regression analysis, we can test the assertion that ice cream sales are higher at Dappermarkt, *at a given temperature*. But before we do that, we first introduce the tools to test difference between means (as we just did with a simple two-sample t-test), and introduce basic linear regression. We return to the icecream problem in Section \@ref(icecreamtest).
 
 
 
@@ -257,10 +257,6 @@ One-way ANOVA (ANalysis Of VAriance) can be used to compare means across two or 
 We can use either the `aov` function or `lm` to perform ANOVAs. We will focus exclusively on the latter as it can be generalized more easily to other models. The use of `aov` is only appropriate when you have a balanced design (i.e., the same sample sizes in each of your groups).
 
 To use `lm` for an ANOVA, we need a dataframe containing a (continuous) response variable and a factor variable that defines the groups. For example, in the Coweeta dataset, the species  variable is a factor that defines groups by species.  We can compute (for example) the mean height by species. Let's look at an example using the Coweeta data, but with only four species to simplify the output.
-
-```{r}
-search()
-```
 
 
 ```{r}
@@ -590,48 +586,18 @@ fit6 <- lm(height ~ species * DBH, data=coweeta)
 
 
 
-### Understanding effects {#predictedeffects}
+### Visualizing fitted regression models {#predictedeffects}
 
 
 
-The coefficients in a linear model are usually contrasts (i.e. differences between factor levels), slopes or intercepts. While this is useful for comparisons of treatments, it is often more instructive to visualize the predictions at various combinations of factor levels.
+The coefficients in a linear model are usually contrasts (i.e. differences between factor levels), slopes or intercepts. While this is useful for comparisons of treatments, it is often more instructive to visualize the predictions at various combinations of factor levels. 
 
-For balanced designs where the model contains all interactions, the predicted means from a linear model will be the same as the group means calculated from the data. 
+A number of options exist to extract and visualize fitted regression models - to make sense of differences between groups, the effects of covariates, and the impact of interactions. We prefer the `visreg` package, which can be used to make attractive plots of the predictions of a linear model.
 
-However, if the data is not balanced and/or some of the interactions are left out the group mean and the predicted mean will be different. The package `effects` contains a very useful function to calculate and visualise these effects.
+The following example makes Fig. \@ref(fig:visreg1).
 
-For example, consider this example using the memory data (Fig.~\@ref(fig:effectsplot1)) with main effects only.
-
-```{r echo=FALSE}
-suppressPackageStartupMessages(library(effects))
-```
-```{r effectsplot1, opts.label="wide", fig.cap='Effects plot of a linear model using the Memory data, including main effects only. Effects of Age (left panel) and Process (right panel) are assumed to be additive.' }
-# Load the effects package
-library(effects)
-
-# Fit linear model, main effects only
-fit9 <- lm(Words ~ Age + Process, data=memory)
-plot(allEffects(fit9))
-```
-
-
-And compare the output when we add all interactions (Fig.~\@ref(fig:effectsplot2)),
-
-```{r effectsplot2, opts.label="wide", fig.cap='Effects plot a linear model of the Memory data, including main effects and interactions. The effects of Age and Process are not simply additive.'}
-fit10 <- lm(Words ~ Age * Process, data=memory)
-plot(allEffects(fit10))
-```
-
-```{block2, type="rmdtry"}
-Use the command `plot(allEffects(...))` on the two model fits from Section~\@ref(sec:lmfaccont), and compare the results. Also, use these plots to double check your interpretation of the model coefficients, as shown in the output of `summary`.
-```
-
-
-
-Another option is to use the `visreg` package, which can be used to make attractive plots of the predictions of a linear model. In the following example we redo Fig.~\@ref(fig:effectsplot2) using the `visreg` package.
-
-The following example makes Fig.~\@ref(fig:visreg1).
-```{r visreg1, opts.label="smallsquare", fig.cap='Visualization of a fitted linear model with the visreg package.', warning=FALSE, message=FALSE}
+```{r visreg1, opts.label="wide", fig.cap='Visualization of two fitted linear model with the visreg package. The model on the right includes an interaction between Process and Age.', warning=FALSE, message=FALSE, echo=-1}
+par(mfrow=c(1,2))
 library(visreg)
 
 # Read tab-delimited data
@@ -642,214 +608,84 @@ memory <- read.table("eysenck.txt", header=TRUE)
 # the chapter already for this dataset, it is repeated here).
 memory$Process <- with(memory, reorder(Process, Words, mean))
 
-# Refit the linear model as above.
-fit10 <- lm(Words ~ Age*Process, data=memory)
+# Two linear models: one without, and one with an interaction
+fit7 <- lm(Words ~ Age + Process, data=memory)
+fit8 <- lm(Words ~ Age*Process, data=memory)
 
 # Here we specify which variable should be on the X axis (Process),
 # and which variable should be added with different colours (Age).
-visreg(fit10, "Process", by="Age", overlay=TRUE)
+visreg(fit7, "Process", by="Age", overlay=TRUE)
+visreg(fit8, "Process", by="Age", overlay=TRUE)
 ```
 
-Here is another example. This time, we include a continuous and a factor variable in the model (Fig.~\@ref(fig:visreg2)).
-```{r visreg2, opts.label="smallsquare", fig.cap='Visualization of a fitted linear model with a continuous and factor variable using the \`visreg` package.'}
-# Read data and make sure CO2 treatment is a factor!
-pupae <- read.csv("pupae.csv")
-pupae$CO2_treatment <- as.factor(pupae$CO2_treatment)
+You can test for yourself that the interaction is a highly significant predictor in the model.
 
-# A linear model with a factor and a numeric variable
-fit_b <- lm(Frass ~ PupalWeight * CO2_treatment, data=pupae)
 
-# When plotting a model that has interactions, make sure to specify the variable 
-# that should appear on the X axis (the first argument), and the factor 
-# variable (the 2nd argument).
-visreg(fit_b, "PupalWeight", by="CO2_treatment", overlay=TRUE)
+### Group differences in regression models: back to ice cream sales {#icecreamtest}
+
+At the beginning of this chapter (Section \@ref(icecream)), we looked at an example where including a covariate drastically changed our conclusions about an effect. Simply testing the difference between two locations where we sold ice creams showed no effect, but including temperature at a covariate, it appeared that *at a given temperature*, there was a difference between the locations. 
+
+Here, we continue this example as it shows that we need to closely inspect a fitted model before making any conclusions - and that estimated coefficients of a regression model can lead to wrong conclusions, if not carefully examined.
+
+To continue, first read in the icecream data as shown in Section \@ref(icecream).
+We now fit a linear model with one numeric, and one factor variable. We immediately include all effects, including the interaction.
+
+```{r}
+lm_ice1 <- lm(sales ~ location * temperature, data=icecream)
 ```
 
+You can inspect all details in the summary of this model yourself (`summary(lm_ice1)`) - here we just look at the estimated coefficients from the model. Recall that in a linear model, the intercept is assigned to the first level of the factor variable in the model, in this case `levels(icecream$location)` shows that this is 'Dappermarkt'. 
 
-### Using predicted effects to make sense of model output
-
-Next we show an example of a model where using predicted effects as introduced in Section~\@ref(sec:predictedeffects) is very helpful in understanding model output. For this example, we use measurements of photosynthesis and transpiration of tree leaves in the EucFACE experiment (see Section~\@ref(sec:eucgasdata) for a description of the data). We are interested in the relationship between photosynthesis and transpiration (the ratio of which is known as the water-use efficiency), and whether this relationship differs with CO$_2$ treatment. The data are shown in Fig.~\@ref(fig:eucgasplot1).
-
-
-```{r eucgasplot1, opts.label="wide", fig.cap="Photosynthesis and leaf transpiration rate (Trmmol) for leaves in elevated (red) and ambient (blue) CO2 concentration.", fig.show="hold"}
-eucgas <- read.csv("eucface_gasexchange.csv")
-
-palette(c("blue","red"))
-with(eucgas, plot(Trmmol, Photo, pch=19, col=CO2))
-legend("topleft", levels(eucgas$CO2), pch=19, col=palette())
-
-boxplot(Photo ~ CO2, data=eucgas, col=palette(), ylab="Photo")
+```{r}
+pander(lm_ice1)
 ```
 
-It seems quite clear from Fig.~\@ref(fig:eucgasplot1) that, at a given `Trmmol`, `Photo` is higher in the elevated (`Ele`) CO$_2$ treatment. From the boxplot on the right, it also seems more than reasonable to expect that overall, `Photo` is higher in `Ele` (when not accounting for the `Trmmol` covariate).
+Four coefficients are shown, these are:
 
-Let's fit a linear model to confirm this effect.
+- *Intercept* : ice cream sales for the first level of 'Location' (Dappermarkt), when temperature equals zero (i.e. the intersection of the regression line with the y-axis when x = 0).
+-  *locationOosterpark* : The difference in intercept for Oosterpark location, compared to the first level (Dappermarkt). A positive value here seems to indicate higher sales at the Oosterpark location (when temperature is zero - read further below!).
+- *temperature* : The slope of sales per unit temperature (i.e. for every degree increase in temperature, sales go up this much), for Dappermarkt.
+- *locationOosterpark:temperature* : the difference in *slope* for the Oosterpark, compared to Dappermarkt. This shows the slope is lower for Oosterpark. 
 
-```{r echo=FALSE}
-printfixef <- function(model){
-  x <- as.data.frame(summary(model)$coefficients)
-  x$Signif <- symnum(x[,4], corr = FALSE, na = FALSE, 
-                 cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
-                 symbols = c("***", "**", "*", ".", " "))
-  names(x)[ncol(x)] <- ""
-  x[,4] <- format.pval(x[,4])
-print(x)
-}
+Based on the above, it seems difficult to draw conclusions about the difference between locations. This is because the intercept is not at all informative: it quantifies ice cream sales when temperature equals zero, but we do not even try to sell ice cream when it is cold outside. To visualize what is going on, we modify the standard `visreg` plot to draw the regression lines all the way to zero. We also show how to adjust the appearance of the plot (see `?plot.visreg` for details).
+
+```{r}
+visreg(lm_ice1, "temperature", by="location", 
+       overlay = TRUE, xlim=c(0,40),
+       line.par=list(col=c("dimgrey","grey")),
+       fill.par=list(col=c("#BEBEBE80","#BEBEBE80")),
+       points.par=list(col=c("dimgrey","grey"), cex=1.2))
 ```
 
+We now see that the regression lines 'cross over' around a temperature of 10, giving a higher intercept for Oosterpark.
 
-```{r }
-# A linear model with a continuous and a factor predictor, including the interaction.
-lmfit <- lm(Photo ~ CO2*Trmmol, data=eucgas)
+A meaningful test in situations like this is to test for group differences *at a given value of our covariate(s)*. A number of approaches exist in various add-on packages, but we prefer to first show the basic approach using `predict` - a function that has methods for practically all models we use. It also offers great flexibility, and we don't have to wonder what exactly we are testing.
 
-# Significance of overall model terms (sequential anova)
-anova(lmfit)
+Somewhat arbitrarily, we want to test for location differences at a temperature of 25 degrees. To do this, I will construct confidence intervals for both locations, as follows. In the call to `predict`, it is important to list values for all variables in the model. This makes this approach less practical for models with many more regressors (see below for another approach).
+
+```{r}
+# Predict from model, at temperature =25.
+pred_ice <- predict(lm_ice1, 
+                    newdata = data.frame(temperature = 25, 
+                                         location = levels(icecream$location)),
+                    se = TRUE)
 ```
 
-And the coefficients table from `summary`:
+If you inspect this object, you will find that sales at Dappermarkt are `r round(pred_ice$fit[1],1)` with a standard error of `r round(pred_ice$se.fit[1],1)`, and sales at Oosterpark are `r round(pred_ice$fit[2],1)` (SE `r round(pred_ice$se.fit[2],1)`). The standard errors may be used to construct approximate 95% confidence intervals (by using twice the standard error).
 
-```{r echo=FALSE}
-printfixef(lmfit)
+A more convenient approach is to use the `emmeans` package to extract *marginal effects* of our fitted model. The default approach in this package is to test for group differences at the average level of other predictors. This approach is also called 'least-square means'. However, we can adjust what value we want to use.
+
+
+```{r include=FALSE, warning=FALSE, echo=FALSE}
+suppressPackageStartupMessages(library(emmeans))
 ```
 
-```{r eval=FALSE}
-# Significance of the individual coefficients:
-summary(lmfit)
-```
-
-
-Look at the 'coefficients' table in the `summary` statement. Four parameters are shown, they can be interpreted as, 1) the intercept for 'Amb', 2) the slope for 'Amb', 3) the *difference* in the intercept for 'Ele', compared to 'Amb', 4) the *difference* in the slope for 'Ele', compared to 'Amb'.
-
-It seems that neither the intercept or slope effect of `CO2` is significant here, which is surprising. Also confusing is the fact that the `anova` statement showed a clear significant effect of `CO2`, so what is going on here? 
-
-First recall that the sequential anova tests each term against a model that includes *only the terms preceding it*. So, since we added `CO2` as the first predictor, its test in the `anova` is tested against a model that has no predictors. This is similar in approach to simply performing a $t$-test on `Photo` vs. `CO2` (which also shows a significant effect), in other words testing for separation in the right-hand panel of Fig.~\@ref(fig:eucgasplot1). It is clearly a different test from those shown in the `summary` statement.
-
-To understand the tests of the coefficients, we will plot predictions of the model, together with confidence intervals. The following code makes Fig.~\@ref(fig:eucgasplot2), and we introduce the use of the `predict` function to estimate fitted values, and confidence intervals, from a fitted model.
-
-```{r eucgasplot2, opts.label="smallsquare", fig.cap="Predicted relationship between Photo and Trmmol for ambient and elevated CO2 concentrations in the EucFACE leaf gas exchange dataset. Dashed lines are confidence intervals for the regression line."}
-
-# Set up a regular sequence of numbers, for which 'Photo' is to be predicted from
-xval <- seq(0, max(eucgas$Trmmol), length=101)
-
-# Two separate dataframes, one for each treatment/
-amb_dfr <- data.frame(Trmmol=xval, CO2="Amb")
-ele_dfr <- data.frame(Trmmol=xval, CO2="Ele")
-
-# Predictions of the model using 'predict.lm'
-# The first argument is the fitted model, the second argument a dataframe
-# containing values for the predictor variables.
-predamb <- as.data.frame(predict(lmfit, amb_dfr, interval="confidence"))
-predele <- as.data.frame(predict(lmfit, ele_dfr, interval="confidence"))
-
-# Plot. Set up the axis limits so that they start at 0, and go to the maximum.
-palette(c("blue","red"))
-with(eucgas, plot(Trmmol, Photo, pch=19, col=CO2,
-                  xlim=c(0, max(Trmmol)),
-                  ylim=c(0, max(Photo))))
-
-# Add the lines; the fit and lower and upper confidence intervals.
-with(predamb, {
-  lines(xval, fit, col="blue", lwd=2)
-  lines(xval, lwr, col="blue", lwd=1, lty=2)
-  lines(xval, upr, col="blue", lwd=1, lty=2)
-})
-
-with(predele, {
-  lines(xval, fit, col="red", lwd=2)
-  lines(xval, lwr, col="red", lwd=1, lty=2)
-  lines(xval, upr, col="red", lwd=1, lty=2)
-})
-```
-
-```{block2, type="rmdtry"}
-The above plot can also be easily made with the `visreg` package, as we have seen already. Use the code `visreg(lmfit, "Trmmol", by="CO2", overlay=TRUE)` to make a similar plot. Set the x-axis limit with `xlim` to include the intercept.
-```
-
-The intercept in a linear model is of course the value of the Y variable where X is zero. As we can see in Fig.~\@ref(fig:eucgasplot2), the confidence intervals for the regression lines overlap when `Trmmol` is zero - which is the comparison made in the `summary` statement for the intercept. We now see why the intercept was not significant, but it says very little about the treatment difference *in the range of the data*.
-
-Perhaps it is more meaningful to test for treatment differences at a mean value of `Trmmol`. There are four ways to do this.
-
-#### Centering the predictor
-
-The first approach is to recenter the predictor so that the intercept can be interpreted as the value where the predictor (in our case, `Trmmol`) is at its mean value.
-
-```{r }
-# Rescaled transpiration rate
-# This is equivalent to Trmmol - mean(Trmmol)
-eucgas$Trmmol_center <- scale(eucgas$Trmmol, center=TRUE, scale=FALSE)
-
-# Refit using centered predictor
-lmfit2 <- lm(Photo ~ Trmmol_center*CO2, data=eucgas)
-```
-
-The coefficients table in the `summary` statement now shows a highly significant effect for `CO2Ele`, a difference of about 4.22 units. It is also possible to compute confidence intervals on the coefficients via `confint(lmfit2)`, try this yourself.
-
-```{r eval=FALSE}
-# Summary of the fit:
-summary(lmfit2)
-```
-
-```{r echo=FALSE}
-printfixef(lmfit2)
-```
-
-
-#### Using the effects package
-
-Another way is to compute the `CO2` effect at a mean value of `Trmmol`. This avoids having to refit the model with centered data, and is more flexible.
-
-```{r }
-# The effects package calculates effects for a variable by averaging over all other
-# terms in the model
-library(effects)
-Effect("CO2", lmfit)
-
-# confidence intervals can be obtained via
-summary(Effect("CO2", lmfit))
-```
-
-The `effects` package is quite flexible. For example, we can calculate the predicted effects at any specified value of the predictors, like so (output not shown):
-
-```{r results="hide"}
-# For example, what is the CO2 effect when Trmmol was 3?
-summary(Effect("CO2", lmfit, given.values=c(Trmmol=3)))
-```
-
-
-#### Least-square means
-
-The effect size while holding other predictors constant at their mean value is also known as 
-the 'least-square mean' (or even 'estimated marginal means'), and is implemented as such in the `emmeans` package. It is a powerful package, also to make sense of models that are far more complex than the one in this example, as seen in section~\@ref(sec:emmeans).
-
-{#page:emmeans2}
-```{r }
+```{r}
 library(emmeans)
-summary(emmeans(lmfit, "CO2"))
-# emmeans warns that perhaps the results are misleading - this is true for more 
-# complex models but not a simple one as shown here. 
+emmeans(lm_ice1, specs = "location", at = list(temperature = 25))
 ```
 
-#### Using the `predict` function
-
-Finally, we show that the effects can also be obtained via the use of `predict`, as we already saw in the code to produce Fig.~\@ref(fig:eucgasplot2).
-
-```{r }
-# Predict fitted Photo at the mean of Trmmol, for both CO2 treatments
-predict(lmfit, data.frame(Trmmol=mean(eucgas$Trmmol), 
-                          CO2=levels(eucgas$CO2)), 
-        interval="confidence")
-```
-
-
-```{r echo=FALSE}
-palette("default")
-```
-
-
-> **Further reading**
-This example shows that interpretation of main effects (in this case, `CO2`) is not at all straightforward when the model also includes an interaction term (`CO2:Trmmol`). A readable review of this problem is Engqvist 2005, *Animal Behaviour* 70(4):967-971. There, it is shown that many studies misinterpret the main effects in cases like this.
-
-
+You can ignore the warning in this case, since we have used both the predictors in our model - there are no other 'hidden' predictors that may complicate matters. As you can see for yourself,  the `emmeans` package gives the same results as the basic `predict` approach, but it is certainly much more practical.
 
 
 ### Quadratic and polynomial terms
@@ -897,145 +733,11 @@ visreg(allomquadfit, "diameter", by="species", overlay=TRUE)
 ```
 
 
-\clearpage
-
-## Generalized Linear Models
-{#sec:glm}
-
-So far we have looked at modelling a continuous response to one or more factor variables (ANOVA), one or more continuous variables (multiple regression), and combinations of factors and continuous variables. We have also assumed that the predictors are normally distributed, and that, as a result, the response will be, too. We used a log-transformation in one of the examples to meet this assumption.
-
-In some cases, there is no obvious way to transform the response or predictors, and in other cases it is nearly impossible. Examples of difficult situations are when the response represents a count or when it is binary (i.e., has only two possible outcomes).  
-
-Generalized linear models (GLMs) \footnote{The term *General Linear Model*, which you may see used sometimes, is not the same as a GLM, although some statistics packages use GLM to mean general linear model, and use another term for generalized linear model.} extend linear models by allowing non-normally distributed errors. The basic idea is as follows. Suppose you have a response variable $y$ and one or more predictors (independent variables) that can be transformed into a linear predictor in the same way as in linear models, which we call $\eta$. Then $y$ is modelled as some distribution with mean $\mu$, which itself is related to the predictors through the linear predictor and a *link*-function, $g$. Formally,
-
-$$
-g(\mu) = \eta
-{#eqn:glm}
-$$
-
-In practice, the distribution for $y$ and the link-function are chosen depending on the problem. Logistic regression is an example of a GLM, with a binomial distribution and the link-function
-\[
-\log\left(\frac{\mu}{1-\mu}\right) = \eta
-\]
-
-Another common GLM uses the Poisson distribution, in which case the most commonly used link-function is $\log$. This is also called Poisson regression, and it is often used when the response represents counts of items. In the following, we will demonstrate two common GLMs: logistic regression and Poisson regression.
-
-### Logistic Regression
-{#sec:logistic}
-
-The Titanic dataset (see Section~\@ref(sec:titanic)) contains information on the survival of passengers on the Titanic, including ages, gender and passenger class. Many ages are missing, and for this example we will work with only the non-missing data (but note that this is not always the best choice). Refer to Section~\@ref(sec:workingmissing) (p.~\pageref{sec:workingmissing}) for working with and removing missing values.
-
- 
-```{r }
-# Read tab-delimited data
-titanic <- read.table("titanic.txt", header=TRUE)
-
-# Complete cases only (drops any row that has a missing value anywhere)
-titanic <- titanic[complete.cases(titanic),]
-
-# Construct a factor variable based on 'Survived'
-titanic$Survived <- factor(ifelse(titanic$Survived==1, "yes", "no"))
-
-# Look at a standard summary
-summary(titanic)
-```
-
-The idea here is to find out whether the probability of survival depends on the passenger's `Age`, `Sex` and `PClass` (passenger class). Before we proceed, it is always a good idea to start by visualizing the data to find out what we are dealing with (and to make sure we will interpret the model output correctly). If we plot two factor variables against each other, R produces quite a useful plot, as the following example demonstrates (Fig.~\@ref(fig:facfacplot)).
-
-```{r facfacplot, fig.width=8, out.width="0.8\\textwidth", fig.cap="Probability of survival versus passenger class and sex for the titanic data."}
-par(mfrow=c(1,2), mgp=c(2,1,0))
-with(titanic, plot(Sex, Survived, ylab="Survived", xlab="Sex"))
-with(titanic, plot(PClass, Survived, ylab="Survived", xlab="Passenger class"))
-```
-
-In logistic regression we model the probability of the "1" response (in this case the probability of survival). Since probabilities are between 0 and 1, we use a logistic transform of the linear predictor, where the linear predictor is of the form we would like to use in the linear models above. If $\eta$ is the linear predictor and $Y$ is the binary response, the logistic model takes the form,
-
-$$
-P(Y=1) = \frac{1}{1+e^{-\eta}}
-{#eqn:logit}
-$$
-
-These models are easily fit with `glm`. It has a similar interface to `lm` with a couple of additional features. To fit a logistic regression to the (modified) titanic data we use,
-
-```{r }
-# Fit a logistic regression
-fit11 <- glm(Survived~Age+Sex+PClass, data=titanic, family=binomial)
-summary(fit11)
-```
-
-The text `family=binomial` specifies that we wish to perform a *logistic regression*. The `summary` shows that all terms are significant. Interpreting the coefficients has to be done with care. For binary factors (such as `Sex`) they can be interpreted as a log-odds ratio, but this is beyond the scope of this text. The signs of the coefficients tell us about how the factor variable affects the probability of survival. In this example, all of them are negative so we can conclude: 1) an increase in age decreases the chance of survival, 2) being male decreases survival, 3) being in 2nd or 3rd class decrease survival with 3rd being worse than 2nd.
-
-The function `allEffects` from the `effects` package can be used here to visualize the effects (Fig.~\@ref(fig:titaniceffects)).
-
-```{r titaniceffects, opts.label="wide", fig.cap='Fitted effects for the Titanic logistic regression example.'}
-# The 'type' argument is used to back-transform the probability
-# (Try this plot without that argument for comparison)
-plot(allEffects(fit11), type="response")
-```
-
-
-#### Tabulated data
-{#sec:tabuldataglm}
-
-Sometimes the available data are not at an individual level (as in the Titanic example above), but counts have already been aggregated into various factors.
-
-We will first aggregate the Titanic data into a table of counts, and then show how we can still fit a `glm` for a logistic regression.
-
-Suppose instead of age we only know the adult status of passengers.  
-```{r }
-titanic$AgeGrp <- factor(ifelse(titanic$Age>18, "Adult", "Child"))
-```
-
-We can then count the numbers of survivors and non-survivors,  
-```{r titanic2make, tidy=FALSE}
-# Count the number of survivors and non-survivors by various factor combinations
-titanic2 <- aggregate(cbind(Survived=="yes",Survived=="no") ~ AgeGrp+Sex+PClass, 
-                      data=titanic, sum)
-titanic2
-
-# Tidy up the names
-names(titanic2)[4:5] <- c("survivors", "nonsurvivors")
-```
-
-Use the following example to fit a logistic regression when your data looks like the above. We will again plot the fitted effects (Fig.~\@ref(fig:titaniceffects2)). As you can see, the conclusions are the same as before.
-
-```{r titaniceffects2, opts.label="wide", fig.cap='Fitted effects for the Titanic logistic regression example, when fitted using tabulated data.', tidy=FALSE}
-fit12 <- glm(cbind(survivors, nonsurvivors)~AgeGrp+Sex+PClass, 
-             data=titanic2, family=binomial)
-summary(fit12)
-
-# Effects plot
-plot(allEffects(fit12))
-```
-
-
-
-
-
-### Poisson regression
-
-For this example we return to the Age and Memory dataset. In this dataset, the response variable is a count of the number of words recalled by subjects using one of four different methods for memorization. When the response variable represents a count, a Poisson regression is often appropriate. 
-
-The following code performs a Poisson regression of the Age and Memory data. See Fig.~\@ref(fig:glm1) for the fitted effects.
-```{r glm1, opts.label="smallsquare", fig.cap='Fitted effects for a Poisson regression of the Age and Memory data. Note the log scale of the y-axis.'}
-# Fit a generalized linear model
-fit13 <- glm(Words~Age*Process, data=memory, family=poisson)
-summary(fit13)
-
-# Look at an ANOVA of the fitted model, and provide likelihood-ratio tests.
-Anova(fit13)
-
-# Plot fitted effects
-plot(allEffects(fit13))
-```
-
-Remember that when we fit this as a linear model (using `lm`), we found that the interaction term was highly significant. This time, when we used Poisson regression, the interaction is no longer significant. However, the default link for Poisson regression is $\log$. This means that the mean $\mu$ in this case depends on the factors `Age` and `Process` in a multiplicative fashion, whereas in the linear model (using `lm`) it was additive without the interaction. In other words, we have now modelled the interaction implicitly by using the $\log$ link function.
-
-Note that in example above we use the `anova` function with the option `test="LRT"`, which allows us to perform a *Likelihood Ratio Test* (LRT). This is appropriate for GLMs because the usual $F$-tests may not be inaccurate when the distribution is not normal.
 
 
 > **Further reading**
 An excellent book on linear modelling, including many tools that we did not cover in this chapter is:
 Fox, John, and Sanford Weisberg. *An R companion to applied regression*. Sage, 2010. This book describes the `car` package.
+
 
 

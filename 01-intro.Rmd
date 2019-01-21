@@ -186,6 +186,21 @@ library(help=gplots)
 ```
 
 
+### Install packages not on CRAN
+
+The previous section applies to packages that have been uploaded to CRAN (the central repository for R packages). It is however also quite common for R packages to be available on Github or Bitbucket, which cannot be installed via `install.packages`. Instead, do:
+
+```{r eval=FALSE}
+library(remotes)
+install_bitbucket("remkoduursma/fitplc")
+```
+
+This installs an R package from www.bitbucket.org. Similarly, `install_github` installs the package from www.github.com, if it is hosted there.
+
+For this command to work, your system needs to be able to compile R packages from source. Windows users will need to install [Rtools](https://cran.r-project.org/bin/windows/Rtools/).
+
+
+
 ### Updating packages
 
 Besides updating R and Rstudio itself (which is recommended at least every couple of months or so), it is also a very good idea to keep all packages up to date. If your workflow ends up depending on an older version of the package, your code may not work on a different system. To update all *installed* packages, you can run the following command - make sure to do this right after opening Rstudio:

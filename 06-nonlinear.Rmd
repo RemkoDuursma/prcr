@@ -1,0 +1,678 @@
+
+# Non-linear Modelling
+
+## Introduction
+
+This chapter introduces alternatives to linear models, with an emphasis on non-linear regression (Section~\ref{sec:nls}). Very brief introductions to local regression smoothers (loess, Section~\ref{sec:loess}), quantile regression (Section~\ref{sec:rq}), and generalized additive models (Section~\ref{sec:gam}) are also included. In each case, we avoid technical descriptions of theory and implementation, and instead illustrate each technique with examples, and many figures.
+
+Before we delve into non-linear regression, we first briefly describe when each of these techniques is useful. In general, linear models are preferable when you can use them, since they are robust, easy to use, and the theory for inference (hypothesis testing) is well developed and not very sensitive to violation of the usual assumptions. 
+
+In general, as the name suggests, non-linear methods are to be used when the relationship between your response variable and predictor is not linear. 
+
+#### Transformations
+
+In this case, one common approach is to transform the predictor and/or response so as to linearize the relationship between the two. When this is possible, it is usually the preferred approach. For example, you may find that your data can be well described with an equation of the form:
+
+$$Y = a \cdot X^b$$
+
+This is the so-called power function. You could go ahead and use non-linear regression to fit this curve, but it would be better to linearize this relationship by taking the logarithm of both sides, which gives:
+
+$$log(Y) = a + b \cdot log(X)$$
+
+And thus we can use linear regression of $log(Y)$ against $log(X)$.
+
+In a number of cases, though, there is no simple transformation that linearizes the relationship. Typical cases are relationships with a clear asymptote (though exceptions exist), peaked relationships, or very irregular relationships with lots of peaks and curves.
+
+
+#### Parametric or non-parametric?
+
+In the case where no transformation can be found, or you have a specific equation that you want to fit to your data, non-linear regression may be an appropriate technique. This is an example of a parametric method, because you end up estimating specific parameters, and in doing so making assumptions about the underlying distribution. This can be useful because a fitted non-linear regression model can be applied in a new setting, for example predicting for a new dataset, or reliably extrapolating beyond your data. 
+
+In non-parametric approaches, you either cannot find or are not interested in finding an equation that describes your data. You may simply be interested in describing or visualizing a (potentially irregular) trend, maybe comparing groups, but not estimating specific parameters or predicting for new situations (let alone extrapolation). In this chapter we will briefly look at `loess` (Section~\ref{sec:loess}), a flexible non-parametric regression method, and generalized additive models (Section~\ref{sec:gam}), a semi-parametric approach.
+
+#### Means or quantiles?
+
+In the usual linear models, as well as non-parametric regression, we are usually forced to be interested in the mean relationship between response and predictor. Often this is what you want, but there are many cases in which you are actually interested in questions like 'What is the maximum value of my response as a function of my predictors?'. Instead of actually estimating the maximum, a particular quantile will be much more robust to outliers (for example, the 95\% quantile). In this case we can use quantile regression, which will be introduced in Section~\ref{sec:rq}. This is not strictly a non-linear method, but we present it in this chapter because it is such a constrast to the usual linear models, and because non-linear quantile regression can also be applied (Section~\ref{sec:rqnonlinear}).
+
+
+```{r echo=FALSE, out.width='66%'}
+knitr::include_graphics("screenshots/lmflow_3.png")
+```
+*A simple flow chart to select regression methods.*
+
+
+
+Packages used in this chapter. The `nls` function and associated methods are in the `stats` package, which is base R, and therefore not mentioned in this table.
+
+Package & Key functions
+`nlstools` & `overview`, `confint2`
+`nlshelper` & `plot\_nls`, `anova\_nlslist`, `tidy.nlsList` 
+`nlme` & `nlsList` 
+`car` & `qqPlot` 
+`mgcv` & `gam` 
+`quantreg` & `rq`, `nlrq` 
+
+
+
+
+> **Further reading**
+As mentioned, we present a practical, visual approach to non-linear models in this chapter. We recommend further reading if you are interested in technical aspects of non-linear regression :
+\begin{itemize}
+\item Ritz, C., Streibig, J.C., 2008. Nonlinear regression with R. Springer. (from the developers of the `nlstools` package)
+\item Fox, J. Nonlinear regression and nonlinear least squares in R (Online appendix to 'Companion to applied regression', <http://socserv.mcmaster.ca/jfox/Books/Companion/appendix/Appendix-Nonlinear-Regression.pdf>).
+\end{itemize}
+For generalized additive models, the book by Simon Wood accompanies the `mgcv` package:
+\begin{itemize}
+\item Wood, S.N., 2006. Generalized additive models: an introduction with R, Texts in Statistical Science. Chapman \& Hall/CRC.
+\end{itemize}
+
+
+
+
+## Non-linear regression {#nls}
+
+### Introduction
+
+A model is *linear* when you can write it like this:
+
+$$
+Y = b_0 + b_1 \cdot X_1 + b_2 \cdot X_2 + b_3 \cdot X_3
+$$
+
+where Y is the dependent variable, and the X's are the predictors. The predictors can be any variable or some transformation thereof (for example, squared terms, two variables multiplied together, etc.). This model is *linear in the coefficients* $b_1$, $b_2$, etc, though it may contain terms that are non-linear in the X's (such as squared terms of X).
+
+An example of a non-linear model is the Chapman-Richards growth equation,
+
+$$
+Y = Y_{max}\cdot(1-e^{-b \cdot x})^c
+$$
+
+Here the coefficients (Ymax, b and c) occur non-linearly in the equation, and you cannot write this in a form similar to the linear model as shown above. We can look at the shape of this curve by using `curve`, like in the following example (Fig. \ref{fig:chapmcurve}).
+
+```{r chapmcurve, opts.label="smallsquare", fig.cap='The Chapman-Richards growth equation.', fig.align='center'}
+# Define function
+chapm <- function(x,Asym,b,c)Asym*(1-exp(-b*x))^c
+
+# Plot (curve must use an x argument)
+curve(chapm(x, Asym=100, b=0.15, c=3), from=0, to=50, ylab="Y")
+```
+
+We can use non-linear regression to fit curves like that one to data, which gives estimates of the coefficients `Ymax`, `b` and `c`. The majority of useful applications of non-linear regression are when you have an equation already specified (arising from theory), and you wish the estimate the parameters of the curve, or use the curve for prediction (as in lots of modelling applications). 
+
+In the following examples of non-linear regression, we use the `nls` function, but point out the `nlsLM` function (in package `minpack.lm`) for a very promising alternative, and `nls2` (package of same name) for an alternative that can be used to find starting values.
+
+
+### Model selection
+
+How do you choose the right model to fit to your data? In some applications of non-linear regression, you already know the model you want to fit, as it arises from theory. The Michaelis-Menten model, very commonly applied in enzyme kinetics, is an example (see Exercise \ref{michaementex}).
+
+In other cases you have to choose a model from various options, and select the best fitting one, or the one that has certain properties. One reason to apply non-linear regression, as stated above, is that the model can be expected to behave well outside the range of the data used for fitting. Models with an asymptote are a good example. Take the following equation, 
+$$Y = Y_{max}(1 - e^{-kX})$$
+
+we can see that this model reaches an asymptote for very large X (because $e^{-x}$ goes to zero for large $x$), given by the parameter $Y_{max}$. Also, this model has the, possible useful, quality that Y is zero when X is zero. 
+
+> **Further reading**
+I still cannot find a better compendium of equations used in non-linear regression than this manual published by the Ministry of Forests in British Columbia, Canada (download PDF from <https://www.for.gov.bc.ca/hfd/pubs/docs/bio/bio04.htm>). It includes a huge number of example equations, and visually shows how the shape of the curve changes with the various parameters. Example applications in SAS may not be relevant.
+
+
+
+
+### Fitting a simple model
+
+In this section, we show how to implement a simple non-linear regression model with the `nls` function (available in base R). In this first example, we define our model by hand, which is the most flexible approach but it comes at a cost of having to specify suitable starting values, or initial guesses, of the parameters. In the next section, we introduce built-in self-starting functions which do not require starting values.
+
+When you specify your own model, you have to specify suitable *starting values* for the parameters, otherwise `nls` will in many cases not converge to a solution. Depending on the situation, these starting values need to be quite good. This will depend a lot on the type of curve you are fitting, the number of data points, and the number of parameters describing the curve. 
+
+To find suitable starting values, you can either guess them based on the meaning of the parameters (for example, the asymptote, or value of y when x is zero, and so on), or otherwise find them with trial and error. The following 'Try it yourself' box explains how to plot the curve with the data, as a method to find starting values.
+
+> **Try this yourself**
+Using the Loblolly data as in the example below, plot height versus age, and add the Chapman-Richards curve using `curve`, like so:
+\begin{verbatim}
+with(Loblolly, plot(age, height))
+curve(chapm(x, Asym=30, b=0.2, c=2), add=TRUE)
+\end{verbatim}
+Now play around with the coefficients (`Asym,b,c`) to see the change in curve shape and location, and find values so that the curve is 'somewhat close' to the data.
+
+
+Here we use the built-in `Loblolly` data (see `?Loblolly`), which contains age and height of Loblolly pine (*Pinus taeda*), for several seedlots. We will fit the Chapman-Richards equation, a type of sigmoidal curve that fits these data quite well. Note that we defined the function in the previous section, but we repeat it here.
+
+```{r }
+# Define function to fit
+chapm <- function(x,Asym,b,c)Asym*(1-exp(-b*x))^c
+
+# Note the specification of the starting values.
+nls_lob <- nls(height ~ chapm(age, Asym, b,c),
+               data=Loblolly,
+               start=list(Asym=100, b=0.1, c=2.5))
+```
+
+If the model does not converge, it will report an error. Note that you do not have to write a function first and use it within `nls`, you can also write the equation in the formula interface of `nls` directly. However, it is usually convenient to have the function defined separately.
+
+Next, it is useful to add the fitted curve to a plot, which is particularly easy to do with the `nlshelper` package. In Section~\ref{sec:nlspredict}, we return to predicting from a non-linear regression model, using the `predict` function. The following code makes Fig.~\ref{fig:plotnlslob1}.
+
+```{r echo=FALSE, message=FALSE}
+suppressPackageStartupMessages(library(nlshelper))
+```
+
+```{r plotnlslob1, opts.label="smallsquare", fig.cap='The Chapman-Richards growth equation fitted to the Loblolly data, using the nlshelper package.', fig.align='center', echo=-1}
+par(mar=c(4,4,1,1), mgp=c(2.5,0.8,0))
+library(nlshelper)
+plot_nls(nls_lob,  ylim=c(0,80), xlim=c(0,30))
+```
+
+
+### Self-starting functions
+{#sec:selfstart}
+
+To avoid the need for starting values, we can use one of many 'self-starting functions'. These are common non-linear models that do not require starting values, and instead estimate them from the data with clever methods. You can also develop these yourself, but this is tricky.
+
+I won't go into much detail on these functions, but simply redo our example with the `Loblolly` data from the previous example. This time we are fitting the 'Gompertz' growth model to the data, using the `SSgompertz` function.
+
+
+```{r }
+# Fit same model, using a self-starting model
+nlsfitSS <- nls(height ~ SSgompertz(age, Asym, b2, b3),
+              data=Loblolly)
+```
+
+> **Try this yourself**
+Compare the fit of this model to the Chapman-Richard equation from above. Look at the residual standard error in the `summary` of the fitted model, and plot the curve in addition to the Chapman-Richard curve in the previous example.
+
+
+
+
+### Model summary and diagnostics {#nlsdiagnos}
+
+#### Summarizing the fit
+
+The usual `summary` does not print a lot of useful information for `nls` models - a much better alternative is the `overview` function from the `nlstools` package:
+
+```{r echo=FALSE, message=FALSE}
+suppressPackageStartupMessages(library(nlstools))
+```
+
+```{r }
+library(nlstools)
+overview(nls_lob)
+```
+
+The `overview` statement shows:
+\begin{itemize}
+\item The parameter estimates, standard error (`Std. Error`), and a t-test against zero (`t value` and the p-value, `Pr(>|t|)`). The test against zero is rarely useful.
+\item The residual standard error, calculated as $\sqrt{\sum{r^2}/df}$, where $r$ is the residual, and df the residual degrees of freedom (sample size minus number of estimated parameters). This metric is also known as the root-mean square error (RMSE).
+\item Some information on the convergence, normally can be ignored.
+\item The residual sum of squares, simply the sum of the squared residuals.
+\item Confidence intervals for the parameters. Note that these will be somewhat different from those calculated with `confint`.
+\item Correlation matrix of the parameters.
+\end{itemize}
+
+The disadvantage of `overview` is that none of the printed results can be extracted. A convenient way to print the coefficients, standard error and confidence interval is the `tidy` function from the `broom` package. The `glance` function returns things like the RMSE (`sigma`), log-likelihood, AIC, etc. Both functions return a dataframe and are thus convenient as a basis for further calculation, or use in tables.
+
+```{r }
+library(broom)
+tidy(nls_lob, conf.int=TRUE)
+glance(nls_lob)
+```
+
+If you only want to extract the coefficients, use the base function `coef`,
+
+```{r }
+coef(nls_lob)
+```
+
+
+#### Residual diagnostics
+
+As in linear regression, an important assumption in non-linear regression is that the residuals are normally distributed. This can be inspected visually, as we strongly recommend against the use of tests for normality. The `qqPlot` function from the `car` package is very handy because it adds a confidence region for the qq-plot. The following example makes Fig.~\ref{fig:carqq}.
+
+```{r echo=FALSE, message=FALSE}
+suppressPackageStartupMessages(library(car))
+```
+
+```{r carqq, opts.label="smallsquare", fig.cap="Normal QQ plot for the Chapman-Richards growth equation fitted to the Loblolly dataset."}
+library(car)
+qqPlot(residuals(nls_lob))
+```
+
+When interpreting QQ plots for non-linear regression models, don't get too upset if the residuals aren't perfectly normal. This is rarely a problem unless the deviation is very large. Most importantly, it does not affect the estimates of your parameters, but it does affect the estimated standard errors and confidence intervals. If you are mostly interested in fitting the curve and moving on, it is not important.
+
+A more important test, again visually, is to check whether there is no pattern in the residuals with respect to the predictor(s). If there is, clearly the model does not fit very well and another model should be chosen. The following code makes a plot of the residuals against the fitted values, and a plot of the fitted values against the predictor (with a comparison to a 1:1 line) (Fig.~\ref{fig:diagfit}).
+
+```{r diagfit, opts.label="wide", echo=-1, fig.cap="Residuals against fitted values, and fitted values against the predictor for a non-linear regression model (nls) fit to the Loblolly data."}
+par(mfrow=c(1,2))
+plot(fitted(nls_lob), residuals(nls_lob), pch=16, col="dimgrey")
+abline(h=0)
+
+plot(Loblolly$height, fitted(nls_lob), pch=16, col="dimgrey")
+abline(0,1)
+```
+
+
+
+#### Goodness of fit
+
+It is well known that the R^2^ is a very poor measure of goodness of fit in non-linear models\footnote{e.g. Spiess and Neumeyer 2010, 'An evaluation of R^2^ as an inadequate measure for nonlinear models in pharmacological and biochemical research: a Monte Carlo approach', BMC Pharmacol.}
+
+Better is the RMSE (the residual standard error), which is returned by `glance`, like so. The RMSE can be roughly interpreted as the standard deviation of the residuals ('roughly' because it is adjusted slightly for the number of fitted parameters).
+
+```{r }
+glance(nls_lob)$sigma
+```
+
+### Comparing models
+
+Thus, when comparing different models *fit to the same dataset*, we can use the RMSE as a basis for comparing their relative goodness of fit. Probably even better (though in practice usually equivalent), we can use Akaike's Information Criterion (AIC) as a basis for ranking model fit. This is quickly done with `AIC`,
+
+```{r eval=FALSE}
+AIC(model1, model2, model3)
+```
+
+The model with the lowest AIC can be deemed the 'best'. 
+
+When comparing two (or more) models fit to the same dataset, but with different number of parameters, an F-test can be applied providing a direct test of model superiority. For example,
+
+```{r }
+# Chapman-Richard model (equivalent to nls_lob used above)
+nls_fit1 <- nls(height ~ Asym*(1-exp(-b*age))^c,
+               data=Loblolly,
+               start=list(Asym=100, b=0.1, c=2.5))
+
+# Drop the 'c' parameter
+nls_fit2 <- nls(height ~ Asym*(1-exp(-b*age)),
+               data=Loblolly,
+               start=list(Asym=100, b=0.1))
+
+anova(nls_fit2, nls_fit1)
+```
+
+The F-test in the above `anova` statement shows overwhelming support for a better fit for the model that includes the `c` parameter. 
+
+> **Try this yourself**
+In the example above, confirm that use of `AIC` would give the same conclusions.
+
+
+
+#### Correlation between parameters 
+
+This is not a problem in model fitting, but it is important that you are aware that the coefficients in a non-linear regression models are often highly correlated. A correlation matrix between the parameters is shown with the `overview` function from the `nlstools` package (see example above).
+
+> **Try this yourself**
+A nice way to visualize the correlation between parameters is the `ellipse` function from the `ellipse` package. For a fitted nls model, try the following code after setting the `which` argument to two parameters of interest:
+\begin{verbatim}
+library(ellipse)
+plot(ellipse(nls_lob, which=c("Asym","b")), type='l')
+
+# Optionally, add the estimated coefficients as a point
+p <- coef(nls_lob)
+points(p["Asym"], p["b"], pch=19)
+\end{verbatim}
+
+It is also possible to plot all confidence ellipses with the `plotcorr` function, for a quick visualization of correlation and confidence regions of the parameters, like so:
+\begin{verbatim}
+plotcorr(summary(nls_lob, correlation=TRUE)$correlation)
+\end{verbatim}
+
+
+
+### Adding factor variables
+{#sec:nlsfactor}
+
+A very common question in non-linear modelling is whether estimated coefficients are different between groups, for example species, treatment, location. It is not straightforward to compare coefficients by group, unfortunately, but we can produce estimates and confidence intervals for each group, and base our conclusions on those.
+
+The following example fits the Gompertz growth model to foot length as a function of age, to ask the question whether foot length growth is different between boys and girls. The divergent curves, and the very different estimated parameters show a clear difference, as the following example demonstrates:
+
+```{r echo=FALSE, message=FALSE}
+suppressPackageStartupMessages(library(scales))
+```
+
+```{r anthronls, opts.label="smallsquare", fig.cap="The Gompertz growth model fitted to the anthropometry dataset, for males and females separately."}
+
+# Read data.
+foot <- read.csv("anthropometry.csv")
+
+# nlsList does not like missing values. We can set an option there,
+# or just remove missing values now
+foot <- foot[complete.cases(foot),]
+
+# nlsList is from the nlme package
+library(nlme)
+
+# Note the grouping operator '|' to specify to fit the curve by gender
+fit_foot_gender <- nlsList(foot_length ~ SSgompertz(age, Asym, b2, b3) | gender,
+            data=foot)
+
+# Load nlshelper to allow a tidy statement of the fit
+library(nlshelper)
+tidy(fit_foot_gender)
+
+# Define two colours for the plot
+cols <- c("#FF4E37FF","#008DFFFF")
+library(scales) # for alpha()
+
+# (from nlshelper package)
+plot_nls(fit_foot_gender, pch=16, cex=0.6, 
+         points.col=alpha(cols, 0.5),
+         lines.col=cols,
+         lwd=2)
+legend("topleft", levels(foot$gender), col=cols, lty=1, bty='n',lwd=2)        
+```
+
+Using the `nlshelper` package, we can test directly whether adding the grouping variable (`gender` in the above example) improves the fit, that is, whether the relationship between foot length and age differs significantly between genders.
+
+To do so, we need the full model (fit with `nlsList`), and a simple `nls` model without the grouping variable, and then use `anova\_nlslist`, like so:
+
+```{r }
+fit_foot_0 <- nls(foot_length ~ SSgompertz(age, Asym, b2, b3),
+            data=foot)
+
+library(nlshelper)
+anova_nlslist(fit_foot_gender, fit_foot_0)
+```
+
+Clearly there is plenty of support for gender affecting the relationship, but that should have been abundantly clear from Fig.~\ref{fig:anthronls}!
+
+
+
+### Predicting {#nlspredict}
+
+It is easy to predict a fitted value for a new value of the predictor variable with the `predict` function. Note that `predict` is a generic function, so if you want to read the help file when applied to `nls`, read `?predict.nls`.
+
+```{r loblollypred}
+# Make dataframe with X variable that we wish to predict Y values for.
+# Make sure it has the same name as in the dataframe we used to fit the model!
+newdat <- data.frame(age=c(18, 30))
+
+# Predict from the fitted model for the new dataframe:
+predict(nls_lob, newdata=newdat)
+```
+
+*Note:* Unlike the predict method for linear models (`predict.lm` in particular), we cannot easily estimate standard errors or confidence intervals for predictions (although `predict.nls` does have an argument `se.fit` which is actually ignored!). 
+
+%In Section~\ref{sec:paramcombboot} we use the bootstrap to produce confidence intervals on predictions.
+
+> **Try this yourself**
+For the `nls\_lob` model, verify that the estimated asymptote ('`Asym`') is equal to the value of the curve when age is infinity (`Inf`). Extra points if you can write a statement that gives `TRUE`, if this is true.
+%predict(nls_lob, data.frame(age=Inf)) == coef(nls_lob)["Asym"]
+
+
+### Confidence intervals
+
+To calculate confidence intervals on the parameters, we can use the base function `confint`, which uses a so-called 'profiling' method. 
+
+```{r }
+confint(nls_lob)
+```
+
+It is important to know that this standard (and preferred) method does not always work, in particular for more complex curves fitted to smaller datasets. In this case, one may use the `confint2` function from the `nlstools` package. A warning here is that these confidence intervals will be approximate, and particularly poor for smaller sample sizes.
+
+```{r }
+library(nlstools)
+confint2(nls_lob)
+```
+
+In this particular example the two methods give very similar confidence intervals. Finally, to make a quick table including the fitted coefficients and their confidence intervals, use `coef` like so,
+
+```{r }
+cbind(Estimate=coef(nls_lob), confint2(nls_lob))
+```
+
+Even more convenient is the `tidy` function from the `broom` package, but in that case the `confint2` function cannot be used.
+
+```{r }
+library(broom)
+tidy(nls_lob, conf.int=TRUE)
+```
+
+For models fit with `nlsList`, you can also use the `tidy` function but only after loading the `nlshelper` package:
+
+```{r }
+library(nlshelper)
+
+fit_foot <- nlsList(foot_length ~ SSgompertz(age, Asym, b2, b3) | gender,
+            data=foot)
+tidy(fit_foot, conf.int=TRUE)
+```
+
+
+
+## Local regression {#loess}
+
+In this section we briefly introduce `loess`, a non-parametric method to fit local regression smoothers to data. This method is useful when you want to illustrate non-linear patterns in the data, but it cannot be used for serious inference. 
+
+In a loess model, you have to set the degree of smoothness yourself, via the `span` argument. Thus you can fit a model with an arbitrary smoothness to it, which makes the method less dependable for inference. The following example demonstrates its use.
+
+Here we also show how to extract predictions, calculate a confidence interval for the prediction, and use both in a plot. Note that this is for illustration only, since the `plot\_loess` function from `nlshelper` can be used to make plots like this, as a later example demonstrates.
+
+The following code produces Fig. \ref{fig:hobartloess}.
+
+```{r hobartloess, opts.label="smallsquare", fig.cap="A loess fit to the Sydney to Hobart race finish time data, including the confidence interval for the fit."}
+# Finish times of the Sydney to Hobart race
+hobart  <- read.csv("sydney_hobart_times.csv")
+
+# Fit the local regression model. Note that we always set the span.
+loes1 <- loess(Time ~ Year, data=hobart, span=0.6)
+
+# Extract predictions from the model, including the standard errors.
+# If we don't give a newdata argument, predictions for the original data 
+# are returned.
+loes1_pred <- predict(loes1, se=TRUE)
+
+# Use transform() to add new variables to the predictions, including
+# lower confidence interval (lci), upper (uci), and Year from the original
+# dataset.
+loes1_pred <- transform(loes1_pred,
+                        lci = fit - 2 * se.fit,
+                        uci = fit + 2 * se.fit,
+                        Year = hobart$Year)
+
+# Make a plot with data, predictions, and confidence interval.
+with(hobart,  plot(Year, Time, pch=16, cex=0.7, col="dimgrey", ylim=c(0, max(Time))))
+with(loes1_pred, {
+  lines(Year, fit)
+  lines(Year, lci, lty=3)
+  lines(Year, uci, lty=3)
+})
+```
+     
+
+
+In general, we use a loess model to visualize patterns in the data. It is also useful to visualize if there is any pattern in the residuals of a non-linear regression, as discussed in Section~\ref{sec:nlsdiagnos}.
+
+The following example makes Fig.~\ref{fig:loessresidplot}, using the fitted model `nlsfitSS` (see Section~\ref{sec:selfstart}).
+
+```{r loessresidplot, opts.label="smallsquare", fig.cap="Residuals against fitted values for the nlsfitSS model." }
+# In order to use plot_loess, we need to make a dataframe with the variables:
+df <- data.frame(resid=residuals(nlsfitSS),
+                 fitted=fitted(nlsfitSS))
+
+# Fit the loess model of residuals against fitted.
+l <- loess(resid ~ fitted, data=df)
+
+# Plot it, add a horizontal line at 0 behind the data.
+# Assign it to an object; see example below.
+rplot <- plot_loess(l,
+           panel.first=abline(h=0))
+```
+
+Finally, the `plot\_loess` function returns the predictions and various other variables. Take a look at the the object `rplot` we saved above:
+
+```{r }
+head(rplot)
+```
+
+Where predvar is the X variable at regular spacing, fit the fitted value, se.fit the standard error, df degrees of freedom of the residual, and lci and uci the lower and upper 95\% confidence interval for the mean.
+
+> **Further reading**
+A comprehensive but readable account on the loess smoother is provided by Jacoby (2000, "Loess: a nonparametric, graphical tool for depicting relationships between variables", Electoral Studies 19, 577-613).
+
+
+## Quantile regression {#rq}
+
+There are surprisingly many situations where you might be interested in relationships other than the 'mean' relationship, which is what you study with the usual regression techniques. 
+
+The next example uses a dataset which includes measurements of plant drought tolerance (P50, more negative values indicate higher tolerance for drought) and mean annual precipitation for 115 plant species. Although significant, the data show no convincing relationship between the two variables in terms of the mean response. It does seem that the lower end (i.e. the minimum P50) is much more constrained by mean annual precipitation. We can thus ask the question: does the 10% quantile of P50 increase with precipitation?
+
+We use `rq` from the `quantreg` package to perform quantile regression.  The argument `tau` sets the quantile to be estimated, for example if `tau = 0.5`, we would perform 'median regression'.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+library(quantreg)
+```
+
+```{r }
+# Read data
+choat <- read.csv("Choat_precipP50.csv")
+
+# A basic quantile regression
+library(quantreg)
+choat_rq <- rq(P50 ~ annualprecip, tau=0.1, data=choat)
+
+# Test for significance, use bootstrapped standard errors
+summary(choat_rq, se="boot")
+```
+
+In the above code, to calculate p-values, we must specify `se="boot"` to `summary.rq`, so that standard errors are calculated with a bootstrap. 
+
+As with `lm`, `rq` also returns a slope and intercept when you run `coef(f1)`, and you can also use `abline` to add a line to a plot. We can also fit multiple quantiles at once, by passing a vector of `tau` to `rq`. The result can be added to a plot with a simple `for` loop. The next example makes Fig.~\ref{fit:choatplot2}
+
+```{r choatplot2, opts.label="wide", fig.cap="The Choat dataset with the mean response fitted (left panel), or a range of quantiles (right panel).", echo=-1}
+par(mfrow=c(1,2))
+
+with(choat, plot(annualprecip, P50, pch=16, col="dimgrey"))
+abline(lm(P50 ~ annualprecip, data=choat))
+
+# fit multiple quantiles
+choat_rq_2 <- rq(P50 ~ annualprecip, tau=c(0.1,0.25,0.5,0.75,0.9), data=choat)
+ 
+# store coefficients (inspect p, it is a matrix)
+p <- coef(choat_rq_2)
+
+# Plot
+with(choat, plot(annualprecip, P50, pch=16, col="dimgrey"))
+
+# Add the quantiles in thin red lines, with a loop
+for(i in 1:ncol(p))abline(p[,i], col="red3")
+legend("bottomright", c("10,25,50,72,90%"), col="red3", title="Quantiles")
+```
+
+> **Try this yourself**
+The example above shows how to add multiple quantile regressions to a plot. When you fit a single quantile (as in the first example with `rq`), you can just use `abline` to add the model to a plot. Try this with the `choat\_rq` model fitted in the previous example. 
+
+
+
+### Confidence intervals {#rqci}
+
+In the next example we show how to calculate confidence intervals for quantile regression fits and add it to a plot. For this example we use the Flux tower dataset, and are interested in the upper limit of relative humidity at a given air temperature. 
+
+The following code makes Fig.~\ref{fig:fluxplotrq}.
+
+```{r fluxplotrq, opts.label="smallsquare", fig.cap="Relative humidity (RH) and air temperature (Tair)", echo=-1}
+
+# Half-hourly met observations on top of a tower in a forest
+flux <- read.csv("Fluxtower.csv")
+
+# Quantile regression of relative humidity on air temperature, estimate the 90% quantile
+flux_rq <- rq(RH ~ Tair, tau=0.9, data=flux)
+
+# Set up a 'prediction' dataframe, we will obtain fitted values for these
+# values of Tair.
+preddfr <- data.frame(Tair=seq(0, max(flux$Tair, na.rm=TRUE), length=101))
+
+# Predict from the fitted quantile regression model, and return a 
+# confidence interval. Look at the 'type' argument in ?rq for options
+# used to calculate the confidence interval (here we use the default).
+FH2O_90 <- as.data.frame(predict(flux_rq, preddfr, interval="confidence"))
+preddfr <- cbind(preddfr, FH2O_90)
+
+# Plot symbols
+with(flux,plot(Tair, RH, pch=16, col="dimgrey", cex=0.8))
+
+# Add lines
+with(preddfr,{
+  lines(Tair, fit)
+  lines(Tair, lower, lty=3)
+  lines(Tair, higher, lty=3)
+})
+```
+
+
+
+### Non-linear quantile regression {#rqnonlinear}
+
+Finally we can combine two techniques introduced in this chapter: non-linear regression and quantile regression. Using `nlrq` from `quantreg`, we can perform non-linear quantile regression.
+
+The following example shows how to estimate quantiles of growth over time - similar to growth charts for childrens' heights - in this case for foot length against age.
+
+First we read and prepare the data, and fit a single model for closer inspection.
+
+```{r }
+# for nlrq
+library(quantreg) 
+
+# The anthropometry dataset, with foot length, age, and sex
+foot <- read.csv("anthropometry.csv")
+foot <- foot[complete.cases(foot),]
+
+# Use male subset only for this example
+foot_male <- subset(foot, gender == "male")
+
+# Fitting an upper quantile, can be interpreted as the 90% quantile of
+# foot length at a given age (i.e. only 10% of children would have feet
+# longer than this at some age).
+foot90 <- nlrq(foot_length ~ SSgompertz(age, Asym, b2, b3),
+               tau=0.9,
+              data=foot_male)
+```
+
+There are very few things you can do with the fitted model, other than predicting from it (see below, but no confidence intervals!), and summarizing the fit, which tests each coefficient against zero (not very informative in this case, see for yourself: `summary(foot90)`). The coefficients can be extracted with, `coef(foot90)`.
+
+Now we are ready to make our growth chart. To do this, we loop through a few values of `tau`, each time adding a line to a plot.
+
+The following code makes Fig.~\ref{fig:footexample3}.
+
+```{r footexample3, opts.label="smallsquare", fig.cap="Growth chart for foot length (mm) against childrens' age (years)"}
+# Plot symbols, very small
+with(foot_male,
+     plot(age, foot_length, pch=16, cex=0.2, col="grey",
+          xlim=c(0,22), ylim=c(100,320)))
+
+# Loop through desired quantiles ...
+for(TAU in c(0.1, 0.5, 0.9)){
+  
+  # ... use them in a non-linear quantile regression
+  fit_mod <- nlrq(foot_length ~ SSgompertz(age, Asym, b2, b3),
+               tau=TAU,
+              data=foot_male)
+  
+  # Set up x-values to predict over
+  xpred <- seq(min(foot$age), max(foot$age), length=101)
+  
+  # And add a line to the plot
+  lines(xpred, predict(fit_mod, data.frame(age=xpred)))
+  
+  # Label the curve on the right (y-value is predicted from the curve)
+  text(21, predict(fit_mod, data.frame(age=max(foot_male$age))),
+       labels=as.character(TAU))
+}
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

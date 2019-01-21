@@ -1,0 +1,181 @@
+
+```{r echo=FALSE, cache=FALSE, results="hide"}
+opts_chunk$set(echo=TRUE)
+set.seed(1234)
+palette("default")
+```
+
+
+# Logistic regression {#logistic}
+
+## Generalized Linear Models {#glm}
+  
+So far we have looked at modelling a continuous response to one or more factor variables (ANOVA), one or more continuous variables (multiple regression), and combinations of factors and continuous variables. We have also assumed that the predictors are normally distributed, and that, as a result, the response will be, too. We used a log-transformation in one of the examples to meet this assumption.
+  
+In some cases, there is no obvious way to transform the response or predictors, and in other cases it is nearly impossible. Examples of difficult situations are when the response represents a count or when it is binary (i.e., has only two possible outcomes).  
+  
+Generalized linear models (GLMs) \footnote{The term *General Linear Model*, which you may see used sometimes, is not the same as a GLM, although some statistics packages use GLM to mean general linear model, and use another term for generalized linear model.} extend linear models by allowing non-normally distributed errors. The basic idea is as follows. Suppose you have a response variable $y$ and one or more predictors (independent variables) that can be transformed into a linear predictor in the same way as in linear models, which we call $\eta$. Then $y$ is modelled as some distribution with mean $\mu$, which itself is related to the predictors through the linear predictor and a *link*-function, $g$. Formally,
+  
+$$
+g(\mu) = \eta
+{#eqn:glm}
+$$
+      
+In practice, the distribution for $y$ and the link-function are chosen depending on the problem. Logistic regression is an example of a GLM, with a binomial distribution and the link-function
+
+\[
+\log\left(\frac{\mu}{1-\mu}\right) = \eta
+\]
+    
+Another common GLM uses the Poisson distribution, in which case the most commonly used link-function is $\log$. This is also called Poisson regression, and it is often used when the response represents counts of items. In the following, we will demonstrate two common GLMs: logistic regression and Poisson regression.
+    
+### Logistic Regression {#logistic}
+      
+The Titanic dataset (see Section \@ref(titanic)) contains information on the survival of passengers on the Titanic, including ages, gender and passenger class. Many ages are missing, and for this example we will work with only the non-missing data (but note that this is not always the best choice). Refer to Section \@ref(workingmissing) for working with and removing missing values.
+      
+
+```{r }
+# Read tab-delimited data
+titanic <- read.table("titanic.txt", header=TRUE)
+
+# Complete cases only (drops any row that has a missing value anywhere)
+titanic <- titanic[complete.cases(titanic),]
+
+# Construct a factor variable based on 'Survived'
+titanic$Survived <- factor(ifelse(titanic$Survived==1, "yes", "no"))
+
+# Look at a standard summary
+summary(titanic)
+```
+      
+The idea here is to find out whether the probability of survival depends on the passenger's `Age`, `Sex` and `PClass` (passenger class). Before we proceed, it is always a good idea to start by visualizing the data to find out what we are dealing with (and to make sure we will interpret the model output correctly). If we plot two factor variables against each other, R produces a 'mosaic plot', as the following example demonstrates (Fig. \@ref(fig:facfacplot)).
+
+```{r facfacplot, fig.width=8, out.width="0.8\\textwidth", fig.cap="Probability of survival versus passenger class and sex for the titanic data."}
+par(mfrow=c(1,2), mgp=c(2,1,0))
+with(titanic, plot(Sex, Survived, ylab="Survived", xlab="Sex"))
+with(titanic, plot(PClass, Survived, ylab="Survived", xlab="Passenger class"))
+```
+
+In logistic regression we model the probability of the "1" response (in this case the probability of survival). Since probabilities are between 0 and 1, we use a logistic transform of the linear predictor, where the linear predictor is of the form we would like to use in the linear models above. If $\eta$ is the linear predictor and $Y$ is the binary response, the logistic model takes the form,
+
+$$
+P(Y=1) = \frac{1}{1+e^{-\eta}}
+{#eqn:logit}
+$$
+
+These models are easily fit with `glm`. It has a similar interface to `lm` with a couple of additional features. To fit a logistic regression to the (modified) titanic data we use,
+
+```{r }
+# Fit a logistic regression
+fit11 <- glm(Survived ~ Age + Sex + PClass, data=titanic, family=binomial)
+summary(fit11)
+```
+
+The text `family=binomial` specifies that we wish to perform a *logistic regression*. The `summary` shows that all terms are significant. Interpreting the coefficients has to be done with care. For binary factors (such as `Sex`) they can be interpreted as a log-odds ratio, but this is beyond the scope of this text. The signs of the coefficients tell us about how the factor variable affects the probability of survival. In this example, all of them are negative so we can conclude: 1) an increase in age decreases the chance of survival, 2) being male decreases survival, 3) being in 2nd or 3rd class decrease survival with 3rd being worse than 2nd.
+
+XXX plot effects!
+
+#### Tabulated data {#tabuldataglm}
+
+Sometimes the available data are not at an individual level (as in the Titanic example above), but counts have already been aggregated into various factors.
+
+We will first aggregate the Titanic data into a table of counts, and then show how we can still fit a `glm` for a logistic regression.
+
+Suppose instead of age we only know the adult status of passengers.  
+```{r }
+titanic$AgeGrp <- factor(ifelse(titanic$Age>18, "Adult", "Child"))
+```
+
+We can then count the numbers of survivors and non-survivors,  
+```{r titanic2make, tidy=FALSE}
+# Count the number of survivors and non-survivors by various factor combinations
+titanic2 <- aggregate(cbind(Survived=="yes",Survived=="no") ~ AgeGrp+Sex+PClass, 
+                      data=titanic, sum)
+
+# Tidy up the names
+names(titanic2)[4:5] <- c("survivors", "nonsurvivors")
+
+# Inspect first rows
+head(titanic2)
+```
+
+Use the following example to fit a logistic regression when your data looks like the above. We will again plot the fitted effects (Fig. \@ref(fig:titaniceffects2)). As you can see, the conclusions are the same as before.
+
+```{r titaniceffects2, opts.label="wide", fig.cap='Fitted effects for the Titanic logistic regression example, when fitted using tabulated data.', tidy=FALSE}
+fit12 <- glm(cbind(survivors, nonsurvivors) ~ AgeGrp + Sex + PClass, 
+             data=titanic2, family=binomial)
+summary(fit12)
+
+# Effects plot
+#plot(allEffects(fit12))
+```
+
+
+
+
+
+### Poisson regression
+
+For this example we return to the Age and Memory dataset. In this dataset, the response variable is a count of the number of words recalled by subjects using one of four different methods for memorization. When the response variable represents a count, a Poisson regression is often appropriate. 
+
+The following code performs a Poisson regression of the Age and Memory data. See Fig. \@ref(fig:glm1) for the fitted effects.
+
+```{r glm1, opts.label="smallsquare", fig.cap='Fitted effects for a Poisson regression of the Age and Memory data. Note the log scale of the y-axis.'}
+# Fit a generalized linear model
+fit13 <- glm(Words~Age*Process, data=memory, family=poisson)
+
+# Look at an ANOVA of the fitted model, and provide likelihood-ratio tests.
+Anova(fit13)
+
+
+visreg(fit13, "Process", by="Age", overlay=T, scale="response", ylim=c(0,30), rug=FALSE)
+
+
+# Plot fitted effects
+#plot(allEffects(fit13))
+```
+
+Remember that when we fit this as a linear model (using `lm`), we found that the interaction term was highly significant. This time, when we used Poisson regression, the interaction is no longer significant. However, the default link for Poisson regression is $\log$. This means that the mean $\mu$ in this case depends on the factors `Age` and `Process` in a multiplicative fashion, whereas in the linear model (using `lm`) it was additive without the interaction. In other words, we have now modelled the interaction implicitly by using the $\log$ link function.
+
+```{r}
+
+fit3 <- lm(Words ~ Age + Process + Age:Process, data=memory)
+
+
+sim_histograms <- function(model){
+  s <- simulate(model, 1000, seed=1)
+  
+  # Select rows
+  s_old <- s[which(memory$Process == "Intentional" & memory$Age == "Older"),]
+  s_young <- s[which(memory$Process == "Intentional" & memory$Age == "Younger"),]
+  
+  s_old <- unname(unlist(s_old))
+  s_young <- unname(unlist(s_young))
+  
+  dfr <- data.frame(Words_sim = c(s_old, s_young),
+                    Age = c(rep("Old", length(s_old)), rep("Young", length(s_young))))
+  
+  library(ggplot2)
+  
+  ggplot(dfr, aes(x=Words_sim, fill = Age)) + 
+    geom_histogram(alpha=0.5, position="identity", binwidth = 1) +
+    theme_tufte() +
+    scale_fill_tableau()
+  
+  # library(dplyr)
+  # filter(memory, Process == "Intentional") %>%
+  #   group_by(Age) %>%
+  #   summarize(Words = mean(Words)) %>% pull
+  # 
+  # with(subset(memory, Process == "Intentional"), tapply(Words, Age, mean))
+
+}
+
+g1 <- sim_histograms(fit13) + theme(legend.position="none") +
+  labs(title="Poisson regression")
+g2 <- sim_histograms(fit3) + labs(title="OLS")
+ggpubr::ggarrange(g1, g2) %>% plot
+
+```
+
+

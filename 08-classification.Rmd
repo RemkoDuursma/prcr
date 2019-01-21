@@ -93,3 +93,51 @@ featurePlot(x = cereals[, 4:12],
 
 
 
+## Visualizing classifiers
+
+
+```{r eval=FALSE}
+
+
+library(ggplot2)
+library(ggthemes)
+
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, col=Species)) +
+  geom_point(size=3) +
+  theme_tufte() +
+  scale_colour_tableau() +
+  lims(x=c(4,8), y=c(2,4.5))
+
+library(MASS)
+lda1 <- lda(Species ~ Sepal.Length + Sepal.Width, data=iris)
+
+n <- 101
+out <- expand.grid(Sepal.Length = seq(4,8, length=n),
+                   Sepal.Width = seq(2, 4.5, length=n))
+out$pred_species <- predict(lda1, newdata = out)$class
+#with(out, plot(Sepal.Length, Sepal.Width, col=pred_species, pch=16))
+
+ggplot(out, aes(x = Sepal.Length, y = Sepal.Width, fill=pred_species)) +
+  geom_tile() +
+  scale_fill_tableau() +
+  theme_tufte() 
+
+
+library(randomForest)
+rf1 <- randomForest(Species ~ Sepal.Length + Sepal.Width, data=iris)
+
+n <- 101
+out <- expand.grid(Sepal.Length = seq(4,8, length=n),
+                   Sepal.Width = seq(2, 4.5, length=n))
+out$pred_species <- predict(rf1, newdata = out)
+#with(out, plot(Sepal.Length, Sepal.Width, col=pred_species, pch=16))
+
+ggplot(out, aes(x = Sepal.Length, y = Sepal.Width, fill=pred_species)) +
+  geom_tile() +
+  scale_fill_tableau() +
+  theme_tufte()
+
+
+
+```
+

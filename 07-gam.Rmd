@@ -1,0 +1,39 @@
+
+
+# Generalized additive models {#gam}
+
+In this section we very briefly introduce generalized additive models (GAMs), with the `mgcv` package. 
+Like loess regression, we use GAMs to visualize highly non-linear patterns in the data. However unlike loess, we can use GAMs for inference on smoothness terms, as well as factor variables, and we can even add random effects and account for non-normal errors (hence the 'generalized'). All of these topics are however well outside the scope of this chapter.
+
+The most defining aspect of a GAM is that the smoothness of the model is semi-automatically estimated. Basically, the algorithm finds the smoothest representation that is supported by the data. The user does have to set a 'maximum' degrees of freedom that is to be spent on the smooth terms, but this is generally less influential than the `span` parameter in loess regression. Another aspect is that a number of smoothing models can be chosen, but here we restrict ourselves to 'cubic splines' only.
+
+The following example fits a cubic spline to the Howell height data. Note the use of `by=sex` to fit the spline separately for each sex. We use the `visreg` package as a very convenient method to plot the fitted model.
+
+```{r howellgam, opts.label="smallsquare",fig.cap="Generalized additive model (GAM) to the Howell height data, fit by sex, and plotted with visreg."}
+howell <- read.csv("howell.csv")
+
+# It may still be necessary to change k.
+library(mgcv)
+g <- gam(height ~ s(age, by=sex, k=7), data=howell)
+
+library(visreg)
+visreg(g, "age", by="sex", overlay=TRUE, ylab="height (cm)", xlab="age (years)")
+```
+
+
+> **Further reading**
+The book by Simon Wood, the developer of the `mgcv` package, is the standard text (Wood, 2006, 'Generalized Additive Models').
+
+
+
+> **Try this yourself**
+You can also fit multiple splines, one for each predictor variable. On the fitted object, you can then use `anova` to see if all or any terms are significant. Try the following example. 
+\begin{verbatim}
+g2 <- gam(height ~ s(age, k=5) + s(weight, k=5), data=howell)
+anova(g2)
+
+# Use visreg to make a 3D plot:
+library(visreg)
+visreg2d(g2, "age", "weight", plot.type="rgl")
+\end{verbatim}
+
