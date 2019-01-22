@@ -1,0 +1,210 @@
+# Appendix: catalogue of self-starting functions for non-linear regression {#nonlinearappendix}
+
+
+```{r, echo=FALSE}
+ss_plot_i <- function(model, params, xlim, add=FALSE, inputname="input", ...){
+  
+  x <- seq(xlim[1], xlim[2], length=501)
+  li <- list(input=x)
+  names(li)[1] <- inputname
+  l <- c(li, params)
+  y <- do.call(model, l)
+  
+  if(!add){
+    plot(x,y, type='l', ...)
+  } else {
+    lines(x,y, ...)
+  }
+}
+make_legend <- function(p){
+  n <- length(p[[1]])
+  txt <- c()
+  for(i in 1:n){
+    txt[i] <- paste(paste(names(p), "=", sapply(p, "[", i)), collapse=",")
+  }
+  txt
+}
+ss_plot <- function(model, params, legend="bottomright", ...){
+  n <- length(params[[1]])
+  
+  par(xpd=FALSE)
+  fn <- function(i, ...)ss_plot_i(model, lapply(params, "[", i), ...)
+  
+  fn(1, col=palette()[1], ...)
+  for(j in 2:n){
+    fn(j, add=TRUE, col=palette()[j],...)
+  }
+  
+  txt <- make_legend(params)
+  par(xpd=TRUE)
+  legend("bottom", txt, lty=1, col=palette(), bty='n', cex=1.1, inset=-0.25)
+}
+get_help_title <- function(ss){
+  rdbfile <- file.path(find.package("stats"), "help", "stats")
+  rdb <- tools:::fetchRdDB(rdbfile, key = ss)
+  rdb[[1]][[1]][1]
+}
+
+palette(c("blue","red","forestgreen"))
+```
+
+## SSasymp
+
+`r get_help_title("SSasymp")`
+
+
+$$Y = Asym+(R0-Asym)*exp(-exp(lrc)*input)$$
+
+```{r, fig.width=9, fig.height=5, echo=FALSE}
+par(mfrow=c(1,3), mar=c(8,4,0.5,1), mgp=c(2,0.5,0), tcl=0.2, cex.axis=0.8, cex.lab=1.1,
+    oma=c(0,0,2,0))
+ss_plot(SSasymp, list(Asym=c(10,10,10), R0=c(6,4,2), lrc=c(0.1,0.1,0.1)), xlim=c(0,6), ylim=c(0,10))
+ss_plot(SSasymp, list(Asym=c(10,10,10), R0=c(2,2,2), lrc=c(3,1,0.025)), xlim=c(0,6), ylim=c(0,10))
+ss_plot(SSasymp, list(Asym=c(2,7,10), R0=c(4,4,4), lrc=c(1,1,1)), xlim=c(0,6), ylim=c(0,10))
+```
+
+## SSasympOff
+`r get_help_title("SSasympOff")`
+
+$$Y = Asym*(1 - exp(-exp(lrc)*(input - c0)))$$
+
+```{r, fig.width=9, fig.height=5, echo=FALSE}
+par(mfrow=c(1,3), mar=c(8,4,0.5,1), mgp=c(2,0.5,0), tcl=0.2, cex.axis=0.8, cex.lab=1.1,
+    oma=c(0,0,2,0))
+ss_plot(SSasympOff, list(Asym=c(10,10,10), c0=c(1,2,3), lrc=c(0.1,0.1,0.1)), "topleft", xlim=c(0,10), ylim=c(0,12))
+ss_plot(SSasympOff, list(Asym=c(6,8,10), c0=c(1,1,1), lrc=c(1,1,1)), xlim=c(0,6), ylim=c(0,10))
+ss_plot(SSasympOff, list(Asym=c(10,10,10), c0=c(1,1,1), lrc=c(0.1,1,2)), xlim=c(0,6), ylim=c(0,10))
+```
+
+
+## SSasympOrig
+`r get_help_title("SSasympOrig")`
+
+$$Y = Asym*(1 - exp(-exp(lrc)*input))$$
+
+```{r, fig.width=9, fig.height=5, echo=FALSE}
+par(mfrow=c(1,3), mar=c(8,4,0.5,1), mgp=c(2,0.5,0), tcl=0.2, cex.axis=0.8, cex.lab=1.1,
+    oma=c(0,0,2,0))
+ss_plot(SSasympOrig, list(Asym=c(6,8,10), lrc=c(1,1,1)), xlim=c(0,6), ylim=c(0,10))
+ss_plot(SSasympOrig, list(Asym=c(10,10,10), lrc=c(0.1,1,2)), xlim=c(0,6), ylim=c(0,10))
+```
+
+
+## SSbiexp
+`r get_help_title("SSbiexp")`
+
+$$Y = A1*exp(-exp(lrc1)*input)+A2*exp(-exp(lrc2)*input)$$
+
+Use this model when a simple exponential model ($A1*exp(-exp(lrc1)*input)$) doesn't quite fit. For the simple exponential model, you won't need a self-starting function as even poor starting values will result in convergence. Also, it can be linearized after taking the log of both the predictor and the response variable. 
+
+```{r, fig.width=9, fig.height=5, echo=FALSE}
+par(mfrow=c(1,3), mar=c(8,4,0.5,1), mgp=c(2,0.5,0), tcl=0.2, cex.axis=0.8, cex.lab=1.1,
+    oma=c(0,0,2,0))
+ss_plot(SSbiexp, list(A1=c(5,5,5), lrc1=c(1,1,1), A2=c(1,5,10), lrc2=c(0.1,0.1,0.1)), "topright", 
+        xlim=c(0,10), ylim=c(0,5))
+ss_plot(SSbiexp, list(A1=c(1,1,1), lrc1=c(0.005,0.2,0.5), A2=c(-1,-1,-1), lrc2=c(2,2,2)), "topright", 
+        xlim=c(0,5), ylim=c(-1,1))
+
+```
+
+
+## SSmicmen
+
+`r get_help_title("SSmicmen")`
+
+$$ Y = Vm*input/(K+input)$$
+
+
+```{r, fig.width=9, fig.height=5, echo=FALSE}
+par(mfrow=c(1,3), mar=c(8,4,0.5,1), mgp=c(2,0.5,0), tcl=0.2, cex.axis=0.8, cex.lab=1.1,
+    oma=c(0,0,2,0))
+ss_plot(SSmicmen, list(Vm=c(200, 200, 200), K=c(0.05, 0.1, 0.2)), xlim=c(0,1), ylim=c(0,200))
+ss_plot(SSmicmen, list(Vm=c(100, 150, 200), K=c(0.1, 0.1, 0.1)), xlim=c(0,1), ylim=c(0,200))
+```
+
+
+## SSlogis
+
+`r get_help_title("SSlogis")`
+
+$$Y = Asym/(1+exp((xmid-input)/scal))$$
+
+
+```{r, fig.width=9, fig.height=5, echo=FALSE}
+par(mfrow=c(1,3), mar=c(8,4,0.5,1), mgp=c(2,0.5,0), tcl=0.2, cex.axis=0.8, cex.lab=1.1,
+    oma=c(0,0,2,0))
+ss_plot(SSlogis, list(Asym=c(100,100,100), xmid=c(10,20,30), scal=c(2,2,2)), xlim=c(0,60), ylim=c(0,100))
+ss_plot(SSlogis, list(Asym=c(50,75,100), xmid=c(20,20,20), scal=c(2,2,2)), xlim=c(0,60), ylim=c(0,100))
+ss_plot(SSlogis, list(Asym=c(100,100,100), xmid=c(20,20,20), scal=c(1,2,4)), xlim=c(0,60), ylim=c(0,100))
+```
+
+
+## SSgompertz
+
+`r get_help_title("SSgompertz")`
+
+$$Y = Asym*exp(-b2*b3^x)$$
+
+Note: the parameter $b3$ should be less than 1.
+
+```{r, fig.width=9, fig.height=5, echo=FALSE}
+par(mfrow=c(1,3), mar=c(8,4,0.5,1), mgp=c(2,0.5,0), tcl=0.2, cex.axis=0.8, cex.lab=1.1,
+    oma=c(0,0,2,0))
+ss_plot(SSgompertz, list(Asym=c(40,50,60), b2=c(2,2,2), b3=c(0.8, 0.8, 0.8)),
+        xlim=c(0,30), ylim=c(0,60), inputname="x")
+ss_plot(SSgompertz, list(Asym=c(50,50,50), b2=c(1,2.5,5), b3=c(0.8, 0.8, 0.8)),
+        xlim=c(0,30), ylim=c(0,60), inputname="x")
+ss_plot(SSgompertz, list(Asym=c(50,50,50), b2=c(5,5,5), b3=c(0.4, 0.7, 0.8)),
+        xlim=c(0,30), ylim=c(0,60), inputname="x")
+```
+
+## SSweibull
+
+`r get_help_title("SSweibull")`
+
+$$Y = Asym-Drop*exp(-exp(lrc)*x^pwr)$$
+
+Note: in the plot below, the \code{Asym} parameter is not varied, but as before, it represents the asymptote.
+
+```{r, fig.width=9, fig.height=5, echo=FALSE}
+par(mfrow=c(1,3), mar=c(8,4,0.5,1), mgp=c(2,0.5,0), tcl=0.2, cex.axis=0.8, cex.lab=1.1,
+    oma=c(0,0,2,0))
+ss_plot(SSweibull, list(Asym=c(150,150,150), Drop=c(50,100,150), lrc=c(-6, -6, -6), pwr=c(2.5, 2.5, 2.5)),
+        inputname="x",xlim=c(0,30), ylim=c(0,150))
+ss_plot(SSweibull, list(Asym=c(150,150,150), Drop=c(150,150,150), lrc=c(-2, -4, -6), pwr=c(2.5, 2.5, 2.5)),
+        inputname="x",xlim=c(0,30), ylim=c(0,150))
+ss_plot(SSweibull, list(Asym=c(150,150,150), Drop=c(150,150,150), lrc=c(-6, -6, -6), pwr=c(2.2, 2.5, 2.8)),
+        inputname="x",xlim=c(0,30), ylim=c(0,150))
+
+```
+
+
+## SSfpl
+
+
+`r get_help_title("SSfpl")`
+
+$$Y = A+(B-A)/(1+exp((xmid-input)/scal))$$
+
+
+```{r, fig.width=9, fig.height=5, echo=FALSE}
+par(mfrow=c(1,3), mar=c(8,4,0.5,1), mgp=c(2,0.5,0), tcl=0.2, cex.axis=0.8, cex.lab=1.1,
+    oma=c(0,0,2,0))
+ss_plot(SSfpl, list(A=c(0,5,10), B=c(20,20,20), xmid=c(20,20,20), scal=c(2,2,2)), 
+        xlim=c(0,50), ylim=c(0,20))
+ss_plot(SSfpl, list(A=c(5,5,5), B=c(10,15,20), xmid=c(20,20,20), scal=c(2,2,2)), 
+        xlim=c(0,50), ylim=c(0,20))
+ss_plot(SSfpl, list(A=c(5,5,5), B=c(20,20,20), xmid=c(10,20,30), scal=c(2,2,2)), 
+        xlim=c(0,50), ylim=c(0,20))
+```
+
+
+```{r, fig.width=9, fig.height=5, echo=FALSE}
+par(mfrow=c(1,3), mar=c(8,4,0.5,1), mgp=c(2,0.5,0), tcl=0.2, cex.axis=0.8, cex.lab=1.1,
+    oma=c(0,0,2,0))
+ss_plot(SSfpl, list(A=c(5,5,5), B=c(20,20,20), xmid=c(20,20,20), scal=c(1,2,4)), 
+        xlim=c(0,50), ylim=c(0,20))
+
+```
+
+

@@ -159,7 +159,11 @@ dir(pattern="[.]csv", ignore.case=TRUE)
 
 ## Packages {#packages}
 
-Throughout this tutorial, we will focus on the basic functionality of R, but we will also call on a number of add-on 'packages' that include additional functions. We will tell you which packages you need as they are called for. If, after running code from the book, you get "Error: could not find function 'example'", you can look up the function in the table at the end of the chapter to find out which package it comes from. You can find a full list of packages available for R on the CRAN site (<http://cran.r-project.org/>, navigate to 'Packages'), but be warned -- it's a very long list! A more palatable index of packages is provided at <http://r-pkg.org/>. 
+Throughout this tutorial, we will focus on the basic functionality of R, but we will also call on a number of add-on 'packages' that include additional functions. These packages need to be installed (downloaded) before first use.
+
+### Install from CRAN
+
+You can find a full list of packages available for R on the CRAN site (<http://cran.r-project.org/>, navigate to 'Packages'), but be warned -- it's a very long list! A more palatable index of packages is provided at <http://r-pkg.org/>. 
 
 In RStudio, click on the `Packages` tab in the lower-right hand panel. There you can see which packages are already installed, and you can install more by clicking on the `Install` button.
 
@@ -186,9 +190,9 @@ library(help=gplots)
 ```
 
 
-### Install packages not on CRAN
+### Install from git hosting sites
 
-The previous section applies to packages that have been uploaded to CRAN (the central repository for R packages). It is however also quite common for R packages to be available on Github or Bitbucket, which cannot be installed via `install.packages`. Instead, do:
+The previous section applies to packages that have been uploaded to CRAN (the central repository for R packages). It is however also quite common for R packages to be available on Github or Bitbucket - two large web services that host source code under *git* version control. For repositories that contain R packages, these cannot be installed via `install.packages`. Instead, do:
 
 ```{r eval=FALSE}
 library(remotes)
@@ -199,6 +203,18 @@ This installs an R package from www.bitbucket.org. Similarly, `install_github` i
 
 For this command to work, your system needs to be able to compile R packages from source. Windows users will need to install [Rtools](https://cran.r-project.org/bin/windows/Rtools/).
 
+
+### Updating R and package locations
+
+By default, `install.packages` places the packages in a subdirectory of your R installation, which means that when you update R, you have to reinstall all packages - unless you follow these instructions. To check where your packages are being installed to, type:
+
+```{r eval=FALSE}
+.libPaths()
+```
+
+You may see more than one path listed - packages will be installed to the first directory. It is  generally a good idea to make a custom location for all your packages, for example under `c:/RLIBRARY`, or `~/rpackages`, or some other location independent of where R is installed.
+
+To do this, you have to add an environment variable `R_LIBS`, that points to your custom directory. If you don't know how to do this, simply do a web search for 'add environment variable windows/mac'. The next time you open Rstudio, `.libPaths()` should show the custom directory.
 
 
 ### Updating packages

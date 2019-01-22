@@ -27,7 +27,7 @@ more practical approach, requiring no math/stat/computer science background
 
 visualizing data
 - base vs. ggplot2.
-- here mostly ggplot2 unless base is easier (less code)
+- here mostly ggplot2 unless base is easier (less code), for example curve()
 - no introduction to ggplot2, see these resources (why copy them?)
 - see appendix for base graphics
 - learn from examples! and use google effectively
