@@ -1,5 +1,5 @@
 --- 
-title: "A Practical Guide to Regression and Classification with R"
+title: "A Learning Guide to R: data, analytical, and programming skills."
 author: "Remko Duursma"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
@@ -90,10 +90,14 @@ knit_hooks$set(output = function(x, options) {
 })
 
 # Figure size templates
-opts_template$set(smallsquare = list(fig.height = 5, fig.width = 5, fig.align="center", out.width=".6\\linewidth"),
-                  wide        = list(fig.height = 5, fig.width = 9, fig.align="center", out.width=".8\\linewidth"),
-                  largesquare = list(fig.height = 8, fig.width = 8, fig.align="center", out.width=".8\\linewidth"),
-                  extrawide = list(fig.height = 4, fig.width = 10, fig.align="center", out.width=".9\\linewidth"))
+opts_template$set(smallsquare = list(fig.height = 5, fig.width = 5, 
+                                     fig.align="center", out.width=".6\\linewidth"),
+                  wide        = list(fig.height = 5, fig.width = 9, 
+                                     fig.align="center", out.width=".8\\linewidth"),
+                  largesquare = list(fig.height = 8, fig.width = 8, 
+                                     fig.align="center", out.width=".8\\linewidth"),
+                  extrawide = list(fig.height = 4, fig.width = 10,
+                                     fig.align="center", out.width=".9\\linewidth"))
 ```
 
 

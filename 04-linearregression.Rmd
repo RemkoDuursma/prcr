@@ -112,7 +112,6 @@ In other applications we are not so much interested in testing for difference, b
 
 **Testing: p-values and confidence intervals**
 
-
 **Predicting: cross-validation**
 
 The real quality of a predictive model is assessed by a completely independent test dataset. We can use the model to predict new outcomes, given the test data, and compare the predictions to the true values. In practice, however, a truly independent test dataset is rarely if ever available. Instead, we can use a trick to pretend we have lots of 'independent' test datasets: split the original data into a 'training' set (the data used to fit the model), and a 'test' set (the data used to test the model).
@@ -123,6 +122,18 @@ Rather than treat this topic exhaustively, we will show one very popular method 
 
 (separate chapter with p-values, confidence intervals? Or mixed in here?
 cross validation also applies to non-linear models, classification)
+
+
+Sometimes models are better for prediction of new cases, at the expense of a slightly worse fit for the data used to fit them. Ridge regression is an example (section on shrinkage?).
+
+```{r eval=FALSE}
+# shrink package, works on lm coefficients
+# https://www.rdocumentation.org/packages/shrink/versions/1.2.1/topics/shrink
+# MASS::lm.ridge
+# ridge with glmnet
+# https://drsimonj.svbtle.com/ridge-regression-with-glmnet
+
+```
 
 
 

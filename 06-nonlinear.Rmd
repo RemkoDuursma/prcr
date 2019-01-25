@@ -9,6 +9,42 @@ Before we delve into non-linear regression, we first briefly describe when each 
 
 In general, as the name suggests, non-linear methods are to be used when the relationship between your response variable and predictor is not linear. 
 
+#### Packages used
+
+
+Packages used in this chapter. The `nls` function and associated methods are in the `stats` package, which is base R, and therefore not mentioned in this table.
+
++------------------+------------------------------------------------+
+| Package          | Key functions                                   |
++==================+================================================+
+| `nlstools`       |   `overview`, `confint2`                        |
++------------------+------------------------------------------------+
+| `nlshelper`      |  `plot_nls`, `anova_nlslist`, `tidy.nlsList`    |
++------------------+------------------------------------------------+
+| `nlme`           |  `nlsList`                                      |
++------------------+------------------------------------------------+
+| `car`            |   `qqPlot`, `bootCase`                          |
++------------------+------------------------------------------------+
+| `mgcv`           |   `gam`                                         |
++------------------+------------------------------------------------+
+| `quantreg`       |   `rq`, `nlrq`                                  |
++------------------+------------------------------------------------+
+
+```{r echo=FALSE, message=FALSE}
+suppressPackageStartupMessages(library(nlshelper))
+suppressPackageStartupMessages(library(car))
+suppressPackageStartupMessages(library(nlme))
+suppressPackageStartupMessages(library(mgcv))
+suppressPackageStartupMessages(library(quantreg))
+suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(ggthemes))
+suppressPackageStartupMessages(library(lgrdata))
+
+```
+
+
+
 #### Transformations
 
 In this case, one common approach is to transform the predictor and/or response so as to linearize the relationship between the two. When this is possible, it is usually the preferred approach. For example, you may find that your data can be well described with an equation of the form:
@@ -42,24 +78,6 @@ knitr::include_graphics("screenshots/lmflow_3.png")
 *A simple flow chart to select regression methods.*
 
 
-
-Packages used in this chapter. The `nls` function and associated methods are in the `stats` package, which is base R, and therefore not mentioned in this table.
-
-+-------------------------------------------------------------------+
-| Package          | Key functions                                   |
-+===================================================================+
-| `nlstools`       |   `overview`, `confint2`                        |
-+-------------------------------------------------------------------+
-| `nlshelper`      |  `plot_nls`, `anova_nlslist`, `tidy.nlsList`    |
-+-------------------------------------------------------------------+
-| `nlme`           |  `nlsList`                                      |
-+-------------------------------------------------------------------+
-| `car`            |   `qqPlot`                                      |
-+-------------------------------------------------------------------+
-| `mgcv`           |   `gam`                                         |
-+-------------------------------------------------------------------+
-| `quantreg`       |   `rq`, `nlrq`                                  |
-+-------------------------------------------------------------------+
 
 
 ```{block2 type="rmdreading"}
@@ -135,9 +153,6 @@ nlsfitSS <- nls(height ~ SSgompertz(age, Asym, b2, b3),
 
 Next, it is useful to add the fitted curve to a plot, which is particularly easy to do with the `nlshelper` package. In Section \@ref(nlspredict), we return to predicting from a non-linear regression model, using the `predict` function. The following code makes Fig. \@ref(fig:plotnlslob1).
 
-```{r echo=FALSE, message=FALSE}
-suppressPackageStartupMessages(library(nlshelper))
-```
 
 ```{r plotnlslob1, opts.label="smallsquare", fig.cap='The Chapman-Richards growth equation fitted to the Loblolly data, using the nlshelper package.', fig.align='center', echo=-1}
 par(mar=c(4,4,1,1), mgp=c(2.5,0.8,0))
@@ -651,8 +666,6 @@ Now we are ready to make our growth chart. To do this, we loop through a few val
 The following code makes Fig. \@ref(fig:footexample3).
 
 ```{r footexample3, opts.label="smallsquare", fig.cap="Growth chart for foot length (mm) against childrens' age (years)"}
-library(directlabels)
-
 g <- ggplot(foot_male, aes(x = age, y = foot_length)) +
   geom_point(pch=16, size=0.7, col="grey") +
   theme_tufte(base_family = "sans")
@@ -693,6 +706,183 @@ print(g)
 
 
 
+
+## Bootstrapping
+
+### Parameter combinations
+
+This example demonstrates that we can use the bootstrap to calculate any derived quantity from a fitted regression model. Consider the following example: we have a non-linear saturating dependence of `height` on `age` (Fig. \@ref(asympsimfig)).
+
+
+```{r asympsimfig, opts.label="smallsquare", fig.cap='Height and age for a group of !Khosan people (the Howell1 dataset).', fig.align='center'}
+# We use an example dataset contained in the 'rethinking' package,
+# containing heights and ages of members of a clan of !Khosan people.
+data(howell)
+
+# Plot the data. 
+ggplot(howell, aes(x = age, y = height)) +
+  geom_point(pch=21, bg="white") +
+  lims(y=c(0, max(howell$height))) +
+  theme_tufte()
+```
+  
+It seems reasonable to fit a function with an asymptote to this relationship. An exponential regression model seems appropriate, and it should contain an 'offset', since height at zero age will not be zero!
+  
+Now suppose we want to know the age where height has reached 90% of the asymptotic value. We can calculate this value from the fitted curve directly, and use the bootstrap to estimate a confidence interval for this estimate.
+
+First, we are going to rearrange the fitted equation. We will fit the following equation, where $y_max$ is the asymptote, $k$ some curvature parameter and $b_0$ the value of y where x=0):
+  
+$$y = b_0 + y_{max}*(1-e^{-kx})$$
+    
+We want to know the value of `x` where `y = 0.9 * ymax`, inserting this into the equation and solving for `x` gives, 
+
+$$x_{90} = log(1 - (0.9 - b_0)/y_{max})/-k$$
+    
+Now let's find the distribution of $x_{90}$. We will use the `bootCase` function from the `car` package, which is a convenient function for bootstrapping (non-)linear models.
+  
+```{r x90boot}
+# The bootCase function is contained in the car package
+library(car)
+
+# Fit nls. This particular function is not very sensitive to the 
+# starting values (try this yourself),
+# but the maximum height has been guessed from the plot of the data.
+nls_howell <- nls(height ~ b0 + (ymax-b0)*(1-exp(-k*age)), 
+                  start=list(b0=50,ymax=150,k=0.1), data=howell)
+
+# Perform bootstrap, 500 times
+b <- car::Boot(nls_howell, B=500)
+
+# This function calculates the 90% saturation point based on the fitted parameters:
+x90fun <- function(ymax,k)log(1 - 0.9)/-k
+
+# Calculate all 90% saturation points. 
+# The object 'b' is a matrix with the three parameters in columns.
+x90 <- x90fun(b[,"ymax"], b[,"k"])
+
+# The simulated distribution of x90 is an approximation to 
+# the sampling distribution. So, we can calculate the confidence 
+# interval using quantile.
+quantile(x90, c(0.025, 0.975))
+
+```
+  
+And finally we can make a plot showing the confidence interval (Fig.~\ref{fig:bootsympcifig}) of the age where 90\% of the maximum height is reached, on average. The first panel of the plot shows the sampling distribution of this age, as estimated with the bootstrap.
+  
+```{r bootsympcifig, opts.label="wide", fig.cap='Confidence interval on the x-value where y reaches 90\\% of its estimated asymptotic value, calculated with the bootstrap.', fig.align='center', echo=-1}
+
+# Store coefficients
+cf <- coef(nls_howell)
+
+# 
+ggplot(howell, aes(x = age, y = height)) +
+  geom_point(pch=21, bg="white") +
+  lims(y=c(0, max(howell$height))) +
+  theme_tufte() +
+  
+  # Add any curve using stat_function()
+  stat_function(fun = function(x)cf["b0"] + (cf["ymax"] - cf["b0"])*(1 - exp(-cf["k"]*x))) +
+  
+  # Age where 90% max height is reached, with confidence interval
+  geom_vline(xintercept = mean(x90)) +
+  geom_vline(xintercept=ci_x90, lty=5)
+
+```
+  
+
+```{block2 type="rmdtry"}
+In the above example, we fitted a single curve to the `howell` dataset. That dataset also includes information on gender (the `male` variable). Using the example code above, find out whether the age at which 90\% height is reached differs significantly between men and women (as indicated by the confidence interval).
+```  
+  
+  
+ 
+#### Predictions
+  
+Suppose we are interested in the predicted value of tree height at an age of 22.5 years, using the fitted model from the previous example. We can find an estimate of this height by interpolating with the fitted nonlinear model. There is really no viable alternative to the bootstrap in this situation - approximate methods can be very inaccurate.
+  
+Note that bootstrapping a non-linear model can be impractical because it requires the model to be refit many times to the resampled dataset. This can both be slow, and sometimes fail altogether when a large portion of the models does not converge. Both are problems with small datasets in particular (or many parameters to be estimated, relative to the size of the dataset). For small datasets, you should probably not try to estimate the uncertainty of the predictions at all, because the bootstrap will fail, and approximate methods will be particularly bad.
+  
+The following example finds the prediction and 95% confidence interval for the height, using the non-parametric bootstrap (see Chapter X).
+  
+```{r}
+# We quickly redo the nls_lob model from the start of this chapter
+chapm <- function(x,Asym,b,c)Asym*(1-exp(-b*x))^c
+nls_lob <- nls(height ~ chapm(age, Asym, b,c),
+               data=Loblolly,
+               start=list(Asym=100, b=0.1, c=2.5))
+
+# bootstrap resampling. The object bt$t contains coefficients of the nonlinear 
+# model fitted to 500 resampled datasets.
+# NOTE: always try whether 500 resamples is sufficient, if not use more!
+bt <- car::Boot(nls_lob, R=500)
+coefs <- bt$t
+
+# Calculate height at age of 22.5 years for every bootstrap replicate.
+# Note that 'b' is a matrix containing the model coefficients, one row for each
+# bootstrap replicate.
+h225 <- chapm(x=22.5, Asym=coefs[,"Asym"], b=coefs[,"b"], c=coefs[,"c"])
+
+# The 2.5 and 97.5% quantiles give the confidence interval for the prediction.
+quantile(h225, probs=c(0.025, 0.975))
+```
+  
+```{block2 type="rmdtry"}
+From the bootstrapped results, calculate the confidence intervals of the parameters. Compare to the results with `confint` and `confint2`. *Hint:* calculate the quantiles of the three parameters stored in the `bt` object. 
+```
+  
+  
+The next example demonstrates how to calculate a confidence interval along the entire fitted curve, again using the bootstrap. 
+  
+```{r, echo=-1,opts.label="wide", fig.cap="Illustration of the bootstrap applied to non-linear regression, using the Callitris hydraulics dataset."}
+set.seed(123)
+
+# Hydraulic restistance in Callitris branches
+data(callitrishydraulic)
+
+# Fit logistic model using non-linear regression
+nls_calli <- nls(PLC ~ SSlogis(Psi, Asym, xmid, scal), data=callitrishydraulic)
+
+# Set up X values where we want to yield predictions (cover the range of Psi in the data).
+xvals <- seq(2,15,length=25)
+
+# Bootstrap the model. Note low number of replications - 
+# you may want to increase this for serious use.
+b <- car::Boot(nls_calli, R=100, f = function(x)predict(x, data.frame(Psi=xvals)))
+predictions <- b$t
+```
+
+We have now performed the bootstrap on the non-linear regression model, but note that a number of models could not be fitted. Recall that non-linear regression models need to converge to a solution, and for some poor-fitting datasets, the fit may be inconclusive. We can now plot each of the fitted curves to the resampled datasets, as returned by the bootstrap (Fig. \@ref(fig:callcurves)). This is a case where using base graphics results in a substantially more concise solution.
+
+```{r callcurves}
+# Plot the data, and a curve for each bootstrap replicate.
+with(callitrishydraulic, plot(Psi, PLC, pch=19, 
+                 panel.first={
+                   for(i in 1:nrow(predictions)){
+                     lines(xvals, predictions[i,], col="grey")
+                   }  
+                  }))
+```
+
+
+Now, for an arbitrary sequence of x values, we can calculate the confidence interval for the mean location of the regression line from the quantiles across all those regression lines. 
+
+```{r}
+# Calculate confidence interval across the bootstrap predictions.
+ci <- apply(na.omit(predictions), 2, quantile, probs=c(0.025, 0.975))
+
+# Plot data, and a shaded confidence interval for the location of the curve.
+with(callitrishydraulic, plot(Psi, PLC, pch=19, panel.first={
+  lines(xvals, ci[1,], lty=3)
+  lines(xvals, ci[2,], lty=3)
+}))
+
+# Add the fitted 'mean' curve from the original fitted model.
+cf <- coef(nls_calli)
+curve(SSlogis(x, cf["Asym"], cf["xmid"], cf["scal"]), add=TRUE, lwd=2, col="red")
+```
+  
+  
+  
 
 
 

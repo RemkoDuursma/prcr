@@ -1,16 +1,814 @@
-# Summarizing, merging and reshaping data {#summarize}
+# Data skills {#summarize}
 
 
 ## Introduction
 
-In this chapter we will look at various ways to summarize data, from simple summaries of what is contained in the original data, to more complex tables of statistics by grouping variables. We will also treat other data skills that are frequently needed, including merging (joining) dataframes by one or more key-variables, and reshaping datasets (from long to wide, and back). 
+For the purpose of this tutorial, a dataframe can contain six types of data. These are summarized in the table below:
+
++---------------+---------------+--------------------+
+| Fruit         | Price         | Advantages         |
++===============+===============+====================+
+| Bananas       | $1.34         | - built-in wrapper |
+|               |               | - bright color     |
++---------------+---------------+--------------------+
+| Oranges       | $2.10         | - cures scurvy     |
+|               |               | - tasty            |
++---------------+---------------+--------------------+
+
++-----------------+-----------------------------------------+-------------------------------+--------------+
+| Data type       | Description                             | Example                       | Section      |
++=================+=========================================+===============================+==============+
+|   *numeric*     |   Any number, including `double`        | `c(1, 12.3491, 10/2, 10^6, pi)`|             |   
+|                 | (double precision floating point) and   |                                |             |
+|                 | `integer` (whole numbers). In R you very|                                |             |
+|                 | rarely have to worry about the exact    |                                |             |
+|                 | nature of numeric values.               |                                |             |   
++-----------------+-----------------------------------------+--------------------------------+-------------+
+| *character*       | Strings of text.          |   `c("apple", "pear", letters[1:3])`    |   \@ref(workingtext)       |
++-----------------+-----------------------------------------+--------------------------------+-------------+
+| *factor*       | Categorial variable. Preferred over character when few unique levels (values) present in the data. Must use in statistical models, plotting. Internally stored as an integer corresponding to the *level* of the factor variable.    |   `factor(c("Control","Fertilized","Irrigated"))`       |   \@ref(workingfactors)       |
++-----------------+-----------------------------------------+--------------------------------+-------------+
+|  *logical*     |  Either TRUE or FALSE. Internally stored as 0 (FALSE) or 1 (TRUE).   |  `10 == 100/10`         | \@ref(workinglogic)  |
++-----------------+-----------------------------------------+--------------------------------+-------------+
+| *Date*        | Special Date class. Internally stored as number of days since 1970-1-1.    | `as.Date(Sys.time())` | \@ref(readingdates)          |
++-----------------+-----------------------------------------+--------------------------------+-------------+
+| *POSIXct*     | Special Date-time class. Internally stored as number of seconds since 1970-1-1, and may have timezone attributes.       | `lubridate::ymd_hms("1883-08-26 14:00")`   | \@ref(datetime)          |
++-----------------+-----------------------------------------+--------------------------------+-------------+
+
+
+Also, R has a very useful built-in data type to represent missing values. This is represented by `NA` (Not Available) (see Section \@ref(:workingmissing)).
+
+We will show how to convert between data types at the end of this chapter (Section \@ref(converttype)).
+
+In this chapter we will also look at various ways to summarize data, from simple summaries of what is contained in the original data, to more complex tables of statistics by grouping variables. We will also treat other data skills that are frequently needed, including merging (joining) dataframes by one or more key-variables, and reshaping datasets (from long to wide, and back). 
 
 For each of these operations, the `dplyr` package will be used, since it is very fast, and uses a quite intuitive syntax. However in a few cases we will also look at functions from base R (including `merge`, `summary`, `str`), and useful functions from other packages (especially the handy `summaryBy` function from the `doBy` package).
 
+**Packages used in this chapter**
+
+The examples will generally let you know which packages are used, but for your convenience, here is a complete list of the packages used. 
+
+For plotting, we often use `ggplot2` and `ggthemes` (these are usually omitted from the examples):
+
+Otherwise:
+
+- `lgrdata` (for the example datasets)
+- `lubridate` (for dates and times)
+- `dplyr` (for various data skills)
+- `padr` (for aggregating timeseries data)
+- `doBy` (for `summaryBy`, handy for making summary tables)
+- `Hmisc` (for `contents` and `describe`, both summarize dataframes)
+- `tidyr` (for reshaping dataframes)
+- `reshape2` (for reshaping dataframes)
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+suppressPackageStartupMessages(library(doBy))
+suppressPackageStartupMessages(library(Hmisc))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(lgrdata))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(ggthemes))
+suppressPackageStartupMessages(library(padr))
+```
+
+
+
+
+## Working with factors {#workingfactors}
+
+The *factor* data type is used to represent qualitative, categorical data. 
+
+When reading data from file, for example with `read.csv`, R will automatically convert any variable to a factor if it is unable to convert it to a numeric variable. If a variable is actually numeric, but you want to treat it as a factor, you can use `as.factor` to convert it, as in the following example.
+
+```{r }
+# Make sure you have loaded the lgrdata package
+data(pupae)
+
+# This dataset contains a temperature (T_treatment) and CO2 treatment (CO2_treatment).
+# Both should logically be factors, however, CO2_treatment is read as numeric:
+str(pupae)
+
+# To convert it to a factor, we use:
+pupae$CO2_treatment <- as.factor(pupae$CO2_treatment)
+
+# Compare with the above,
+str(pupae)
+```
+
+In the `allom` example dataset, the `species` variable is a good example of a factor. A factor variable has a number of 'levels', which are the text values that the variable has in the dataset. Factors can also represent treatments of an experimental study. For example,
+
+```{r }
+levels(allom$species)
+```
+
+Shows the three species in this dataset. We can also count the number of rows in the dataframe for each species, like this:
+
+```{r }
+table(allom$species)
+```
+
+Note that the three species are always shown in the order of the `levels` of the factor: when the dataframe was read, these levels were assigned based on alphabetical order. Often, this is not a very logical order, and you may want to rearrange the levels to get more meaningful results.
+
+In our example, let's shuffle the levels around, using `factor`.
+
+```{r eval=FALSE}
+allom$species <- factor(allom$species, levels=c("PSME","PIMO","PIPO"))
+```
+
+Now revisit the commands above, and note that the results are the same, but the order of the `levels` of
+the `factor` is different. You can also reorder the levels of a factor by the values of another variable, see the example in Section~\ref{sec:reorder}.
+
+We can also generate new factors, and add them to the dataframe. This is a common application:
+ 
+
+```{r }
+# Add a new variable to allom:  'small' when diameter is less than 10, 'large' otherwise.
+allom$treeSizeClass <- factor(ifelse(allom$diameter < 10, "small", "large"))
+
+# Now, look how many trees fall in each class.
+# Note that somewhat confusingly, 'large' is printed before 'small'.
+# Once again, this is because the order of the factor levels is alphabetical by default.
+table(allom$treeSizeClass)
+```
+
+What if we want to add a new factor based on a numeric variable with more than two levels? In that case, we cannot use `ifelse`. We must find a different method. Look at this example using `cut`.
+
+```{r tidy=FALSE}
+# The cut function takes a numeric vectors and cuts it into a categorical variable.
+# Continuing the example above, let's make 'small','medium' and 'large' tree size classes:
+allom$treeSizeClass <- cut(allom$diameter, breaks=c(0,25,50,75), 
+                           labels=c("small","medium","large"))
+
+# And the results,
+table(allom$treeSizeClass)
+```
+
+
+#### Empty factor levels
+
+It is important to understand how factors are used in R: they are not simply text variables, or 'character strings'. Each unique value of a factor variable is assigned a *level*, which is used every time you summarize your data by the factor variable.
+
+Crucially, even when you delete data, the original factor *level* is still present. Although this behaviour might seem strange, it makes a lot of sense in many cases (zero observations for a particular factor level can be quite informative, for example species presence/absence data).
+
+Sometimes it is more convenient to drop empty factor levels with the `droplevels` function. Consider this example:
+
+```{r }
+# Note that 'T_treatment' (temperature treatment) is a factor with two levels,
+# with 37 and 47 observations in total:
+table(pupae$T_treatment)
+
+# Suppose we decide to keep only the ambient treatment:
+pupae_amb <- subset(pupae, T_treatment == "ambient")
+
+# Now, the level is still present, although empty:
+table(pupae_amb$T_treatment)
+
+# In this case, we don't want to keep the empty factor level.
+# Use droplevels to get rid of any empty levels:
+pupae_amb2 <- droplevels(pupae_amb)
+```
+
+> **Try this yourself**
+Compare the `summary` of `pupae\_amb` and `pupae\_amb2`, and note the differences.
+
+
+
+### Changing the levels of a factor {#changelevels}
+
+Sometimes you may want to change the levels of a factor, for example to replace abbreviations with more readable labels. To do this, we can assign new values with the `levels` function, as in the following example using the pupae data:
+
+```{r eval=FALSE}
+# Change the levels of T_treatment by assigning a character vector to the levels.
+levels(pupae$T_treatment) <- c("Ambient","Ambient + 3C")
+
+# Or only change the first level, using subscripting.
+levels(pupae$T_treatment)[1] <- "Control"
+```
+
+```{block2 type="rmdtry"}
+Using the method above, you can also merge levels of a factor, simply by assigning the same new level to both old levels. Try this on a dataset of your choice (for example, in the `allom` data, you can assign new species levels, 'Douglas-fir' for PSME, and 'Pine' for both PIMO and PIPO). Then check the results with `levels()`.
+```
+
+
+## Working with logical data {#workinglogic}
+
+Some data can only take two values: true, or false. For data like these, R has the *logical* data type. Logical data are coded by integer numbers (0 = `FALSE`, 1 = `TRUE`), but normally you don't see this, since R will only *print* `TRUE` and `FALSE` 'labels'. However, once you know this, some analyses become even easier. Let's look at some examples,
+
+
+```{r }
+# Answers to (in)equalities are always logical:
+10 > 5
+101 == 100 + 1
+
+# ... or use objects for comparison:
+apple <- 2
+pear <- 3
+apple == pear
+
+# NOT equal to.
+apple != pear
+
+# Logical comparisons like these also work for vectors, for example:
+nums <- c(10,21,5,6,0,1,12)
+nums > 5
+
+# Find which of the numbers are larger than 5:
+which(nums > 5)
+
+# Other useful functions are 'any' and 'all':
+# Are any numbers larger than 25?
+any(nums > 25)
+# Are all numbers less than or equal to 10?
+all(nums <= 10)
+
+# Use & for AND, for example to take subsets where two conditions are met:
+subset(pupae, PupalWeight > 0.4 & Frass > 3)
+
+# Use | for OR
+nums[nums < 2 | nums > 20]
+
+# How many numbers are larger than 5?
+#- Short solution
+sum(nums > 5)
+#- Long solution
+length(nums[nums > 5])
+```
+
+The help page `?Syntax` has a comprehensive list of operators in R (including the logical operators).
+
+
+## Working with missing values {#workingmissing}
+
+In R, missing values are represented  with `NA`, a special data type that indicates the data is simply *Not Available*.
+
+*Warning:* Because `NA` represents a missing value, make sure you never use 'NA' as an abbreviation for anything (like North America).
+
+Many functions can handle missing data, usually in different ways. For example, suppose we have the following vector:
+
+```{r }
+myvec1 <- c(11,13,5,6,NA,9)
+```
+
+In order to calculate the mean, we might want to either exclude the missing value (and calculate the mean of the remaining five numbers), or we might want `mean(myvec1)` to fail (produce an error). This last case is useful if we don't expect missing values, and want R to only calculate the mean when there are no `NA`'s in the dataset.
+
+These two options are shown in this example:
+
+```{r }
+# Calculate mean: this fails if there are missing values
+mean(myvec1)
+
+# Calculate mean after removing the missing values
+mean(myvec1, na.rm=TRUE)
+```
+
+Many functions have an argument `na.rm`, or similar. Refer to the help page
+of the function to learn about the various options (if any) for dealing with missing values. For example, see the help pages `?lm` and `?sd`.
+
+The function `is.na` returns `TRUE` when a value is missing, which can be useful to see which values are missing, or how many,
+
+
+```{r }
+# Is a value missing? (TRUE or FALSE)
+is.na(myvec1)
+
+# Which of the elements of a vector is missing?
+which(is.na(myvec1))
+
+# How many values in a vector are NA?
+sum(is.na(myvec1))  
+```
+
+### Making missing values
+
+In many cases it is useful to change some bad data values to `NA`. We can use our indexing skills to do so,
+
+```{r }
+# Some vector that contains bad values coded as -9999
+datavec <- c(2,-9999,100,3,-9999,5)
+
+# Assign NA to the values that were -9999
+datavec[datavec == -9999] <- NA 
+
+```
+
+In many cases, missing values may arise when certain operations did not produce the desired result. Consider this example,
+
+
+```{r }
+# A character vector, some of these look like numbers:
+myvec <- c("101","289","12.3","abc","99")
+
+# Convert the vector to numeric:
+as.numeric(myvec)
+```
+
+The warning message `NAs introduced by coercion` means that missing values were produced by when we tried to turn one data type (character) to another (numeric).
+
+
+
+### Not A Number
+
+Another type of missing value is the result of calculations that went wrong, for example:
+```{r }
+# Attempt to take the logarithm of a negative number:
+log(-1)
+```
+The result is `NaN`, short for *Not A Number*. 
+
+Dividing by zero is not usually meaningful, but R does not produce a missing value:
+```{r }
+1000/0
+```
+It produces 'Infinity' instead. 
+
+
+### Missing values in dataframes {#naindataframe}
+
+When working with dataframes, you often want to remove missing values for a particular analysis. We'll use the `pupae` dataset for the following examples. See Section~\ref{sec:pupaedata} for a description of this dataset.
+
+
+```{r }
+# (re-)load data
+data(pupae)
+
+# Look at a summary to see if there are missing values:
+summary(pupae)
+# Notice there are 6 NA's (missing values) for Gender, and 1 for Frass.
+
+# Option 1: take subset of data where Gender is not missing:
+pupae_subs1 <- subset(pupae, !is.na(Gender))
+
+# Option 2: take subset of data where Frass AND Gender are not missing
+pupae_subs2 <- subset(pupae, !is.na(Frass) & !is.na(Gender))
+
+# A more rigorous subset: remove all rows from a dataset where ANY variable 
+# has a missing value:
+pupae_nona <- pupae[complete.cases(pupae),]
+
+```
+
+
+
+### Subsetting when there are missing values {#subsetmissing}
+
+When there are missing values in a vector, and you take a subset (for example all data larger than some value), should the missing values be included or dropped? There is no one answer to this, but it is important to know that `subset` drops them, but the square bracket method (`[]`) keeps them. See also Section \@ref(subsetdiff), where we showed that these two methods to subset data differ in their behaviour. 
+
+Consider this example, and especially the use of `which` to drop missing values when subsetting.
+
+```{r }
+# A small dataframe
+dfr <- data.frame(a=1:4, b=c(4,NA,6,NA))
+
+# subset drops all missing values
+# Note: dplyr::filter also drops NA
+subset(dfr, b > 4, select=b)
+
+# square bracket notation keeps them
+dfr[dfr$b > 4,"b"]
+
+# ... but drops them when we use 'which'
+dfr[which(dfr$b > 4),"b"]
+```
+
+
+
+## Working with text {#workingtext}
+
+Many datasets include variables that are text only (think of comments, species names, locations, sample codes, and so on), it is useful to learn how to modify, extract, and analyse text-based ('character') variables.
+
+Consider the following simple examples when working with a single character string:
+ 
+```{r }
+# Count number of characters in a bit of text:
+sentence <- "Not a very long sentence."
+nchar(sentence)
+
+# Extract the first 3 characters:
+substr(sentence, 1, 3)
+```
+
+It gets more interesting when we have character vectors, for example,
+```{r }
+# Substring all elements of a vector
+substr(c("good","good riddance","good on ya"),1,4)
+
+# Number of characters of all elements of a vector
+nchar(c("hey","hi","how","ya","doin"))
+```
+
+To glue bits of text together, use the `paste` function, like so:
+```{r }
+# Add a suffix to each text element of a vector:
+txt <- c("apple","pear","banana")
+paste(txt, "-fruit")
+
+# Glue them all together into a single string using the collapse argument
+paste(txt, collapse="-")
+
+# Combine numbers and text:
+paste("Question", 1:3)
+
+# This can be of use to make new variables in a dataframe,
+# as in this example where we combine two factors to create a new one:
+pupae$T_CO2 <- with(pupae, paste(T_treatment, CO2_treatment, sep="-"))
+head(pupae$T_CO2)
+```
+
+```{block2 type="rmdtry"}
+Run the final example above, and inspect the variable `T\_CO2` (with `str`) that we added to the dataframe. Make it into a factor variable using `as.factor`, and inspect the variable again.
+```
+
+
+### Text in dataframes and `grep` {#textgrep}
+
+When you read in a dataset (with `read.csv`, `read.table` or similar), any variable that R cannot convert to numeric *is automatically converted to a factor*. This means that if a column has even just one value that is text (or some garble that does not represent a number), the column cannot be numeric. 
+
+When you want non-numeric columns to be read in as *character* instead of *factor*, you must do:
+
+```{r eval=FALSE}
+cereals <- read.csv("cereals.csv", stringsAsFactors = FALSE)
+```
+
+Here, the argument `stringsAsFactors=FALSE` avoided the automatic conversion of character variables to factors. 
+
+While we know that factors are very useful, sometimes we want a variable to be treated like text. For example, if we plan to analyse text directly, or extract numbers or other information from bits of text. Let's look at a few examples using the `titanic` dataset.
+
+```{r }
+# Load dataset
+data(titanic)
+
+# Is passenger name stored as a character?
+is.character(titanic$Name)
+
+# Evidently not. We can convert it to character:
+titanic$Name <- as.character(titanic$Name)
+
+# ... or as part of a dplyr chain:
+titanic <- titanic %>% mutate(Name = as.character(Name))
+
+```
+
+The following example uses `grep`, a very powerful function. This function can make use of *regular expressions*, a flexible tool for text processing.
+
+```{r }
+# Extract cereal names (for convenience).
+data(cereals)
+cerealnames <- cereals$Cereal.name
+
+# Find the cereals that have 'Raisin' in them.
+# grep() returns the index of values that contain Raisin
+grep("Raisin",cerealnames)
+
+# grepl() returns TRUE or FALSE
+grepl("Raisin",cerealnames)
+
+# That result just gives you the indices of the vector that have 'Raisin' in them.
+# these are the corresponding names:
+cerealnames[grep("Raisin",cerealnames)]
+
+# Now find the cereals whose name starts with Raisin.
+# The ^ symbol is part of a 'regular expression', it indicates 'starts with':
+grep("^Raisin",cerealnames)
+
+# Or end with 'Bran'
+# The $ symbol is part of a 'regular expression', and indicates 'ends with':
+grep("Bran$", cerealnames)
+```
+
+As mentioned, `grep` can do a *lot* of different things, so don't be alarmed if you find the help page *a bit overwhelming*. However, there are a few options worth knowing about. One very useful option is to turn off the case-sensitivity, for example:
+
+```{r }
+grep("bran",cerealnames,ignore.case=TRUE)
+```
+finds `Bran` and `bran` and `BRAN`.
+
+Finally, using the above tools, let's add a new variable to the `cereal` dataset that is `TRUE` when the name of the cereal ends in 'Bran', otherwise it is `FALSE`. For this example, the `grepl` function is more useful (because it returns TRUE and FALSE).
+
+```{r }
+# grepl will return FALSE when Bran is not found, TRUE otherwise
+cereals$BranOrNot <- grepl("Bran$", cerealnames)
+
+# Quick summary:
+summary(cereals$BranOrNot)
+```
+
+```{block2 type="rmdreading"}
+A clear explanation of regular expressions is on the Wikipedia page <http://en.wikipedia.org/wiki/Regular_expressions>. Also worth a look is Robin Lovelace's introduction specifically for R and RStudio at <https://www.r-bloggers.com/regular-expressions-in-r-vs-rstudio/>. 
+```
+
+
+
+## Working with dates and times {#workingwithdates}
+
+Admittedly, working with dates and times in R is somewhat annoying at first. The built-in help files on this subject describe all aspects of this special data type, but do not offer much for the beginning R user. This section covers basic operations that you may need when analysing and formatting datasets.
+
+For working with dates, we use the `lubridate` package, which simplifies it tremendously. 
+
+
+### Reading dates {#readingdates}
+
+The built-in `Date` class in R is encoded as an integer number representing the number of days since 1-1-1970 (but this actual origin does not matter for the user). Converting a character string to a date with `as.Date` is straightforward if you use the standard order of dates: `YYYY-MM-DD`. So, for example,
+
+```{r }
+as.Date("2008-5-22")
+```
+
+The output here is not interesting, R simply prints the date. Because dates are represented as numbers in R, we can do basic arithmetic:
+
+
+```{r tidy=TRUE}
+# First load lubridate when working with dates or date-time combinations.
+# (as.Date and difftime are part of the base package, but lubridate provides
+# years(), months(), and many more functions used below).
+library(lubridate)
+
+# A date, 7 days later:
+as.Date("2011-5-12") + 7
+
+# Difference between dates.
+as.Date("2009-7-1") - as.Date("2008-12-1")
+
+# With difftime, you can specify the units:
+difftime(as.Date("2009-7-1"), as.Date("2008-12-1"), units="weeks")
+
+# To add other timespans, use functions months(), years() or weeks() 
+# to avoid problems with leap years
+as.Date("2013-8-18") + years(10) + months(1)
+```
+
+```{block2 type="rmdtry"}
+The previous example showed a very useful trick for adding numbers to a `Date` to get a new `Date` a few days later. Confirm for yourself that this method accounts for leap years. That is, the day before `2011-3-1` should be `2011-2-28` (2011 is not a leap year). But what about `2012-3-1`?
+```
+
+Often, text strings representing the date are not in the standard format. Fortunately, it is possible to convert any reasonable sequence to a `Date` object in R. All we have to do is provide a character string to `as.Date` and tell the function the order of the fields.
+
+To convert any format to a Date, we can use the `lubridate` package, which contains the functions `ymd`, `mdy`, and all other combinations of y, m, and d. These functions are pretty smart, as can be seen in these examples:
+
+```{r }
+# Day / month / year
+as.Date(dmy("31/12/1991"))
+
+# Month - day - year (note, only two digits for the year)
+as.Date(mdy("4-17-92"))
+
+# Year month day
+as.Date(ymd("1976-5-22"))
+
+#-- Unusual formatting can be read in with the 'format' argument
+# in as.Date. See ?strptime for a list of codes.
+# For example, Year and day of year ("%j" stands for 'Julian date')
+as.Date("2011 121", format="%Y %j")
+```
+
+Another method to construct date objects is when you do not have a character string as in the above example, but separate numeric variables for year, month and day. In this case, use the `ISOdate` function:
+
+```{r }
+as.Date(ISOdate(2008,12,2))
+```
+
+Finally, here is a simple way to find the number of days since you were born, using `today` from the lubridate package.
+
+```{r }
+# Today's date (and time) can be with the today() function
+today()
+
+# We can now simply subtract your birthday from today's date.
+today() - as.Date("1976-5-22")
+```
+
+
+#### Example: using dates in a dataframe
+
+The `as.Date` function that we met in the previous section also works with vectors of dates, and the `Date` class can also be part of a dataframe. Let's take a look at the Hydro data to practice working with dates.
+
+```{r }
+# Load the hydro dataset
+data(hydro)
+
+# Now convert this to a Date variable. 
+# If you first inspect head(hydro$Date), you will see the format is DD/MM/YYYY
+hydro$Date <- as.Date(dmy(hydro$Date))
+```
+
+If any of the date conversions go wrong, the `dmy` function (or its equivalents) should print a message letting you know. You can double check if `any` of the converted dates is `NA` like this:
+
+```{r }
+any(is.na(hydro$Date))
+```
+
+We now have successfully read in the date variable. The `min` and `max` functions are useful to check the range of dates in the dataset:
+
+```{r }
+# Minimum and maximum date (that is, oldest and most recent),
+min(hydro$Date)
+max(hydro$Date)
+
+#... and length of measurement period:
+max(hydro$Date) - min(hydro$Date)
+```
+
+Finally, the `Date` class is very handy when plotting. Let's make a simple graph of the Hydro dataset. The following code produces Fig. \@ref(fig:hydroplot). Note how the `X` axis is automatically formatted to display the date in a (fairly) pretty way.
+
+```{r hydroplot, opts.label="smallsquare", fig.cap='A simple plot of the hydro data.'}
+ggplot(hydro, aes(x = Date, y = storage)) +
+  geom_line() + 
+  theme_tufte(base_family="sans")
+```
+
+
+### Date-Time combinations {#datetime}
+
+For dates that include the time, R has a special class called `POSIXct`. The `lubridate` package makes it easy to work with this class. 
+
+Internally, a date-time is represented as the number of seconds since the 1st of January, 1970. Time zones are also supported, but we will not use this functionality in this book (as it can be quite confusing).
+
+From the lubridate package, we can use any combination of (y)ear,(m)onth,(d)ay, (h)our, (m)inutes, (s)econds. For example `ymd_hms` converts a character string in that order.
+
+Let's look at some examples,
+
+```{r }
+# Load lubridate
+library(lubridate)
+
+# The standard format is YYYY-MM-DD HH:MM:SS
+ymd_hms("2012-9-16 13:05:00")
+
+# Read two times (note the first has no seconds, so we can use ymd_hm)
+time1 <- ymd_hm("2008-5-21 9:05")
+time2 <- ymd_hms("2012-9-16 13:05:00")
+
+# Time difference:
+time2 - time1
+
+# And an example with a different format, DD/M/YY H:MM
+dmy_hm("23-1-89 4:30")
+
+# To convert a date-time to a Date, you can also use the as.Date function,
+# which will simply drop the time.
+as.Date(time1)
+```
+
+As with `Date` objects, we can calculate timespans using a few handy functions. 
+```{r }
+# What time is it 3 hours and 15 minutes from now?
+now() + hours(3) + minutes(15)
+```
+
+```{block2 type="rmdtry"}
+The 2012 Sydney marathon started at 7:20AM on September 16th. The winner completed the race in 2 hours, 11 minutes and 50 seconds. What was the time when the racer crossed the finish line? Using the `weekdays` function, which day was the race held? 
+```
+
+
+#### Example:  date-times in a dataframe
+
+Now let's use a real dataset to practice the use of date-times. We also introduce the functions `month`, `yday`, `hour` and `minute` to conveniently extract components of date-time objects.
+
+The last command produces Fig.~\ref{fig:hfemetdate}.
+```{r hfemetdate, opts.label="smallsquare", fig.cap='Air temperature for June at the HFE'}
+# Read the 2008 met dataset from the HFE.
+data(hfemet2008)
+
+# Convert 'DateTime' to POSIXct class.
+# The order of the original data is MM/DD/YYYY HH:MM
+# We also add various date and time fields to the dataframe.
+hfemet <- hfemet2008 %>%
+  mutate(DateTime = mdy_hm(DateTime),
+         Date = as.Date(DateTime),
+         DOY = yday(DateTime),
+         hour = hour(DateTime),
+         minute = minute(DateTime),
+         month = month(DateTime))
+
+# Make sure all datetimes were converted OK (if not, NAs would be produced)
+any(is.na(hfemet$DateTime))
+# FALSE is good here!
+
+# Make a simple line plot for data from one month.
+filter(hfemet, month ==  6) %>%
+  ggplot(aes(x = DateTime, y =  Tair)) +
+  geom_line() + theme_tufte()
+
+# We can also take a subset of just one day, using the Date variable we added:
+hfemet_oneday <- filter(hfemet, Date == as.Date("2008-11-1"))
+```
+
+
+#### Sequences of dates and times {#seqdates}
+
+
+It is often useful to generate sequences of dates. We can use `seq` as we do for numeric variables (as we already saw in Section \@ref(sequences)).
+
+```{r }
+# A series of dates, by day:
+seq(from=as.Date("2011-1-1"), to=as.Date("2011-1-5"), by="day")
+
+# Two-weekly dates:
+seq(from=as.Date("2011-1-1"), length=4, by="2 weeks")
+
+# Monthly:
+seq(from=as.Date("2011-12-13"), length=4, by="months")
+```
+
+Similarly, you can generate sequences of date-times.
+
+```{r }
+# Generate a sequence with 30 min timestep:
+# Here, the 'by' field specifies the timestep in seconds.
+fromtime <- ymd_hm("2012-6-1 14:30")
+seq(from=fromtime, length=3, by=30*60)
+```
+
+
+### Converting between data types {#converttype}
+
+It is often useful, or even necessary, to convert from one data type to another. For example, when you read in data with `read.csv` or `read.table`, any column that contains some non-numeric values (that is, values that cannot be converted to a number) will be converted to a factor variable. Sometimes you actually want to convert it to numeric, which will result in some missing values (`NA`) when the value could not be converted to a number.
+
+Another common example is when one of your variables should be read in as a factor variable (for example, a column with treatment codes), but because all the values are numeric, R will simply assume it is a numeric column.
+
+Before we learn how to convert, it is useful to make sure you know what type of data you have to begin with. To find out what type of data a particular vector is, we use `str` (this is also useful for any other object in R).
+
+```{r }
+# Numeric
+y <- c(1,100,10)
+str(y)
+# This example also shows the dimension of the vector ([1:3]).
+
+# Character
+x <- "sometext"
+str(x)
+
+# Factor
+p <- factor(c("apple","banana"))
+str(p)
+
+# Logical
+z <- c(TRUE,FALSE)
+str(z)
+
+# Date
+sometime <- as.Date("1979-9-16")
+str(sometime)
+
+# Date-Time
+library(lubridate)
+onceupon <- ymd_hm("1969-8-18 09:00")
+str(onceupon)
+```
+
+
+To test for a particular type of data, use the `is.*something*` functions,
+which give `TRUE` if the object is of that type, for example:
+
+
+```{r }
+# Test for numeric data type:
+is.numeric(c(10,189))
+
+# Test for character:
+is.character("HIE")
+```
+
+We can convert between types with the `as.*something*` class of functions.
+
+```{r }
+# First we make six example values that we will use to convert
+mynum <- 1001
+mychar <- c("1001","100 apples")
+myfac <- factor(c("280","400","650"))
+mylog <- c(TRUE,FALSE,FALSE,TRUE)
+mydate <- as.Date("2015-03-18")
+mydatetime <- ymd_hm("2011-8-11 16:00")
+
+# A few examples:
+
+# Convert to character
+as.character(mynum)
+as.character(myfac)
+
+# Convert to numeric
+# Note that one missing value is created
+as.numeric(mychar)
+
+# Warning!!!
+# When converting from a factor to numeric, first convert to character
+# !!!
+as.numeric(as.character(myfac))
+
+# Convert to Date
+as.Date(mydatetime)
+
+# Convert to factor
+as.factor(mylog)
+```
+
+```{block2 type="rmdwarning"}
+When converting a factor to numeric (i.e. when the factor labels can be converted to numeric values), first convert it to character: `x <- as.numeric(as.character(somefactor))`. The reason for this is that factor variables are internally stored as integer numbers, referring to the *levels* of the factor.
+```
 
 ## Summarizing dataframes
 
-There are a few useful functions to print general summaries of a dataframe, to see which variables are included, what types of data they contain, and so on. We already looked at some of these in Section`sec:dataframes.
+There are a few useful functions to print general summaries of a dataframe, to see which variables are included, what types of data they contain, and so on. We already looked at some of these in Section \@ref(dataframes).
 
 The most basic function is `summary`, which works on many types of objects. 
 
@@ -28,7 +826,7 @@ To simply see what types of variables your dataframe contains (or, for objects o
 str(allom)
 ```
 
-Finally, there are two very useful functions in the `Hmisc` package (recall how to install and load packages from Section \@ref(packages)). The first, `describe`, is much like `summary`, but offers slightly more sophisticated statistics.
+Finally, there are two very useful functions in the `Hmisc` package. The first, `describe`, is much like `summary`, but offers slightly more sophisticated statistics.
 
 The second, `contents`, is similar to `str`, but does a very nice job of summarizing the `factor} variables in your dataframe, prints the number of missing variables, the number of rows, and so on. 
 
@@ -244,7 +1042,7 @@ summaryBy(. ~ species, data=allom, FUN=quantile, probs=c(0.05, 0.95))
 ```
 
 
-## Using `dplyr`
+### Summarizing dataframes with `dplyr` {#summaryby}
 
 We started with the `summaryBy` package, since it is so easy to use. A more modern and popular approach is to use `dplyr` for all your dataframe summarizing needs. The main advantage is that `dplyr` is very, very fast. For datasets with > hundreds of thousands of rows, you will notice an incredible speed increase. For millions of rows, you really have to use `dplyr` (or `data.table`, but we don't cover that package in this book).
 
@@ -278,26 +1076,22 @@ group_by(pupae, CO2_treatment, T_treatment) %>%
 
 The result is identical to our last example with `summaryBy`.
 
-
-### Working example : Calculate daily means and totals {#dailymeansexample}
-
-Let's look at a more advanced example using weather data collected at the Hawkesbury Forest Experiment in 2008 (see Section sec:hfemet}). The data given are in half-hourly time steps. It is a reasonable request to provide data as daily averages (for temperature) and daily sums (for precipitation). 
+Let's look at a more advanced example using weather data collected at the Hawkesbury Forest Experiment in 2008. The data given are in half-hourly time steps. It is a reasonable request to provide data as daily averages (for temperature) and daily sums (for precipitation). 
 
 The following code produces a daily weather dataset, and Fig. \@ref(fig:hfemetaggregate).
 
-```{r hfemetaggregate,  fig.cap='Daily rainfall at the HFE in 2008', opts.label="smallsquare"}
+```{r hfemetaggregate,  fig.cap='Daily rainfall at the HFE in 2008', opts.label="smallsquare", warning=FALSE}
 
 # Read data, convert DateTime field to a proper Datetime class using
 # lubridate's mdy_hm function, and add a Date column with as.Date.
 # Instead of loading packages, we use :: in the example below to make sure
 # the functions are used from the right package.
+data(hfemet2008)
 
-hfemet <- read.csv("HFEmet2008.csv") %>%
+hfemet_agg <- hfemet2008 %>%
   mutate(DateTime = lubridate::mdy_hm(DateTime),
-         Date = as.Date(DateTime))
-
-# Summarize data into daily variables, total daily rain, and average temperature
-hfemet_agg <- group_by(hfemet, Date) %>%
+         Date = as.Date(DateTime)) %>%
+  group_by(Date) %>%
   summarize(Rain = sum(Rain),
             Tair = mean(Tair))
 
@@ -309,6 +1103,15 @@ ggplot(hfemet_agg, aes(x = Date, y = Rain)) +
 
 ```
 
+
+#### Using `padr` to aggregate timeseries data
+
+In the previous example we saw a quick and concise methods to aggregate and filter a dataframe that includes a single date-time column (here roughly referred to as timeseries data). In the example, we calculated daily totals and averages, but what if we want to aggregate by other timespans, like two-week intervals, 6 months, or 15 minutes? The `padr` package is very convenient for this sort of mutation.
+
+```{r}
+# padr
+library(padr)
+```
 
 
 ## Tables of counts {#xtabs}
@@ -664,4 +1467,125 @@ dplyr::bind_rows(mydata1, mydata2)
 
 *Note:* an equivalent function to bind dataframes side-by-side is `cbind`, which can be used instead of `merge` when no index variables are present. However, in this book, the use of `cbind` is discouraged for dataframes as it can lead to problems that are difficult to fix, and in all practical applications a merge is preferable.
 
+
+## Reshaping data
+
+# From wide to long
+
+In the majority of analyses in R, we like to have our data in 'long' format (nowadays sometimes called the 'tidy' format), where the data for some kind of measurement are in one column, and we have one or more factor variables distinguishing groups like individual, date, treatment, and so on. It is however common encounter data in 'wide format', which can be converted to long format by reshaping appropriately.
+
+The first example uses the dutch election data.
+
+```{r}
+data(dutchelection)
+head(dutchelection,3)
+```
+
+The data include percentage votes for 11 Dutch political parties in a 2012 election, and somewhat intuitively the parties have been ordered as columns (so that each row adds up to ca. 100%, ignoring some tiny parties). For purposes of analysis, we would like to reshape this dataset to long format, so that we have just columns 'Date', 'Party', and 'Poll'. Right now 'Party' is in the column names, and 'Poll' represents the polling numbers; the actual data in the cells.
+
+As is often the case, there are many ways to solve this. For most basic reshaping tasks we recommend the `tidyr` package, however some other methods may be needed for more complex tasks, as we find in further examples below. 
+
+```{r}
+library(tidyr)
+# The new dataframe will have a column 'Party' with current columns,
+# *except* Date (hence the -Date),
+# and values will be stored in 'Poll'
+elect_long <- gather(elect, Party, Poll, -Date)
+head(elect_long,3)
+```
+
+```{r eval=FALSE}
+# Identical results can be had with melt() from reshape2 - a function which otherwise includes more options.
+# See `?melt.data.frame` for more options (not `?melt`, which is the generic function).
+library(reshape2)
+elect_long <- melt(elect, variable.name="Party", value.name="Poll", id.vars="Date")
+```
+
+The advantage of `melt` is that we can include more than one ID variables, like in the following example. This example also shows the common need for some text processing after reshaping.
+
+In this simple dataset, length of feet and hands was measured on two persons on three consecutive days. We want to reshape it to end up with columns 'Day', 'Person', 'Length' and 'BodyPart' (feet or hands). 
+
+```{r}
+dat <- data.frame(Day=rep(1:3, each=2), Person=rep(letters[1:2], 3), 
+                  Length.feet = rep(c(2,3), 3),
+                  Length.hands=rep(c(3,4),3))
+dat
+
+# Now reshape to long format, using melt.data.frame
+dat_long <- melt(dat, id.vars=c("Day","Person"), value.name="Length", variable.name="BodyPart") %>%
+  mutate(BodyPart = gsub("Length.", "", BodyPart))
+
+dat_long
+```
+
+
+
+# From long to wide
+
+Occasionally we like to use wide format, where groups of data are placed next to each other instead of on top of each other. For the first example consider this simple dataset with a set of questions asked to two persons,
+
+```{r}
+survey <- read.table(text="user	question	answer
+a	question_1	hi
+a	question_2	hey
+a	question_3	oh
+a	question_4	no
+a	question_5	yes
+a	question_6	obv
+b	question_1	cool
+b	question_2	good
+b	question_3	yes
+b	question_4	sweet
+b	question_5	wow
+b	question_6	no", header=TRUE)
+
+survey
+```
+
+In this case we actually want to have all data for each 'user' in a single row, thus creating columns 'question_1', 'question_2' and so on. The first solution uses `spread` from `tidyr`.
+
+```{r}
+library(tidyr)
+spread(survey, question, answer)
+```
+
+The second solution uses `dcast` from `reshape2`. I show this solution because unlike `spread`, `dcast` can be used for more complicated reshaping problems.
+
+```{r}
+library(reshape2)
+dcast(survey, user ~ question, value.var="answer")
+```
+
+Here, the formula indicates 'user goes in rows, question in columns', and `value.var` is the name of the variable used to populate the cells.
+
+For the second, more complex, example we use a small version of the `eucface_gasexchange` dataset, which includes measurements of photosynthesis (`Photo`) on two experimental plots (`Plot`) on three Dates (`Date`), under two experimental treatments (`treatment`). Clearly we have multiple levels of nesting of our data, and each of these nesting levels is represented by a different variable. 
+
+```{r}
+gas <- read.table(text="Date	Plot	treatment	Photo
+A	1	Amb	14.4
+A	1	Ele	16.3
+A	2	Amb	17.8
+A	2	Ele	13.3
+B	1	Amb	16.4
+B	1	Ele	19
+B	2	Amb	15
+B	2	Ele	10.8
+C	1	Amb	17.5
+C	1	Ele	19.8
+C	2	Amb	13.5
+C	2	Ele	12.1
+", header=TRUE)
+```
+
+Now we have two variables that describe which measurements 'belong together' (experimental plot, and treatment). We can no longer use `spread` (which uses just one of those variables), but `dcast` does work nicely with multiple groupings:
+
+```{r}
+dcast(gas, Date + Plot ~ treatment, value.var="Photo")
+```
+
+We have another possibility here, to instead place the values for the individual plots and treatments next to each other. Note we now move `Plot` to the right-hand side of the formula in `dcast`.
+
+```{r}
+dcast(gas, Date ~ Plot + treatment, value.var="Photo")
+```
 
