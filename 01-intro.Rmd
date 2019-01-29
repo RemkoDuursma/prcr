@@ -5,21 +5,9 @@ We assume you have installed R and Rstudio. We occassionally give some tips on h
 
 We go through some of the basics below, because of any of this is unclear, you are going to have a bad time.
 
+## Getting started
 
-### Scripts or rmarkdown?
-
-Script files are good for simple analyses, and they are great for storing small amounts of code that you would like to use in lots of different projects. But, they are not the best way to share your results with others. 
-
-This is know as an R markdown file. Markdown is a simple set of rules for formatting text files so that they are both human-readable and processable by software. The `knitr` package (as used by RStudio) will take a markdown-formatted text file and produce nicely-formatted output. The output can be a Word document, HTML page, or PDF file. If you need to install `knitr`, instructions for installing new packages can be found in Section \@ref(packages). In the next example, we will show you how to use R markdown to output a word file. Word files are excellent for collaborating with your colleagues when writing manuscripts. HTML files can also be very useful -- RStudio produces them quickly, and they are great for emailing and viewing online. They can also be used to present results in an informal meeting. PDF files are good for publishing finished projects. However, producing PDFs using RStudio and knitr requires installing other packages, which we won't cover here (see the Further Reading for more suggestions if you are interested in doing this.)
-
-
-RStudio offers a handy editor for markdown files. Start a new markdown file by choosing `File > New File > R Markdown...`. For now, leave the default settings. The new R markdown document (which is just a text file with the extension `.Rmd`) already contains some example code. Run this example by clicking the button just above the markdown document (Knit HTML). The example code will generate a new document, which opens in your browser You can see that the output contains text, R code, and even a plot.
-
-We suggest using R markdown to organize your code. 
-
-- extensions: blogdown, bookdown, pkgdown, presentations, and more!
-
-
+###### BASICS HERE
 
 ### Vectorized operations
 
@@ -299,5 +287,64 @@ If you know what type of function that you are looking for but do not know its n
 ```
 
 This is allright, but an internet search is usually far more effective.
+
+
+
+
+## Writing reports with rmarkdown
+
+Script files are good for simple analyses, and they are great for storing small amounts of code that you would like to use in lots of different projects. They are also the right solution if you want to produce R scripts that are executed as part of a larger project, for example from the command line, or executed on a schedule (e.g. daily data quality checking). In Section \@ref(scripts) we give a few more tips.
+
+But, scripts are not the best way to share your results with others. Instead, we strongly suggest you use R markdown - a document format that includes both text with markup, and *code chunks*, bits of R code that is executed, and the results placed in the document. 
+
+Markdown is a simple set of rules for formatting text files so that they are both human-readable and processable by software, and is used not just by `rmarkdown` but in many applications (like Github and Stackoverflow). R Markdown simply adds R, by allowing code chunks with various options.
+
+RStudio offers a handy editor for markdown files, and starts with an example file that shows many of the features. Start a new markdown file by choosing `File > New File > R Markdown...`. For now, leave the default settings. The new R markdown document (which is just a text file with the extension `.Rmd`) already contains some example code. Run this example by clicking the button just above the markdown document (Knit HTML). The example code will generate a new document (an HTML page), which opens in your browser You can see that the output contains text, R code, and even a plot.
+
+Throughout this book we assume that you use `rmarkdown` for all your reporting needs. It is by far the best option available at the moment, and provides many options for customization.
+
+**Reasons to use rmarkdown**
+
+- Seemless integration of R code, R results (figures, tables, etc.), and text with markup, section headers, links, images, etc.
+- Easy to learn syntax, and Rstudio provides many shortcuts and tools for working with `rmarkdown`.
+- Output formats include HTML, PDF (if LaTeX is installed) and MS Word. 
+- Make not just simple documents, but also HTML presentations (in many formats), blogs (with `blogdown`), books (with `bookdown`), auto-generated websites documenting R packages (with `pkgdown`), and many more templates provided by add-on packages.
+
+
+**Find help**
+
+The documentation for `rmarkdown` based documents is a little scattered across various sources. The reason for this is that multiple packages are involved in making an HTML page from an `.Rmd` file. 
+
+- The `knitr` package handles the *execution* of the R code in the document, and the *integration* of the R output into the document. It provides all options that are set at the top of each code chunk, for example to show or hide the code, to control figure size and resolution, captions for tables. All chunk options are [listed on the `knitr` website](https://yihui.name/knitr/options/).
+- The `rmarkdown` package (from Rstudio) handles the *conversion* to the desired output format, for example HTML or PDF. To do so, it uses Pandoc (see below), which is installed automatically with Rstudio. The `rmarkdown` package provides all options at the top of the `Rmd` document (the so-called YAML header), including the desired output format, and to control many options like the table of contents, format style, custom CSS, and so on. All options for `rmarkdown` [are described on Rstudio's website](https://rmarkdown.rstudio.com/). (Make sure to scroll down and select an output format to read about available options).
+- Finally, Pandoc is the actual engine to convert our raw text file (including R output formatted by `knitr`) to an HTML page, or some other format. Normally you don't have to learn much about Pandoc's options, since many settings are already provided by `rmarkdown`, but [the various formatting rules and conversion options are described here](https://pandoc.org/MANUAL.html).
+
+
+## Writing scripts {#scripts}
+
+Clearly, R markdown is the right solution if you are interested in writing fully reproducable reports or presentations. For everything else, we use R scripts - simply text files that include R code. A script is meant to be fully executable, so that you can run the entire script, producting the desired results or effects. In Rstudio, you can open a new R script with `File/New File/R script`, simply a text file that is saved with extension `.R`.
+
+To run your script, you can either click 'Source' on the topright corner of the document, or execute it from R with:
+
+```{r eval=FALSE}
+source("myscript.R")
+```
+
+This is *not useful* when you are interested in the output that you normally see in the console, it is only useful for side effects, for example the creation of new datasets (that are saved to disk), production of figures as PDF files, up- or downloading of files, or even converting an rmarkdown file to HTML with various settings. 
+
+From outside R, you can run your script from the *command line* with `Rscript`, for example:
+
+```
+Rscript myscript.R
+```
+
+You can even run bits of R code directly,
+
+```
+Rscript -e "sqrt(225)"
+```
+
+Finally, we can turn our R scripts into more versatile programs by reading and parsing command line options. Although base R provides some functionality for this, we suggest the `optparse` package instead. 
+
 
 
