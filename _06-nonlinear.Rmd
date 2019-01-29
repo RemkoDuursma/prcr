@@ -3,7 +3,7 @@
 
 ## Introduction
 
-This chapter introduces alternatives to linear models, with an emphasis on non-linear regression (Section \@ref(nls)). Very brief introductions to local regression smoothers (loess, Section~\ref{sec:loess}) and quantile regression (Section \ref{sec:rq}), and generalized additive models (Section~\ref{sec:gam}). In each case, we avoid technical descriptions of theory and implementation, and instead illustrate each technique with examples, and many figures.
+This chapter introduces alternatives to linear models, with an emphasis on non-linear least-squares regression (Section \@ref(nls)). Very brief introductions to local regression smoothers (loess, Section \@ref(loess) and quantile regression (Section \@ref(rq)) are also included. In each case, we avoid technical descriptions of theory and implementation, and instead illustrate each technique with examples, and many figures.
 
 Before we delve into non-linear regression, we first briefly describe when each of these techniques is useful. In general, linear models are preferable when you can use them, since they are robust, easy to use, and the theory for inference (hypothesis testing) is well developed and not very sensitive to violation of the usual assumptions. 
 
@@ -29,14 +29,19 @@ Packages used in this chapter. The `nls` function and associated methods are in 
 +------------------+------------------------------------------------+
 | `quantreg`       |   `rq`, `nlrq`                                  |
 +------------------+------------------------------------------------+
+| `broom`          |  `tidy`, `glance`                              |
++------------------+------------------------------------------------+
+
 
 ```{r echo=FALSE, message=FALSE}
 suppressPackageStartupMessages(library(nlshelper))
+suppressPackageStartupMessages(library(nlstools))
 suppressPackageStartupMessages(library(car))
 suppressPackageStartupMessages(library(nlme))
 suppressPackageStartupMessages(library(mgcv))
 suppressPackageStartupMessages(library(quantreg))
 suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(broom))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(ggthemes))
 suppressPackageStartupMessages(library(lgrdata))
@@ -200,10 +205,6 @@ If the model does not converge, it will report an error. Note that you do not ha
 
 The usual `summary` does not print a lot of useful information for `nls` models - a much better alternative is the `overview` function from the `nlstools` package:
 
-```{r echo=FALSE, message=FALSE}
-suppressPackageStartupMessages(library(nlstools))
-```
-
 ```{r }
 library(nlstools)
 overview(nlsfitSS)
@@ -237,9 +238,6 @@ coef(nlsfitSS)
 
 As in linear regression, an important assumption in non-linear regression is that the residuals are normally distributed. This can be inspected visually, as we strongly recommend against the use of tests for normality. The `qqPlot` function from the `car` package is very handy because it adds a confidence region for the qq-plot. The following example makes Fig. \@ref(fig:carqq).
 
-```{r echo=FALSE, message=FALSE}
-suppressPackageStartupMessages(library(car))
-```
 
 ```{r carqq, opts.label="smallsquare", fig.cap="Normal QQ plot for the Chapman-Richards growth equation fitted to the Loblolly dataset."}
 library(car)
@@ -276,10 +274,6 @@ glance(nlsfitSS)$sigma
 This is not a problem in model fitting, but it is important that you are aware that the coefficients in a non-linear regression models are often highly correlated. A correlation matrix between the parameters is shown with the `overview` function from the `nlstools` package (see example above).
 
 A nice way to visualize the correlation between parameters is the `ellipse` function from the `ellipse` package. For a fitted nls model, try the following code after setting the `which` argument to two parameters of interest:
-
-```{r echo=FALSE, message=FALSE}
-suppressPackageStartupMessages(library(ellipse))
-```
 
 ```{r eval=FALSE}
 # (results not shown)
@@ -472,10 +466,11 @@ The following code produces Fig. \@ref(fig:hobartloess).
 
 ```{r hobartloess, opts.label="smallsquare", fig.cap="A loess fit to the Sydney to Hobart race finish time data, including the confidence interval for the fit."}
 # Finish times of the Sydney to Hobart race
-hobart  <- read.csv("sydney_hobart_times.csv")
+library(lgrdata)
+data(sydney_hobart_times)
 
 # Fit the local regression model. Note that we always set the span.
-loes1 <- loess(Time ~ Year, data=hobart, span=0.6)
+loes1 <- loess(Time ~ Year, data=sydney_hobart_times, span=0.6)
 
 # Extract predictions from the model, including the standard errors.
 # If we don't give a newdata argument, predictions for the original data 
@@ -488,15 +483,15 @@ loes1_pred <- predict(loes1, se=TRUE) %>%
   as.data.frame %>%
   mutate(lci = fit - 2 * se.fit,
          uci = fit + 2 * se.fit,
-         Year = hobart$Year)
+         Year = sydney_hobart_times$Year)
 
 # Make a plot with data, predictions, and confidence interval.
-ggplot(hobart, aes(x = Year, y = Time)) +
+ggplot(sydney_hobart_times, aes(x = Year, y = Time)) +
   geom_point(col = "dimgrey") + 
   geom_line(data = loes1_pred, aes(x = Year, y = fit)) +
   geom_line(data = loes1_pred, aes(x = Year, y = lci), lty = 5) +
   geom_line(data = loes1_pred, aes(x = Year, y = uci), lty = 5) +
-  lims(y = c(0, max(hobart$Time))) +
+  lims(y = c(0, max(sydney_hobart_times$Time))) +
   theme_tufte(base_family = "sans")
 
 ```
@@ -504,7 +499,7 @@ ggplot(hobart, aes(x = Year, y = Time)) +
 Alternatively, and much more practically appealling, is to use `stat_smooth` from the `ggplot2` package to make this plot with much less code. The following figure is not shown, but will be very similar to Fig. \@ref(fig:hobartloess).
 
 ```{r}
-ggplot(hobart, aes(x = Year, y = Time)) +
+ggplot(sydney_hobart_times, aes(x = Year, y = Time)) +
   geom_point(col = "dimgrey") + 
   stat_smooth(method = "loess", span = 0.6, se = TRUE) +
   theme_tufte()
@@ -512,17 +507,14 @@ ggplot(hobart, aes(x = Year, y = Time)) +
 
 In general, we use a loess model to visualize patterns in the data. However, it is rarely a good idea to use loess models for any formal conclusions regarding your data, and numerous examples exist where loess models may give misleading conclusions. 
 
-```{r echo=FALSE, message=FALSE}
-suppressPackageStartupMessages(library(nlshelper))
-```
-
-
 ```{r}
 l <- loess(Petal.Length ~ Sepal.Width * Sepal.Length, data=iris, span=0.5)
 
 out <- with(iris, 
-            expand.grid(Sepal.Width = seq(min(Sepal.Width), max(Sepal.Width), length=50),
-                        Sepal.Length = seq(min(Sepal.Length), max(Sepal.Length), length=50))
+            expand.grid(Sepal.Width = seq(min(Sepal.Width), 
+                                          max(Sepal.Width), length=50),
+                        Sepal.Length = seq(min(Sepal.Length), 
+                                           max(Sepal.Length), length=50))
 ) 
 
 # A hack to make sure the predict() statement below returns the 
@@ -542,7 +534,7 @@ ggplot(out, aes(x = Sepal.Width, y = Sepal.Length, fill = pred)) +
 
 ```
 
-Although we just made a pretty picture, we cannot tell from the figure whether the model provided an adequate fit to the data. For models that include multiple predictors, and you want to use smooth functions, it is recommended to instead use a generalized additive model (see Chapter \@ref(gam)).
+Although we just made a pretty picture, we cannot tell from the figure whether the model provided an adequate fit to the data. For models that include multiple predictors, and you want to use smooth functions, it is recommended to instead use a generalized additive model instead (see Chapter \@ref(gam)).
 
 
 ## Quantile regression {#rq}
@@ -553,18 +545,15 @@ The next example uses a dataset which includes measurements of plant drought tol
 
 We use `rq` from the `quantreg` package to perform quantile regression.  The argument `tau` sets the quantile to be estimated, for example if `tau = 0.5`, we would perform 'median regression'.
 
-```{r message=FALSE, warning=FALSE, echo=FALSE}
-library(quantreg)
-```
-
 ```{r }
 # Read data
-choat <- read.csv("Choat_precipP50.csv") %>%
-  mutate(drought_tolerance = -P50)
+data(choat_precipp50)
+choat_precipp50 <- mutate(choat_precipp50, 
+                           drought_tolerance = -P50)
 
-# A basic quantile regression
+# A basic quantile regression fit
 library(quantreg)
-choat_rq <- rq(drought_tolerance ~ annualprecip, tau=0.1, data=choat)
+choat_rq <- rq(drought_tolerance ~ annualprecip, tau=0.1, data=choat_precipp50)
 
 # Test for significance, use bootstrapped standard errors
 summary(choat_rq, se="boot")
@@ -578,13 +567,14 @@ As with `lm`, `rq` also returns a slope and intercept when you run `coef(f1)`, a
 
 # Fit multiple quantiles
 tau_choice <- c(0.1,0.25,0.5,0.75,0.9)
-choat_rq_2 <- rq(drought_tolerance ~ annualprecip, tau=tau_choice, data=choat)
+choat_rq_2 <- rq(drought_tolerance ~ annualprecip, 
+                 tau=tau_choice, data=choat_precipp50)
  
 # Store coefficients (inspect p, it is a matrix)
 p <- coef(choat_rq_2)
 
 # Make base ggplot (points only)
-g <- ggplot(choat, aes(x = annualprecip, y = drought_tolerance)) +
+g <- ggplot(choat_precipp50, aes(x = annualprecip, y = drought_tolerance)) +
   geom_point(col = "dimgrey") +
   labs(x = "Annual rainfall (mm)", y = "Plant drought tolerance") +
   theme_tufte(base_family = "sans")
@@ -603,13 +593,13 @@ print(g)
 
 In the next example we show how to calculate confidence intervals for quantile regression fits and add it to a plot. 
 
-The following code makes Fig. \@ref{fig:fluxplotrq}. Note that in a previous example (Section XXX), we realized that `ggplot2::stat_smooth` could be used to make a similar plot, however, that function does not include an option for quantile regression. The approach shown here is general, and can be adapted to other models as well.
+The following code makes Fig. \@ref{fig:fluxplotrq}. Note that in a previous example (Section \@ref(loess)), we realized that `ggplot2::stat_smooth` could be used to make a similar plot, however, that function does not include an option for quantile regression. The approach shown here is general, and can be adapted to other models as well.
 
 ```{r fluxplotrq, opts.label="smallsquare", fig.cap="Relative humidity (RH) and air temperature (Tair)", echo=-1}
 
 # Fit the quantile regression model. Using the data from the previous example,
 # with only the 95% quantile.
-choat_rq_95 <- rq(drought_tolerance ~ annualprecip, tau=0.95, data=choat)
+choat_rq_95 <- rq(drought_tolerance ~ annualprecip, tau=0.95, data=choat_precipp50)
 
 # Set up a 'prediction' dataframe, we will obtain fitted values for these
 # values of annualprecip. A range of values is chosen to make a smooth plot.
@@ -621,8 +611,8 @@ preddfr <- data.frame(annualprecip = seq(130, 3100, length = 101))
 choat_rq_95_pred <- as.data.frame(predict(choat_rq_95, preddfr, interval="confidence"))
 preddfr <- cbind(preddfr, choat_rq_95_pred)
 
-
-ggplot(choat, aes(x = annualprecip)) +
+# Make the plot.
+ggplot(choat_precipp50, aes(x = annualprecip)) +
   geom_point(col = "dimgrey", aes(y = drought_tolerance)) +
   geom_ribbon(data = preddfr, aes(ymin = lower,
                                   ymax = higher),
@@ -648,7 +638,9 @@ library(quantreg)
 
 # The anthropometry dataset, with foot length, age, and sex
 # Use male subset only for this example
-foot_male <- read.csv("anthropometry.csv") %>%
+data(anthropometry)
+
+foot_male <- anthropometry %>% 
   filter(complete.cases(.),
          gender == "male")
   
@@ -666,11 +658,12 @@ Now we are ready to make our growth chart. To do this, we loop through a few val
 The following code makes Fig. \@ref(fig:footexample3).
 
 ```{r footexample3, opts.label="smallsquare", fig.cap="Growth chart for foot length (mm) against childrens' age (years)"}
+# Setup a base plot with the data.
 g <- ggplot(foot_male, aes(x = age, y = foot_length)) +
   geom_point(pch=16, size=0.7, col="grey") +
   theme_tufte(base_family = "sans")
   
-# Loop through desired quantiles, and add a fitted line each time.
+# Loop through desired quantiles, and add fitted lines to the plot.
 for(TAU in c(0.1, 0.5, 0.9)){
   
   # ... use them in a non-linear quantile regression
@@ -678,7 +671,7 @@ for(TAU in c(0.1, 0.5, 0.9)){
                tau=TAU, data=foot_male)
   
   # Set up x-values to predict over
-  xpred <- seq(min(foot$age), max(foot$age), length=101)
+  xpred <- seq(min(foot_male$age), max(foot_male$age), length=101)
   
   # Setup dataframe for plotting
   plot_df <- data.frame(age = xpred, 
@@ -699,10 +692,6 @@ print(g)
 
 
 ```
-
-
-
-
 
 
 

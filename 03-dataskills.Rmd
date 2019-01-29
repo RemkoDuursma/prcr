@@ -5,38 +5,27 @@
 
 For the purpose of this tutorial, a dataframe can contain six types of data. These are summarized in the table below:
 
-+---------------+---------------+--------------------+
-| Fruit         | Price         | Advantages         |
-+===============+===============+====================+
-| Bananas       | $1.34         | - built-in wrapper |
-|               |               | - bright color     |
-+---------------+---------------+--------------------+
-| Oranges       | $2.10         | - cures scurvy     |
-|               |               | - tasty            |
-+---------------+---------------+--------------------+
 
-+-----------------+-----------------------------------------+-------------------------------+--------------+
-| Data type       | Description                             | Example                       | Section      |
-+=================+=========================================+===============================+==============+
-|   *numeric*     |   Any number, including `double`        | `c(1, 12.3491, 10/2, 10^6, pi)`|             |   
-|                 | (double precision floating point) and   |                                |             |
-|                 | `integer` (whole numbers). In R you very|                                |             |
-|                 | rarely have to worry about the exact    |                                |             |
-|                 | nature of numeric values.               |                                |             |   
-+-----------------+-----------------------------------------+--------------------------------+-------------+
-| *character*       | Strings of text.          |   `c("apple", "pear", letters[1:3])`    |   \@ref(workingtext)       |
-+-----------------+-----------------------------------------+--------------------------------+-------------+
-| *factor*       | Categorial variable. Preferred over character when few unique levels (values) present in the data. Must use in statistical models, plotting. Internally stored as an integer corresponding to the *level* of the factor variable.    |   `factor(c("Control","Fertilized","Irrigated"))`       |   \@ref(workingfactors)       |
-+-----------------+-----------------------------------------+--------------------------------+-------------+
-|  *logical*     |  Either TRUE or FALSE. Internally stored as 0 (FALSE) or 1 (TRUE).   |  `10 == 100/10`         | \@ref(workinglogic)  |
-+-----------------+-----------------------------------------+--------------------------------+-------------+
-| *Date*        | Special Date class. Internally stored as number of days since 1970-1-1.    | `as.Date(Sys.time())` | \@ref(readingdates)          |
-+-----------------+-----------------------------------------+--------------------------------+-------------+
-| *POSIXct*     | Special Date-time class. Internally stored as number of seconds since 1970-1-1, and may have timezone attributes.       | `lubridate::ymd_hms("1883-08-26 14:00")`   | \@ref(datetime)          |
-+-----------------+-----------------------------------------+--------------------------------+-------------+
+```{r echo=FALSE}
+library(tibble)
+
+numeric_descriptor <- "Any number, including `double` (double precision floating point) and `integer` (whole numbers). In R you very rarely have to worry about the exact nature of numeric values."
+factor_descriptor <- "Categorial variable. Preferred over character when few unique levels (values) present in the data. Must use in statistical models, plotting. Internally stored as an integer corresponding to the *level* of the?options factor variable."
+
+dfr <- frame_data(~`Data type`, ~Description,        ~Example, ~Section,
+                  "*numeric*",  numeric_descriptor, "`c(1, 12.3491, 10/2, 10^6, pi)`", "",
+                  "*character*", "Strings of text", "`c('apple', 'pear', letters[1:3])`", "\\@ref(workingtext)",
+                  "*factor*", factor_descriptor, "`factor(c('Control','Fertilized','Irrigated'))`", "\\@ref(workingfactors)",
+                  "*logical*", "Either TRUE or FALSE. Internally stored as 0 (FALSE) or 1 (TRUE).", "`10 == 100/10`", "\\@ref(workinglogic)",
+                  "*Date*", "Special Date class. Internally stored as number of days since 1970-1-1.", "`as.Date(Sys.time())`", "\\@ref(readingdates) ",
+                  "*POSIXct*", "Special Date-time class. Internally stored as number of seconds since 1970-1-1, and may have timezone attributes.", "`lubridate::ymd_hms('1883-08-26 14:00')`","\\@ref(datetime)"
+                  
+                  )
+knitr::kable(dfr)
+```
 
 
-Also, R has a very useful built-in data type to represent missing values. This is represented by `NA` (Not Available) (see Section \@ref(:workingmissing)).
+Also, R has a very useful built-in data type to represent **missing values**. This is represented by `NA` (Not Available) (see Section \@ref(:workingmissing)).
 
 We will show how to convert between data types at the end of this chapter (Section \@ref(converttype)).
 
@@ -70,6 +59,7 @@ suppressPackageStartupMessages(library(lgrdata))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(ggthemes))
 suppressPackageStartupMessages(library(padr))
+suppressPackageStartupMessages(library(gplots))
 ```
 
 
@@ -96,19 +86,20 @@ pupae$CO2_treatment <- as.factor(pupae$CO2_treatment)
 str(pupae)
 ```
 
-In the `allom` example dataset, the `species` variable is a good example of a factor. A factor variable has a number of 'levels', which are the text values that the variable has in the dataset. Factors can also represent treatments of an experimental study. For example,
+In the `allometry` example dataset, the `species` variable is a good example of a factor. A factor variable has a number of 'levels', which are the text values that the variable has in the dataset. Factors can also represent treatments of an experimental study. For example,
 
 ```{r }
-levels(allom$species)
+data(allometry)
+levels(allometry$species)
 ```
 
 Shows the three species in this dataset. We can also count the number of rows in the dataframe for each species, like this:
 
 ```{r }
-table(allom$species)
+table(allometry$species)
 ```
 
-Note that the three species are always shown in the order of the `levels` of the factor: when the dataframe was read, these levels were assigned based on alphabetical order. Often, this is not a very logical order, and you may want to rearrange the levels to get more meaningful results.
+Note that the three species are always shown in the order of the **levels of the factor**: when the dataframe was read, these levels were assigned based on alphabetical order. Often, this is not a very logical order, and you may want to rearrange the levels to get more meaningful results.
 
 In our example, let's shuffle the levels around, using `factor`.
 
@@ -117,7 +108,7 @@ allom$species <- factor(allom$species, levels=c("PSME","PIMO","PIPO"))
 ```
 
 Now revisit the commands above, and note that the results are the same, but the order of the `levels` of
-the `factor` is different. You can also reorder the levels of a factor by the values of another variable, see the example in Section~\ref{sec:reorder}.
+the `factor` is different. You can also reorder the levels of a factor by the values of another variable, see the example in Section \@ref(reorder).
 
 We can also generate new factors, and add them to the dataframe. This is a common application:
  
@@ -145,11 +136,11 @@ table(allom$treeSizeClass)
 ```
 
 
-#### Empty factor levels
+### Empty factor levels
 
 It is important to understand how factors are used in R: they are not simply text variables, or 'character strings'. Each unique value of a factor variable is assigned a *level*, which is used every time you summarize your data by the factor variable.
 
-Crucially, even when you delete data, the original factor *level* is still present. Although this behaviour might seem strange, it makes a lot of sense in many cases (zero observations for a particular factor level can be quite informative, for example species presence/absence data).
+Crucially, even when you delete data, the original factor *level* is still present. Although this behaviour might seem strange, it makes a lot of sense in many cases (zero observations for a particular factor level can be quite informative!).
 
 Sometimes it is more convenient to drop empty factor levels with the `droplevels` function. Consider this example:
 
@@ -159,7 +150,7 @@ Sometimes it is more convenient to drop empty factor levels with the `droplevels
 table(pupae$T_treatment)
 
 # Suppose we decide to keep only the ambient treatment:
-pupae_amb <- subset(pupae, T_treatment == "ambient")
+pupae_amb <- dplyr::filter(pupae, T_treatment == "ambient")
 
 # Now, the level is still present, although empty:
 table(pupae_amb$T_treatment)
@@ -169,9 +160,9 @@ table(pupae_amb$T_treatment)
 pupae_amb2 <- droplevels(pupae_amb)
 ```
 
-> **Try this yourself**
+```{block2 type="rmdtry"}
 Compare the `summary` of `pupae\_amb` and `pupae\_amb2`, and note the differences.
-
+```
 
 
 ### Changing the levels of a factor {#changelevels}
@@ -242,8 +233,6 @@ The help page `?Syntax` has a comprehensive list of operators in R (including th
 
 In R, missing values are represented  with `NA`, a special data type that indicates the data is simply *Not Available*.
 
-*Warning:* Because `NA` represents a missing value, make sure you never use 'NA' as an abbreviation for anything (like North America).
-
 Many functions can handle missing data, usually in different ways. For example, suppose we have the following vector:
 
 ```{r }
@@ -262,8 +251,7 @@ mean(myvec1)
 mean(myvec1, na.rm=TRUE)
 ```
 
-Many functions have an argument `na.rm`, or similar. Refer to the help page
-of the function to learn about the various options (if any) for dealing with missing values. For example, see the help pages `?lm` and `?sd`.
+Many functions have an argument `na.rm`, or similar. Refer to the help page of the function to learn about the various options (if any) for dealing with missing values. For example, see the help pages `?lm` and `?sd`.
 
 The function `is.na` returns `TRUE` when a value is missing, which can be useful to see which values are missing, or how many,
 
@@ -292,7 +280,7 @@ datavec[datavec == -9999] <- NA
 
 ```
 
-In many cases, missing values may arise when certain operations did not produce the desired result. Consider this example,
+In other cases, missing values arise when certain operations did not produce the desired result. Consider this example,
 
 
 ```{r }
@@ -303,30 +291,33 @@ myvec <- c("101","289","12.3","abc","99")
 as.numeric(myvec)
 ```
 
-The warning message `NAs introduced by coercion` means that missing values were produced by when we tried to turn one data type (character) to another (numeric).
+The warning message **NAs introduced by coercion** means that missing values were produced by when we tried to turn one data type (character) to another (numeric).
 
 
 
 ### Not A Number
 
 Another type of missing value is the result of calculations that went wrong, for example:
+
 ```{r }
 # Attempt to take the logarithm of a negative number:
 log(-1)
 ```
+
 The result is `NaN`, short for *Not A Number*. 
 
 Dividing by zero is not usually meaningful, but R does not produce a missing value:
+
 ```{r }
 1000/0
 ```
+
 It produces 'Infinity' instead. 
 
 
 ### Missing values in dataframes {#naindataframe}
 
-When working with dataframes, you often want to remove missing values for a particular analysis. We'll use the `pupae` dataset for the following examples. See Section~\ref{sec:pupaedata} for a description of this dataset.
-
+When working with dataframes, you often want to remove missing values for a particular analysis. We'll use the `pupae` dataset for the following examples. Note we use the `dplyr` package for `filter`.
 
 ```{r }
 # (re-)load data
@@ -337,17 +328,22 @@ summary(pupae)
 # Notice there are 6 NA's (missing values) for Gender, and 1 for Frass.
 
 # Option 1: take subset of data where Gender is not missing:
-pupae_subs1 <- subset(pupae, !is.na(Gender))
+pupae_subs1 <- filter(pupae, !is.na(Gender))
 
 # Option 2: take subset of data where Frass AND Gender are not missing
-pupae_subs2 <- subset(pupae, !is.na(Frass) & !is.na(Gender))
+pupae_subs2 <- filter(pupae, 
+                      !is.na(Frass),
+                      !is.na(Gender))
 
 # A more rigorous subset: remove all rows from a dataset where ANY variable 
 # has a missing value:
 pupae_nona <- pupae[complete.cases(pupae),]
 
+# This was an example where indexing (using square brackets) is a bit more 
+# convenient than the dplyr approach, where we have to write the following.
+# A number of similar looking statements do not work!
+pupae_nona <- pupae %>% filter(complete.cases(.))
 ```
-
 
 
 ### Subsetting when there are missing values {#subsetmissing}
@@ -479,7 +475,7 @@ grep("Bran$", cerealnames)
 As mentioned, `grep` can do a *lot* of different things, so don't be alarmed if you find the help page *a bit overwhelming*. However, there are a few options worth knowing about. One very useful option is to turn off the case-sensitivity, for example:
 
 ```{r }
-grep("bran",cerealnames,ignore.case=TRUE)
+grep("bran", cerealnames, ignore.case=TRUE)
 ```
 finds `Bran` and `bran` and `BRAN`.
 
@@ -490,7 +486,7 @@ Finally, using the above tools, let's add a new variable to the `cereal` dataset
 cereals$BranOrNot <- grepl("Bran$", cerealnames)
 
 # Quick summary:
-summary(cereals$BranOrNot)
+table(cereals$BranOrNot)
 ```
 
 ```{block2 type="rmdreading"}
@@ -808,35 +804,17 @@ When converting a factor to numeric (i.e. when the factor labels can be converte
 
 ## Summarizing dataframes
 
-There are a few useful functions to print general summaries of a dataframe, to see which variables are included, what types of data they contain, and so on. We already looked at some of these in Section \@ref(dataframes).
+There are a few useful functions to print general summaries of a dataframe, to see which variables are included, what types of data they contain, and so on. We already looked at `summary` and `str` in Section \@ref(dataframes).
 
-The most basic function is `summary`, which works on many types of objects. 
-
-```{r eval=FALSE}
-# output not shown
-allom <- read.csv("Allometry.csv")
-summary(allom)
-```
-
-For each factor variable, the levels are printed (the `species` variable, levels `PIMO`, `PIPO` and `PSME`. For all numeric variables, the minimum, first quantile, median, mean, third quantile, and the maximum values are shown.
-
-To simply see what types of variables your dataframe contains (or, for objects other than dataframes, to summarize sort of object you have), use the `str` function (short for 'structure').
-
-```{r}
-str(allom)
-```
-
-Finally, there are two very useful functions in the `Hmisc` package. The first, `describe`, is much like `summary`, but offers slightly more sophisticated statistics.
-
-The second, `contents`, is similar to `str`, but does a very nice job of summarizing the `factor} variables in your dataframe, prints the number of missing variables, the number of rows, and so on. 
+Two more very useful functions are from the `Hmisc` package. The first, `describe`, is much like `summary`, but offers slightly more sophisticated statistics. The second, `contents`, is similar to `str`, but does a very nice job of summarizing the `factor} variables in your dataframe, prints the number of missing variables, the number of rows, and so on. 
 
 ```{r echo=FALSE}
 suppressPackageStartupMessages(library(Hmisc))
 ```
  
 ```{r}
-# read data
-pupae <- read.csv("pupae.csv")
+# Load data
+data(pupae)
 
 # Make sure CO2_treatment is a factor (it will be read as a number)
 pupae$CO2_treatment <- as.factor(pupae$CO2_treatment)
@@ -902,7 +880,7 @@ Often, you want to summarize a variable by the levels of another variable. For e
 
 ```{r}
 # Read data
-rain <- read.csv("Rain.csv")
+data(rain)
 
 # Annual rain totals.
 with(rain, tapply(Rain, Year, FUN=sum))
@@ -913,9 +891,6 @@ The `tapply` function applies a function (`sum`) to a vector (`Rain`), that is s
 We can also use the `tapply` function on more than one variable at a time. Consider these examples on the `pupae` data. 
 
 ```{r}
-# Read data
-pupae <- read.csv("pupae.csv")
-
 # Average pupal weight by CO2 and T treatment:
 with(pupae, tapply(PupalWeight, list(CO2_treatment, T_treatment), FUN=mean))
 
@@ -923,26 +898,25 @@ with(pupae, tapply(PupalWeight, list(CO2_treatment, T_treatment), FUN=mean))
 with(pupae, tapply(PupalWeight, list(CO2_treatment, T_treatment, Gender), FUN=mean))
 ```
 
-As the examples show, the `tapply` function produces summary tables by one or more factors. The resulting object is either a vector (when using one factor), or a matrix (as in the examples using the pupae data). 
+As the examples show, the `tapply` function produces summary tables by one or more factors. The resulting object is either a vector (when using one factor), or a matrix (as in the examples using the pupae data).
 
 The limitations of `tapply` are that you can only summarize one variable at a time, and that the result is not a dataframe.
 
 The main advantage of `tapply` is that we can use it as input to `barplot`, as the following example demonstrates (Fig. fig:pupgroupedbar})
 
 ```{r pupgroupedbar, fig.cap="A grouped barplot of average pupal weight by CO2 and Gender for the pupae dataset. This is easily achieved via the use of tapply.", opts.label="smallsquare"}
-  # Pupal weight by CO2 and Gender. Result is a matrix.
-  pupm <- with(pupae, tapply(PupalWeight, list(CO2_treatment,Gender), 
-                             mean, na.rm=TRUE))
-  
-  # When barplot is provided a matrix, it makes a grouped barplot.
-  # We specify xlim to make some room for the legend.
-  barplot(pupm, beside=TRUE, legend.text=TRUE, xlim=c(0,8),
-          xlab="Gender", ylab="Pupal weight")
+# Pupal weight by CO2 and Gender. Result is a matrix.
+pupm <- with(pupae, tapply(PupalWeight, list(CO2_treatment,Gender), 
+                           mean, na.rm=TRUE))
+
+# When barplot is provided a matrix, it makes a grouped barplot.
+# We specify xlim to make some room for the legend.
+barplot(pupm, beside=TRUE, legend.text=TRUE, xlim=c(0,8),
+        xlab="Gender", ylab="Pupal weight")
 ```
   
-  
-  
-### Summarizing dataframes with `summaryBy` {#summaryby}
+
+### Making summary tables with `summaryBy` {#summaryby}
   
 
 If we have the following dataset called `plantdat`,
@@ -1006,7 +980,7 @@ suppressPackageStartupMessages(library(doBy))
 library(doBy)
 
 # read pupae data if you have not already
-pupae <- read.csv("pupae.csv")
+data(pupae)
 
 # Get mean and standard deviation of Frass by CO2 and T treatments
 summaryBy(Frass ~ CO2_treatment + T_treatment,
@@ -1038,7 +1012,7 @@ You can also use any function that returns a vector of results. In the following
 # . ~ species means 'all numeric variables by species'.
 # Extra arguments to the function used (in this case quantile) can be set here as well,
 # they will be passed to that function (see ?quantile).
-summaryBy(. ~ species, data=allom, FUN=quantile, probs=c(0.05, 0.95))
+summaryBy(. ~ species, data=allometry, FUN=quantile, probs=c(0.05, 0.95))
 ```
 
 
@@ -1058,8 +1032,7 @@ library(dplyr)
 
 group_by(pupae, CO2_treatment, T_treatment) %>%
   summarize(Frass_mean = mean(Frass, na.rm=TRUE),
-            Frass_sd = sd(Frass, na.rm=TRUE)) %>%
-  pander
+            Frass_sd = sd(Frass, na.rm=TRUE))
 ```
 
 
@@ -1070,8 +1043,7 @@ In `summarize` you can specify each of the new variables that should be produced
 ```{r}
 group_by(pupae, CO2_treatment, T_treatment) %>%
   summarize_at(.vars = c("Frass", "PupalWeight"),
-                .funs = c("mean", "sd")) %>%
-  pander
+                .funs = c("mean", "sd"))
 ```
 
 The result is identical to our last example with `summaryBy`.
@@ -1122,7 +1094,7 @@ Consider these examples using the Titanic data (see Section sec:titanic}).
 
 ```{r tidy = FALSE}
 # Read titanic data
-titanic <- read.table("titanic.txt", header=TRUE)
+data(titanic)
 
 # Count observations by passenger class
 table(titanic$PClass)
@@ -1148,7 +1120,7 @@ Consider the `allometry` dataset, which includes tree height for three species. 
 
 ```{r}
 # Read data
-allom <- read.csv("Allometry.csv") %>%
+allom <- allometry %>%
   mutate(MaxHeight = ave(height, species, FUN=max))
 
 # Look at first few rows (or just type allom to see whole dataset)
@@ -1173,30 +1145,25 @@ You can reorder the factor levels by some summary variable. For example,
 # by the mean amount of sodium.
 
 # Read data, show default (alphabetical) levels:
-cereal <- read.csv("cereals.csv")
-levels(cereal$Manufacturer)
+data(cereals)
+levels(cereals$Manufacturer)
 
 # Now reorder:
-cereal <- mutate(cereal, 
+cereals <- mutate(cereals, 
                  Manufacturer = reorder(Manufacturer, sodium, 
                                         median, na.rm=TRUE))
 
 # And inspect the new levels
-levels(cereal$Manufacturer)
+levels(cereals$Manufacturer)
 
 # Tables are now printed in order:
-with(cereal, tapply(sodium, Manufacturer, median))
+with(cereals, tapply(sodium, Manufacturer, median))
 ```
 
 This trick comes in handy when making barplots; it is customary to plot them in ascending order if there is no specific order to the factor levels, as in this example.
 
 The following code produces Fig. \@ref(fig:coweetabar).
 
-```{r echo = FALSE}
-suppressPackageStartupMessages(library(gplots))
-suppressPackageStartupMessages(library(doBy))
-suppressPackageStartupMessages(library(dplyr))
-```
 
 ```{r coweetabar, fig.cap='An ordered barplot for the coweeta tree data (error bars are 1 SD).', warning=FALSE, opts.label="largesquare"}
 
@@ -1490,7 +1457,7 @@ library(tidyr)
 # The new dataframe will have a column 'Party' with current columns,
 # *except* Date (hence the -Date),
 # and values will be stored in 'Poll'
-elect_long <- gather(elect, Party, Poll, -Date)
+elect_long <- gather(dutchelection, Party, Poll, -Date)
 head(elect_long,3)
 ```
 
@@ -1498,7 +1465,7 @@ head(elect_long,3)
 # Identical results can be had with melt() from reshape2 - a function which otherwise includes more options.
 # See `?melt.data.frame` for more options (not `?melt`, which is the generic function).
 library(reshape2)
-elect_long <- melt(elect, variable.name="Party", value.name="Poll", id.vars="Date")
+elect_long <- melt(dutchelection, variable.name="Party", value.name="Poll", id.vars="Date")
 ```
 
 The advantage of `melt` is that we can include more than one ID variables, like in the following example. This example also shows the common need for some text processing after reshaping.
@@ -1532,7 +1499,7 @@ a	question_3	oh
 a	question_4	no
 a	question_5	yes
 a	question_6	obv
-b	question_1	cool
+b	question_1	cool
 b	question_2	good
 b	question_3	yes
 b	question_4	sweet

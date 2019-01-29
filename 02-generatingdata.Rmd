@@ -216,7 +216,7 @@ For comparison, here is the same code using the $-notation. Note that the previo
 allometry$volindex <- allometry$diameter^2 * allometry$height
 ```
 
-The `with` function allows for more readable code, while at the same time making sure that the variables `diameter` and `height` are read from the dataframe `allom`. 
+The `with` function allows for more readable code, while at the same time making sure that the variables `diameter` and `height` are read from the dataframe `allometry`. 
 
 Another, even more readable approach is to use `mutate` from the `dplyr` package (similar to base R's `transform`, but with a useful advantage).
 
@@ -233,7 +233,7 @@ Where `mutate` adds new variables to the dataframe, and it is able to use variab
 The above examples are important -- many times throughout this book you will be required to perform similar operations. As an exercise, also add the ratio of height to diameter to the dataframe.
 ```
 
-A simple summary of the dataframe can be printed with the `summary` function; where we use `pander` (from the `pander` package) to give readable output in rmarkdown (which we assume you use anyway), and indexing (`[,1:3]`) to use the first three columns of `allom` only.
+A simple summary of the dataframe can be printed with the `summary` function; where we use `pander` (from the `pander` package) to give readable output in rmarkdown (which we assume you use anyway), and indexing (`[,1:3]`) to use the first three columns of `allometry` only.
 
 ```{r }
 library(pander)
@@ -390,9 +390,12 @@ Dataframes can be indexed with row and column numbers using `mydataframe[row,col
 
 Here, `row` refers to the row number (which can be a vector of any length), and `column` to the column number (which can also be a vector). You can also refer to the column by its *name* rather than its number, which can be very useful. All this will become clearer after some examples.
 
-Let's look at a few examples using the Allometry dataset (see Section sec:allomdata} for a description of the dataset).
+Let's look at a few examples using the Allometry dataset.
 
 ```{r }
+# Load data
+data(allometry)
+
 # Extract tree diameters: take the 4th observation of the 2nd variable:
 allometry[4,2]
 
