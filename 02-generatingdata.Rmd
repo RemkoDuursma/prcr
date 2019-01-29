@@ -2,56 +2,72 @@
 # Reading and subsetting data {#readdata}
 
 
+```{r echo=FALSE, message=FALSE}
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(lgrdata))
+```
+
 ## Reading data {#readingdata}
 
-There are many ways to read data into R, but we are going to keep things simple and show only a couple of options. Let's assume you have a fairly standard dataset, with variables organized in columns, and individual records in rows, and individual fields separated by a comma (a comma-separated values (CSV) file).  This is a very convenient and safe way to read in data. If your data is not in a CSV file, see Section sec:readingotherdata on how to read other formats into R.
+There are many ways to read data into R, but we are going to keep things simple and show only a couple of options. Throughout this book we focus on 'rectangular data', that is, data that can be organized in a table with columns and rows. A data table like this, with individual observations in rows, and various data fields in columns, is called a *data frame*. All example data in this book is provided as dataframes.
+
+We first a few options to read text files into dataframes in R, and then provide the basics of working with dataframes in Section \@ref(dataframes).
+
+
+### Example data used throughout this book {#exampledata}
+
+All example datasets used throughout this book are provided in the R package `lgrdata`. Install it like any other package:
+
+```{r eval=FALSE}
+install.packages("lgrdata")
+```
+
+At the start of each script where you use an example dataset, load the package:
+
+```{r}
+library(lgrdata)
+```
+
+Then, you can make available any dataset from the package with :
+
+```{r}
+data(allometry)
+```
+
+Each dataset has help page, inspect it (`?allometry`) to learn a bit about the dataset, the meaning and units of the variables, and sometimes a simple example plot with the data.
+
+If you would like to practice reading data from CSV files, you can also download (nearly) every example dataset from [this page maintained by Western Sydney University](http://www.westernsydney.edu.au/hie/opportunities/training_courses/data_analysis_r/r_course_data_files).
+
 
 
 ### Reading CSV files {#readcsv}
 
-Use the function `read.csv` to read in the first example dataset (Allometry.csv). This assumes that the file `Allometry.csv` is in your current working directory. Make sure you fully understand the concept of a working directory (see Section fileswd) before continuing.
+Suppose you have the file `Allometry.csv' in your working directory, you can read in the file into a dataframe with, 
 
-```{r}
-allom <- read.csv("Allometry.csv")
+```{r eval=FALSE}
+allometry <- read.csv("Allometry.csv")
 ```
+
+Make sure you fully understand the concept of a working directory (see Section \@ref(fileswd)) before continuing.
 
 If the file is stored elsewhere, you can specify the entire path (this is known as an *absolute* path). It is generally not recommended to ever use absolute paths, because the script will then depend on an exact location of a datafile. But as always, there are exceptions.
 
 ```{r eval=FALSE}
-allom <- read.csv("c:/projects/data/Allometry.csv")
+allometry <- read.csv("c:/projects/data/Allometry.csv")
 ```
 
 Or, if the file is stored in a sub-directory of your working directory, you can specify the *relative* path.
 
 ```{r eval=FALSE}
-allom <- read.csv("data/Allometry.csv")
+allometry <- read.csv("data/Allometry.csv")
 ```
 
-The latter option is probably useful to keep your data files separate from your scripts and outputs in your working directory. We will not discuss how to organize your files here, but return to this important topic in Chapter chap:projectman.
-
-The previous examples read in an entire dataset, and stored it in an object I called `allom`. This type of object is called a *dataframe*. We will be using dataframes a lot throughout this book. Like matrices, dataframes have two dimensions: they contain both columns and rows. Unlike matrices, each column can hold a different type of data. When you read in a file using `read.csv`, the data is automatically stored in a dataframe. Dataframes can also be created using the function `data.frame`. More on this in Section sec:vecstodfr.
-
-To read a description of this example dataset, see Section sec:allomdata on page sec:allomdata.
-
-To look at the entire dataset after reading, simply type the name of the dataframe. This is called *printing* an object.
-
-```{r results="hide"}
-allom
-```
-
-It is usually a better idea to print only the first (or last) few rows of the dataframe. R offers two convenient functions, `head` and `tail`, for doing this.
-
-```{r }
-head(allom)
-tail(allom)
-```
-
-Note that the row numbers are shown on the left. These can be accessed with `rownames(allom)`. Although some R functions return objects with rownames, I rarely use them, so you can pretty much leave them alone. In the case where the row names include useful information, it is usually a better idea to add them as a new column (with for example, `tibble::rownames_to_column()`).
+The latter option is probably useful to keep your data files separate from your scripts and outputs in your working directory. We will not discuss how to organize your files here, but return to this important topic in Chapter \@ref(projectman).
 
 The function `read.csv` has many options, let's look at some of them. We can skip a number of rows from being read, and only read a fixed number of rows. For example, use this command to read rows 10-15, skipping the header line (which is in the first line of the file) and the next 9 lines. \emph{Note:} you have to skip 10 rows to read rows 10-15, because the header line (which is ignored) counts as a row in the text file! 
 
-```{r}
-allomsmall <- read.csv("Allometry.csv", skip=10, nrows=5, header=FALSE)
+```{r eval=FALSE}
+allomsmall <- read.csv("Allometry.", skip=10, nrows=5, header=FALSE)
 ```
 
 ### Reading large CSV files
@@ -66,15 +82,7 @@ allom <- fread("Allometry.csv")
 Of course, you could use `fread` even for small files, but I generally recommend to keep dependencies to a minimum. In other words, use built-in ('base') functionsif you can, to develop more robust and reproducable code.
 
 
-
-### Reading other data {#readingotherdata}
-
-#### Excel spreadsheets
-
-Excel spreadsheets are *not* a recommended way to store data, but often you don't make that choice yourself. If you do need to read an XLS or XLSX file, the `readxl` package works very well. *Note*: avoid older implementations like the `xlsx` package and `read.xls` in the `gtools` package, which are less reliable.
-
-
-#### Tab-delimited text files {#tabdelimtext}
+### Reading Tab-delimited text files {#tabdelimtext}
 
 Sometimes, data files are provided as text files that are TAB-delimited. To read these files, use the following command:
 
@@ -88,7 +96,18 @@ In fact, `read.table` is the more general function - `read.csv` is a specific ca
 mydata <- read.table("somedelimdata.txt", header=TRUE, sep=";")
 ```
 
-#### Reading typed data
+
+### Reading Excel spreadsheets
+
+Excel spreadsheets are *not* a recommended way to store data, but often you don't make that choice yourself. If you do need to read an XLS or XLSX file, the `readxl` package works very well. *Note*: avoid older implementations like the `xlsx` package and `read.xls` in the `gtools` package, which are less reliable.
+
+```{r eval=FALSE}
+library(readxl)
+mydata <- read_excel("mspreadsheet.xlsx", sheet = 2)
+```
+
+
+### Reading typed data
 
 You can also write the dataset in a text file, and read it as in the following example. This is useful if you have (found) a small dataset that you typed in by hand, or for making reproducible code snippets that include the dataset.  
 
@@ -102,7 +121,7 @@ a b
 
 
 
-#### Reading data from the clipboard
+### Reading data from the clipboard
 
 A very quick way to read a dataset from Excel is to use your clipboard. In Excel, select the data you want to read (including the header names), and press `Ctrl-C` (Windows), or `Cmd-C` (Mac). Then, in R, type:
 
@@ -116,12 +135,30 @@ mydata <- read.delim(pipe("pbpaste"), header=TRUE)
 
 This is not a long-term solution to reading data, but is a very quick way to read (part of) a messy spreadsheet that someone shared with you.
 
-#### Other foreign formats
+### Reading other foreign formats
 
 Finally, if you have a dataset in some unusual format, consider the `foreign` package, which provides a number of tools to read in other formats (such as SAS, SPSS, etc.).
 
 
-#### Convert vectors into a dataframe {#vecstodfr}
+
+## Working with dataframes {#dataframes}
+
+As mentioned, this book focuses heavily on dataframes, because this is the object you will use most of the time in data analysis. The following sections provide a brief introduction, but we will see many examples using dataframes throughout this manual. 
+
+Like matrices, dataframes have two dimensions: they contain both columns and rows. Unlike matrices, each column can hold a different type of data. This is very useful for keeping track of different types of information about data points. For example, you might use one column to hold height measurements, and another to hold the matching species IDs. When you read in a file using `read.csv`, the data is automatically stored in a dataframe. Dataframes can also be created using the function `data.frame` (see Section \@ref(vecstodfr)).
+
+Once the dataframe is read into memory, you can inspect the data in RStudio in the `Environment` tab. If you click on it, you can inspect the dataframe with a built-in viewer (opens up in a separate window).
+
+
+```{block2 type="rmdinfo"}
+**What is a tibble?**
+Sometimes you will notice that some functions return objects that are very similar to
+dataframes, but are actually called 'tibbles' (for example, `read_excel` returns one). A tibble is a newer format for dataframes, and is internally very nearly the same. You can pretty much always assume that dataframes and tibbles behave in the same way.
+```
+
+
+
+### Convert vectors into a dataframe {#vecstodfr}
 
 Suppose you have two or more vectors (of the same length), and you want to include these in a new dataframe. You can use the function `data.frame}. Here is a simple example:
 
@@ -134,55 +171,49 @@ data.frame(x=vec1, y=vec2)
 
 Here, we made a dataframe with  columns named `x` and `y`. *Note*: take care to ensure that the vectors have the same length, otherwise it won't work!
 
-> **Try this yourself**
-> Modify the previous example so that the two vectors are \emph{not} the same length. Then, attempt to combine them in a dataframe and inspect the resulting error message.
+```{block2 type="rmdtry"}
+Modify the previous example so that the two vectors are \emph{not} the same length. Then, attempt to combine them in a dataframe and inspect the resulting error message.
+```
 
-
-
-## Working with dataframes {#dataframes}
-
-This book focuses heavily on dataframes, because this is the object you will use most of the time in data analysis. The following sections provide a brief introduction, but we will see many examples using dataframes throughout this manual. 
 
 ### Variables in the dataframe
 
 Let's first read the `allom` data, if you have not done so already. 
 
 ```{r }
-allom <- read.csv("Allometry.csv")
+data(allometry)
 ```
 
-After reading the dataframe, it is good practice to always quickly inspect the dataframe to see if anything went wrong. I routinely look at the first few rows with `head`. Then, to check the types of variables in the dataframe, use the `str` function (short for 'structure'). This function is useful
-for other objects as well, to view in detail what the object contains.
+After reading the dataframe, it is good practice to always quickly inspect the dataframe to see if anything went wrong. I routinely look at the first few rows with `head`. Then, to check the types of variables in the dataframe, use the `str` function (short for 'structure'). This function is useful for other objects as well, to view in detail what the object contains.
 
 ```{r }
-head(allom)
-str(allom)
+head(allometry)
+str(allometry)
 ```
 
 Individual variables in a dataframe can be extracted using the dollar `$` sign.
 Let's print all the tree diameters here, after rounding to one decimal point:
 
 ```{r }
-round(allom$diameter,1)
+round(allometry$diameter,1)
 ```
 
-It is also straightforward to add new variables to a dataframe. Let's convert the tree diameter to inches, and add it to the dataframe
-as a new variable:
+It is also straightforward to add new variables to a dataframe. Let's convert the tree diameter to inches, and add it to the dataframe as a new variable:
 
 ```{r }
-allom$diameterInch <- allom$diameter / 2.54
+allometry$diameterInch <- allometry$diameter / 2.54
 ```
 
 Instead of using the \$-notation every time (which can result in lengthy, messy code, especially when your variable names are long) you can use `with` to indicate where the variables are stored. Let's add a new variable called `volindex`, a volume index defined as the square of tree diameter times height:
 
 ```{r }
-allom$volindex <- with(allom, diameter^2 * height)
+allometry$volindex <- with(allometry, diameter^2 * height)
 ```
 
 For comparison, here is the same code using the $-notation. Note that the previous example is probably easier to read.
 
 ```{r }
-allom$volindex <- allom$diameter^2 * allom$height
+allometry$volindex <- allometry$diameter^2 * allometry$height
 ```
 
 The `with` function allows for more readable code, while at the same time making sure that the variables `diameter` and `height` are read from the dataframe `allom`. 
@@ -191,12 +222,12 @@ Another, even more readable approach is to use `mutate` from the `dplyr` package
 
 ```{r}
 library(dplyr)
-allom <- mutate(allom, 
+allometry <- mutate(allometry, 
                 diameterInch = diameter / 2.54,
                 volindex = diameterInch^2 * height)
 ```
 
-Where `mutate` adds new variables to the dataframe, and it is able to use variables used just before in the same call (note `diameterInch`).
+Where `mutate` adds new variables to the dataframe, and it is able to use variables used just before in the same call (note `diameterInch` was created in the same call).
 
 ```{block2, type="rmdtry"}
 The above examples are important -- many times throughout this book you will be required to perform similar operations. As an exercise, also add the ratio of height to diameter to the dataframe.
@@ -206,7 +237,7 @@ A simple summary of the dataframe can be printed with the `summary` function; wh
 
 ```{r }
 library(pander)
-summary(allom[,1:3]) %>% pander
+summary(allometry[,1:3]) %>% pander
 ```
 
 For the numeric variables, the minimum, 1st quantile, median, mean, 3rd quantile, and maximum values are printed. For so-called 'factor' variables (i.e., categorical variables), a simple table is printed (in this case, for the `species` variable). We will come back to factors in Section sec:workingfactors. If the variables have missing values, the number of missing values is printed as well (see Section \@ref(workingmissing)).
@@ -214,8 +245,8 @@ For the numeric variables, the minimum, 1st quantile, median, mean, 3rd quantile
 To see how many rows and columns your dataframe contains (handy for double-checking you read the data correctly), use `nrow` and `ncol`. Alternatively, `dim` gives the 'dimension' of the dataframe (rows x columns).
 
 ```{r }
-nrow(allom)
-ncol(allom)
+nrow(allometry)
+ncol(allometry)
 ```
 
 
@@ -223,25 +254,22 @@ ncol(allom)
 
 To access the names of a dataframe as a vector, use the `names} function. You can also use this to change the names. Consider this example:
 
-```{r echo=FALSE}
-allom <- read.csv("Allometry.csv")
-```
 ```{r }
 # read names:
-names(allom)
+names(allometry)
 
 # rename all (make sure vector is same length as number of columns!)
-names(allom) <- c("spec","diam","ht","leafarea","branchm")
+names(allometry) <- c("spec","diam","ht","leafarea","branchm")
 ```
 
 We can also change some of the names, using simple indexing (see Section \@ref(vectorindexing)).
 
 ```{r }
 # rename Second one to 'Diam'
-names(allom)[2] <- "Diam"
+names(allometry)[2] <- "Diam"
 
 # rename 1st and 2nd:
-names(allom)[1:2] <- c("SP","D")
+names(allometry)[1:2] <- c("SP","D")
 ```
 
 Better yet is to use `rename` from the `dplyr` package, which makes sure you change the right column names (indexing as above can be dangerous if the order of columns has changed!).
@@ -250,7 +278,7 @@ Better yet is to use `rename` from the `dplyr` package, which makes sure you cha
 library(dplyr)
 
 # The names on the right are the original names, on the left are the new ones.
-allom <- rename(allom, spec = species,
+allometry <- rename(allometry, spec = species,
                        diam = diameter)
 ```
 
@@ -365,30 +393,27 @@ Here, `row` refers to the row number (which can be a vector of any length), and 
 Let's look at a few examples using the Allometry dataset (see Section sec:allomdata} for a description of the dataset).
 
 ```{r }
-# Read data
-allom <- read.csv("allometry.csv")
-
 # Extract tree diameters: take the 4th observation of the 2nd variable:
-allom[4,2]
+allometry[4,2]
 
 # We can also index the dataframe by its variable name:
-allom[4,"diameter"]
+allometry[4,"diameter"]
 
 # Extract the first 3 rows of 'height':
-allom[1:3, "height"]
+allometry[1:3, "height"]
 
 # Extract the first 5 rows, of ALL variables
 # Note the use of the comma followed by nothing
 # This means 'every column' and is very useful!
-allom[1:5,]
+allometry[1:5,]
 
 # Extract the fourth column
 # Here we use nothing, followed by a comma,
 # to indicate 'every row'
-allom[,4]
+allometry[,4]
 
 # Select only 'height' and 'diameter', store in new dataframe:
-allomhd <- allom[,c("height", "diameter")]
+allomhd <- allometry[,c("height", "diameter")]
 ```
 
 As we saw when working with vectors (see Section sec:vectorindexing), we can use expressions to extract data. Because each column in a dataframe is a vector, we can apply the same techniques to dataframes, as in the following examples. 
@@ -397,35 +422,35 @@ We can also use one vector in a dataframe to find subsets of another. For exampl
 
 ```{r out.lines=9}
 # Extract diameters larger than 60
-allom$diameter[allom$diameter > 60]
+allometry$diameter[allometry$diameter > 60]
 
 # Extract all rows of allom where diameter is larger than 60.
 # Make sure you understand the difference with the above example!
-allom[allom$diameter > 60,]
+allometry[allometry$diameter > 60,]
 
 # We can use one vector to index another. For example, find the height of the tree
 # that has the largest diameter, we can do:
-allom$height[which.max(allom$diameter)]
+allometry$height[which.max(allometry$diameter)]
 
 # Recalling the previous section, this is identical to:
-allom[which.max(allom$diameter), "height"]
+allometry[which.max(allometry$diameter), "height"]
 
 # Get 10 random observations of 'leafarea'. Here, we make a new vector 
 # on the fly with sample(), which we use to index the dataframe.
-allom[sample(1:nrow(allom),10),"leafarea"]
+allometry[sample(1:nrow(allometry),10),"leafarea"]
 
 # As we did with vectors, we can also use %in% to select a subset.
 # This example selects only two species in the dataframe.
-allom[allom$species %in% c("PIMO","PIPO"),]
+allometry[allometry$species %in% c("PIMO","PIPO"),]
 
 # Extract tree diameters for the PIMO species, as long as diameter > 50
-allom$diameter[allom$species == "PIMO" & allom$diameter > 50]
+allometry$diameter[allometry$species == "PIMO" & allometry$diameter > 50]
 
 # (not all output shown)
 ```
 
 ```{block2, type="rmdtry"}
-As with vectors, we can quickly assign new values to subsets of data using the `<-} operator. Try this on some of the examples above.
+As with vectors, we can quickly assign new values to subsets of data using the `<-` operator. Try this on some of the examples above.
 ```
 
 ### A faster method
@@ -436,7 +461,7 @@ With `filter`, you can select rows that meet a certain criterion, and columns as
 
 ```{r out.lines=6}
 # Read data
-pupae <- read.csv("pupae.csv")
+data(pupae)
 
 # For filter(), select().
 library(dplyr)
@@ -445,7 +470,8 @@ library(dplyr)
 # Note: statements separated by commas are interpreted as AND by filter()
 filter(pupae, 
        T_treatment == "ambient",
-       CO2_treatment == 280)
+       CO2_treatment == 280,
+       Gender == 0)
 
 # (not all output shown)
 
@@ -456,11 +482,10 @@ filter(pupae, Frass > 2.6) %>%
 
 ```
 
-Note that for `select`, we habitually make sure to load it from `dplyr` (Hmisc and other packages cause frequent conflicts).
 
 ### Deleting columns from a dataframe
 
-It is rarely necessary to delete columns from a dataframe, unless you want to save a copy of the dataframe to disk (see Section sec:writecsv). Instead of deleting columns, you can take a subset and make a new dataframe to continue with. Also, it should not be necessary to delete columns from the dataframe that you have accidentally created in a reproducible script: when things go wrong, simply clear the workspace and run the entire script again.
+It is rarely necessary to delete columns from a dataframe, unless you want to save a copy of the dataframe to disk (see Section \@ref(writecsv)). Instead of deleting columns, you can take a subset and make a new dataframe to continue with. Also, it should not be necessary to delete columns from the dataframe that you have accidentally created in a reproducible script: when things go wrong, simply clear the workspace and run the entire script again.
 
 That aside, you have the following options to delete a column from a dataframe. We also peek ahead at the `select` function from the `dplyr` package.
 
