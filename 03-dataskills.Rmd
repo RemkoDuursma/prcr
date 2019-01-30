@@ -3,6 +3,13 @@
 
 ## Introduction
 
+- data analysis is more than just stats
+- lots of data skills needed to adjust/subset/reshape/summarize your data
+
+
+
+## Data types
+
 For the purpose of this tutorial, a dataframe can contain six types of data. These are summarized in the table below:
 
 
@@ -60,6 +67,7 @@ suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(ggthemes))
 suppressPackageStartupMessages(library(padr))
 suppressPackageStartupMessages(library(gplots))
+suppressPackageStartupMessages(library(reshape2))
 ```
 
 
@@ -104,7 +112,7 @@ Note that the three species are always shown in the order of the **levels of the
 In our example, let's shuffle the levels around, using `factor`.
 
 ```{r eval=FALSE}
-allom$species <- factor(allom$species, levels=c("PSME","PIMO","PIPO"))
+allometry$species <- factor(allometry$species, levels=c("PSME","PIMO","PIPO"))
 ```
 
 Now revisit the commands above, and note that the results are the same, but the order of the `levels` of
@@ -115,12 +123,12 @@ We can also generate new factors, and add them to the dataframe. This is a commo
 
 ```{r }
 # Add a new variable to allom:  'small' when diameter is less than 10, 'large' otherwise.
-allom$treeSizeClass <- factor(ifelse(allom$diameter < 10, "small", "large"))
+allometry$treeSizeClass <- factor(ifelse(allometry$diameter < 10, "small", "large"))
 
 # Now, look how many trees fall in each class.
 # Note that somewhat confusingly, 'large' is printed before 'small'.
 # Once again, this is because the order of the factor levels is alphabetical by default.
-table(allom$treeSizeClass)
+table(allometry$treeSizeClass)
 ```
 
 What if we want to add a new factor based on a numeric variable with more than two levels? In that case, we cannot use `ifelse`. We must find a different method. Look at this example using `cut`.
@@ -128,11 +136,11 @@ What if we want to add a new factor based on a numeric variable with more than t
 ```{r tidy=FALSE}
 # The cut function takes a numeric vectors and cuts it into a categorical variable.
 # Continuing the example above, let's make 'small','medium' and 'large' tree size classes:
-allom$treeSizeClass <- cut(allom$diameter, breaks=c(0,25,50,75), 
+allometry$treeSizeClass <- cut(allometry$diameter, breaks=c(0,25,50,75), 
                            labels=c("small","medium","large"))
 
 # And the results,
-table(allom$treeSizeClass)
+table(allometry$treeSizeClass)
 ```
 
 
@@ -1206,12 +1214,12 @@ with(coweeta_agg, barplot2(height.mean, names.arg=species,
 
 
 
-> **Try this yourself**
-> The above example orders the factor levels by increasing median sodium levels. 
-> Try reversing the factor levels, using the following code after `reorder`.
-> `coweeta$species <- factor(coweeta$species, levels=rev(levels(coweeta$species)))`
-> Here we used `rev` to reverse the levels.
-
+```{block2 type="rmdtry"}
+The above example orders the factor levels by increasing median sodium levels. 
+Try reversing the factor levels, using the following code after `reorder`.
+`coweeta$species <- factor(coweeta$species, levels=rev(levels(coweeta$species)))`
+Here we used `rev` to reverse the levels.
+```
 
 
 ## Combining dataframes
@@ -1437,7 +1445,7 @@ dplyr::bind_rows(mydata1, mydata2)
 
 ## Reshaping data
 
-# From wide to long
+### From wide to long
 
 In the majority of analyses in R, we like to have our data in 'long' format (nowadays sometimes called the 'tidy' format), where the data for some kind of measurement are in one column, and we have one or more factor variables distinguishing groups like individual, date, treatment, and so on. It is however common encounter data in 'wide format', which can be converted to long format by reshaping appropriately.
 
@@ -1487,7 +1495,7 @@ dat_long
 
 
 
-# From long to wide
+### From long to wide
 
 Occasionally we like to use wide format, where groups of data are placed next to each other instead of on top of each other. For the first example consider this simple dataset with a set of questions asked to two persons,
 

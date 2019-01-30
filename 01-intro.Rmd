@@ -177,6 +177,18 @@ To quickly learn about the functions included in a package, type:
 library(help=gplots)
 ```
 
+### Setting the CRAN mirror
+
+CRAN is a central package for R packages, but it is hosted on many servers around the world. Back in the day, you always had to set the CRAN 'mirror' once for every R session. If you are using Rstudio, though, you won't have to worry about this as it is set automatically to Rstudio's own CRAN mirror, which is actually just a clever service that sends you to a nearby server.
+
+If you use R from the command line, you might want to set the mirror directly:
+
+```{r eval=FALSE}
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+```
+
+This avoids an annoying popup when attempting `install.packages`.
+
 
 ### Install from git hosting sites
 
