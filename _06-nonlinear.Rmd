@@ -338,18 +338,18 @@ suppressPackageStartupMessages(library(scales))
 ```{r anthronls, opts.label="smallsquare", fig.cap="The Gompertz growth model fitted to the anthropometry dataset, for males and females separately."}
 
 # Read data.
-foot <- read.csv("anthropometry.csv")
+data(anthropometry)
 
 # nlsList does not like missing values. We can set an option there,
 # or just remove missing values now
-foot <- foot[complete.cases(foot),]
+anthropometry <- anthropometry[complete.cases(anthropometry),]
 
 # nlsList is from the nlme package
 library(nlme)
 
 # Note the grouping operator '|' to specify to fit the curve by gender
 fit_foot_gender <- nlsList(foot_length ~ SSgompertz(age, Asym, b2, b3) | gender,
-            data=foot)
+            data=anthropometry)
 
 # Load nlshelper to allow a tidy statement of the fit
 library(nlshelper)
@@ -364,7 +364,7 @@ plot_nls(fit_foot_gender, pch=16, cex=0.6,
          points.col=alpha(cols, 0.5),
          lines.col=cols,
          lwd=2)
-legend("topleft", levels(foot$gender), col=cols, lty=1, bty='n',lwd=2)        
+legend("topleft", levels(anthropometry$gender), col=cols, lty=1, bty='n',lwd=2)        
 ```
 
 Using the `nlshelper` package, we can test directly whether adding the grouping variable (`gender` in the above example) improves the fit, that is, whether the relationship between foot length and age differs significantly between genders.

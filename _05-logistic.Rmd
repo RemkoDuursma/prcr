@@ -6,6 +6,12 @@ palette("default")
 ```
 
 
+notes
+
+- disadvantage of logistic regression: 
+  - complete separation (hauck-donner)
+  - for multiple classes it kind of sucks, better methods exist
+
 # Logistic regression {#logistic}
 
 ## Generalized Linear Models {#glm}
