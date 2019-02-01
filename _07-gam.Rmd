@@ -1,5 +1,27 @@
 
 
+notes
+
+- https://mfasiolo.github.io/mgcViz/articles/mgcviz.html
+-https://cran.r-project.org/web/packages/plot3D/vignettes/plot3D.pdf
+
+```{r}
+library(lme4)
+library(ggplot2)
+library(ggthemes)
+data(sleepstudy)
+
+
+with(sleepstudy, plot(Days, Reaction))
+
+ggplot(sleepstudy, aes(x = Days, y = Reaction, group = Subject)) +
+  geom_point(size=0.5) +
+  geom_path(col = "grey") +
+  theme_tufte() +
+  stat_smooth(method = "lm", se = FALSE, col="black")
+```
+
+
 # Generalized additive models {#gam}
 
 In this section we very briefly introduce generalized additive models (GAMs), with the `mgcv` package. 
@@ -10,7 +32,7 @@ The most defining aspect of a GAM is that the smoothness of the model is semi-au
 The following example fits a cubic spline to the Howell height data. Note the use of `by=sex` to fit the spline separately for each sex. We use the `visreg` package as a very convenient method to plot the fitted model.
 
 ```{r howellgam, opts.label="smallsquare",fig.cap="Generalized additive model (GAM) to the Howell height data, fit by sex, and plotted with visreg."}
-howell <- read.csv("howell.csv")
+data(howell)
 
 # It may still be necessary to change k.
 library(mgcv)
@@ -19,6 +41,51 @@ g <- gam(height ~ s(age, by=sex, k=7), data=howell)
 library(visreg)
 visreg(g, "age", by="sex", overlay=TRUE, ylab="height (cm)", xlab="age (years)")
 ```
+
+
+```{r eval=FALSE}
+library(mgcViz)
+
+g <- getViz(g)
+p <- plot(g) 
+
+print(plot(g, allTerms = TRUE), pages = 1)
+
+# overlay factor by= term???
+```
+
+```{r eval=FALSE}
+# gavinsimpson/gratia
+library(gratia)
+library(ggplot2)
+library(ggthemes)
+
+draw(g) + theme_tufte()
+
+```
+
+
+
+```{r}
+dat <- mtcars[,c("hp","mpg")]
+dat$group <- c(rep("a",16),rep("b",16))
+dat$mpg[dat$group == "a"] <- dat$mpg[dat$group == "a"] + 15
+dat$group <- as.factor(dat$group)
+
+library(mgcv)
+g <- gam(mpg ~ group + s(hp, by = group, k=3), data=dat)
+
+library(gratia)
+draw(g)
+
+library(visreg)
+visreg(g, "hp", by="group", overlay=TRUE)
+
+```
+
+
+
+
 
 
 > **Further reading**
