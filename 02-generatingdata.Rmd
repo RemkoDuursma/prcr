@@ -9,9 +9,14 @@ suppressPackageStartupMessages(library(lgrdata))
 
 ## Reading data {#readingdata}
 
-There are many ways to read data into R, but we are going to keep things simple and show only a couple of options. Throughout this book we focus on 'rectangular data', that is, data that can be organized in a table with columns and rows. A data table like this, with individual observations in rows, and various data fields in columns, is called a *data frame*. All example data in this book is provided as dataframes.
+There are many ways to read data into R, but we are going to keep things simple and show only a couple of options to read data from text files. Throughout this book we focus on 'rectangular data', that is, data that can be organized in a table with columns and rows. A data table like this, with individual observations in rows, and various data fields in columns, is called a *data frame*. All example data in this book is provided as dataframes.
 
 We first a few options to read text files into dataframes in R, and then provide the basics of working with dataframes in Section \@ref(dataframes).
+
+```{block2 type="rmdinfo"}
+If your data are stored in an SQL-like database, R provides new powerful methods to extract your data. The use of databases with R is outside the scope of this book, because this is a complex topic that depends very much on your exact situation. [Please consult this page by Rstudio](https://db.rstudio.com/getting-started/) for details to get you started.
+
+```
 
 
 ### Example data used throughout this book {#exampledata}
@@ -42,7 +47,7 @@ If you would like to practice reading data from CSV files, you can also download
 
 ### Reading CSV files {#readcsv}
 
-Suppose you have the file `Allometry.csv' in your working directory, you can read in the file into a dataframe with, 
+A very common text format for data is 'Comma-Separated Values', or CSV. You can use `read.csv` to read these files (or `read.csv2` if the fields are separated by `;` instead of `,`). Suppose you have the file `Allometry.csv' in your working directory, you can read in the file into a dataframe with, 
 
 ```{r eval=FALSE}
 allometry <- read.csv("Allometry.csv")
@@ -67,7 +72,7 @@ The latter option is probably useful to keep your data files separate from your 
 The function `read.csv` has many options, let's look at some of them. We can skip a number of rows from being read, and only read a fixed number of rows. For example, use this command to read rows 10-15, skipping the header line (which is in the first line of the file) and the next 9 lines. \emph{Note:} you have to skip 10 rows to read rows 10-15, because the header line (which is ignored) counts as a row in the text file! 
 
 ```{r eval=FALSE}
-allomsmall <- read.csv("Allometry.", skip=10, nrows=5, header=FALSE)
+allomsmall <- read.csv("Allometry.csv", skip=10, nrows=5, header=FALSE)
 ```
 
 ### Reading large CSV files
@@ -79,7 +84,7 @@ library(data.table)
 allom <- fread("Allometry.csv")
 ```
 
-Of course, you could use `fread` even for small files, but I generally recommend to keep dependencies to a minimum. In other words, use built-in ('base') functionsif you can, to develop more robust and reproducable code.
+Of course, you could use `fread` even for small files, but I generally recommend to keep dependencies to a minimum. In other words, use built-in ('base') functions when you can, to develop more robust and reproducable code.
 
 
 ### Reading Tab-delimited text files {#tabdelimtext}
@@ -90,7 +95,7 @@ Sometimes, data files are provided as text files that are TAB-delimited. To read
 mydata <- read.table("sometabdelimdata.txt", header=TRUE)
 ```
 
-In fact, `read.table` is the more general function - `read.csv` is a specific case for comma-delimited files. When using `read.table`, you must specify whether a header (i.e., a row with column names) is present in the dataset (unlike `read.csv`, it is the default to not read the header). If you have a text file with some other delimiter, for example `;`, use the `sep} argument:
+In fact, `read.table` is the more general function - `read.csv` is a specific case for comma-delimited files. When using `read.table`, you must specify whether a header (i.e., a row with column names) is present in the dataset (unlike `read.csv`, it is the default to not read the header). If you have a text file with some other delimiter, for example `;`, use the `sep` argument:
 
 ```{r eval=FALSE}
 mydata <- read.table("somedelimdata.txt", header=TRUE, sep=";")
@@ -106,10 +111,11 @@ library(readxl)
 mydata <- read_excel("mspreadsheet.xlsx", sheet = 2)
 ```
 
+Here, `sheet` will specify the sheet by number, alternatively you can refer to the sheet by name (e.g., `sheet = 'rawdata'`).
 
 ### Reading typed data
 
-You can also write the dataset in a text file, and read it as in the following example. This is useful if you have (found) a small dataset that you typed in by hand, or for making reproducible code snippets that include the dataset.  
+You can also write the dataset in a text file, and read it as in the following examples. This is useful if you have (found) a small dataset that you typed in by hand, or for making reproducible code snippets that include the dataset. 
 
 ```{r tidy=FALSE}
 read.table(header=TRUE, text="
@@ -120,24 +126,9 @@ a b
 ```
 
 
-
-### Reading data from the clipboard
-
-A very quick way to read a dataset from Excel is to use your clipboard. In Excel, select the data you want to read (including the header names), and press `Ctrl-C` (Windows), or `Cmd-C` (Mac). Then, in R, type:
-
-```{r eval=FALSE}
-# for Windows:
-mydata <- read.delim("clipboard", header=TRUE)
-
-# or for Mac:
-mydata <- read.delim(pipe("pbpaste"), header=TRUE)
-```
-
-This is not a long-term solution to reading data, but is a very quick way to read (part of) a messy spreadsheet that someone shared with you.
-
 ### Reading other foreign formats
 
-Finally, if you have a dataset in some unusual format, consider the `foreign` package, which provides a number of tools to read in other formats (such as SAS, SPSS, etc.).
+Many statistical software packages store data in their own format, not just text files. For data from SPSS, SAS or Stata, we recommend the `haven` package for reading the data into dataframes, and the `foreign` package provides further support for Minitab, Systat, and Weka. 
 
 
 
