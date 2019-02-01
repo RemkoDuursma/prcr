@@ -1,15 +1,141 @@
 # Introduction {#intro}
 
 
+```{r echo=FALSE, message=FALSE}
+suppressPackageStartupMessages(library(tibble))
+```
+
+
 We assume you have installed R and Rstudio. We occassionally give some tips on how to use Rstudio effectively, but since Rstudio is likely to change more quickly than R - we instead suggest you keep an eye on their documentation (link).
 
 We go through some of the basics below, because of any of this is unclear, you are going to have a bad time.
 
-## Getting started
 
-###### BASICS HERE
+## Installing R and Rstudio
 
-### Vectorized operations
+We assume that you have installed both R, and Rstudio. Please visit both websites ([here](http://cran.r-project.org) for R, [here for Rstudio](www.rstudio.org)) to download the latest version for your platform. Note that Rstudio simply runs R for us (and provides many, many other features) - you still need to install R itself.
+
+**Rstudio settings**
+
+We strongly recommend you change the following default settings in Rstudio. The default behaviour is to save all your objects to an 'RData' file when you exit, and loads the same objects when you open RStudio. This is very dangerous behaviour, and you must turn it off. See Section~\ref{sec:savewd} for more information on 'RData' files. For now, make sure you go to `Tools > Global Options...` and on the `General` tab, make sure the settings are like the figure below.
+
+```{r echo=FALSE, out.width='33%'}
+knitr::include_graphics("screenshots/neverloadrdata.png")
+```
+
+Another feature you may want to turn off is the automatic code completion, which is now a standard feature in RStudio. This is a matter of taste, but we find it handier to use code completion only when requested. If you change the settings as shown in the screenshot below, you can engage code completion by typing part of a function and then pressing `Tab`.
+
+```{r echo=FALSE, out.width='33%'}
+knitr::include_graphics("screenshots/rstudionocodecomplete.png")
+```
+
+This text does not provide more information on Rstudio itself, since the software continues to evolve, add new features, and slightly modify old ones.
+
+## Basic operations {#basicops}
+
+In Rstudio, the R console is shown in one of the windows. The other windows include the 'Environment' window (with tabs 'Environment', 'History', etc.), a 'File management' window (where you can browse files, view plots, install packages, etc.), and a source window. The latter may not show up on your first use of Rstudio, but we return to this point in Section \@ref(scripts).
+
+In the console, you can type R code and get immediate results, for example:
+
+```{r }
+# I want to add two numbers:
+1 + 1
+```
+
+Here, we typed `1 + 1`, hit \keys{Enter}, and R produced `2`. The `[1]` means that the result only has one element (the number '2').
+
+In this book, the R output is shown after `\#\#`. Every example can be run by you, simply copy the section (use the text selection tool in Adobe reader), and paste it into the console (with \keys{Ctrl + Enter} on a Windows machine, or \keys{Cmd + Enter} on a Mac).
+
+We can do all sorts of basic calculator operations. Consider the following examples:
+
+```{r tidy=FALSE}
+# Arithmetic
+12 * (10 + 1)
+
+# Scientific notation
+3.5E03 + 4E-01
+
+# pi is a built-in constant
+sin(pi/2)
+
+# Absolute value
+abs(-10)
+
+# Yes, you can divide by zero
+1001/0
+
+# Square root
+sqrt(225)
+
+# Exponents
+15^2
+
+# Round down to nearest integer (and ceiling() for up or round() for closest)
+floor(3.1415)
+```
+
+Try typing `?Math` for description of more mathematical functions.
+
+Also note the use of `#` for comments: anything after this symbol on the same line is *not* read by R. Throughout this book, comments are shown in green.
+
+## Working with vectors {#vectorintro}
+
+A very useful type of object is the `vector`, which is basically a string of numbers or bits of text (but not a combination of both). The power of R is that most functions can use a vector directly as input, which greatly simplifies coding in many applications.
+
+Let's construct an example vector with 7 numbers:
+
+```{r }
+nums1 <- c(1,4,2,8,11,100,8)
+```
+
+We can now do basic arithmetic with this `numeric vector`  :
+
+```{r }
+# Get the sum of a vector:
+sum(nums1)
+
+# Get mean, standard deviation, number of observations (length):
+mean(nums1)
+sd(nums1)
+length(nums1)
+
+# Some functions result in a new vector, for example:
+rev(nums1)  # reverse elements
+cumsum(nums1)  # cumulative sum
+```
+
+There are many more functions you can use directly on vectors. See the table below for a few useful ones.
+
+
+```{r echo=FALSE}
+tab <- frame_data(~Function,   ~`What it does`,           ~Example,
+                  "`length`",     "Length of the vector", "`length(nums1)`",
+                  "`rev`",       "Reverses the elements of a vector", "`rev(nums1)`",
+                  "`sort`",      "Sorts the elements of a vector", "`sort(nums1, decreasing = TRUE)`",
+                  "`order`",     "The order of elements in a vector", "`order(nums1)`",
+                  "`head`",      "The first few elements of a vector", "`head(nums1, 5)`",
+                  "`max`",       "The maximum value", "`max(nums1)`",
+                  "`min`",       "The minimum value", "`min(nums1)`",
+                  "`which.max`", "Which element of the vector is the max?", "`which.max(nums1)`",
+                  "`which.min`", "Which element of the vector is the min?", "`which.min(nums1)`",
+                  "`mean`",      "Computes the average of the vector", "`mean(nums1)`",
+                  "`median`",    "Computers the median", "`median(nums1)`",
+                  "`var`",       "Variance", "`var(nums1)`",
+                  "`sd`",        "Standard deviation", "`sd(nums1)`",
+                  "`cumsum`",    "Cumulative sum (running total)", "`cumsum(nums1)`",
+                  "`diff`",      "Successive difference of a vector", "`diff(nums1)`",
+                  "`unique`",    "Unique values used in the vector", "`unique(nums1)`",
+                  "`round`",     "Rounds numbers to a specified number of decimal points", "`round(nums1, 2)`"
+                  )
+knitr::kable(tab, caption="A selection of useful built-in functions in R.")
+```
+
+
+
+
+## Vectorized operations
+
+To continue, we are first going to open a script - simply a text file where you can type your code, and execute it immediately. To do so, click on the menu `File/New File/R Script`. In the file that opens, try typing the examples below (or copy-pasting for the lazy). A single line can be run by placing the cursor on that line, and clicking 'Run' in the menu just to the top-right of the window. Alternatively (and this is **recommended**), use the keyboard shortcut `Ctrl-Enter` (or `Cmd-Enter` on Mac) to run that line. If you make a text selection with the mouse, this selection can be executed with the same keyboard shortcut.
 
 In the above section, we introduced a number of functions that you can use to do calculations on a vector of numbers. In R, a number of operations can be done on two vectors, and the result is a vector itself. Basically, R knows to apply these operations one element at a time. This is best illustrated by some examples:
 
@@ -38,7 +164,7 @@ In each of the above examples, the operators (like `+` and so on) 'know' to make
 
 
 
-### Applying multiple functions at once {#multifunctions}
+## Applying multiple functions at once {#multifunctions}
 
 In R, we can apply functions and operators in combination. In the following examples, the *innermost* expressions are always evaluated first. This will make sense after some examples:
 
