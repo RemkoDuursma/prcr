@@ -5,4 +5,4 @@ bookdown::render_book('index.Rmd', 'bookdown::gitbook')
 
 
 # ... eventuall
-#bookdown::render_book('index.Rmd', 'bookdown::pdf_book')
+bookdown::render_book('index.Rmd', 'bookdown::pdf_book', clean=FALSE)

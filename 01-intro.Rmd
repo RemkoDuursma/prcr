@@ -1,17 +1,22 @@
-# Introduction {#intro}
+# Beginner skills {#intro}
 
 
 ```{r echo=FALSE, message=FALSE}
 suppressPackageStartupMessages(library(tibble))
+suppressPackageStartupMessages(library(magrittr))
 ```
 
 
+
+
+
+
+
+
+
+## Installing R and Rstudio {#installingr}
+
 We assume you have installed R and Rstudio. We occassionally give some tips on how to use Rstudio effectively, but since Rstudio is likely to change more quickly than R - we instead suggest you keep an eye on their documentation (link).
-
-We go through some of the basics below, because of any of this is unclear, you are going to have a bad time.
-
-
-## Installing R and Rstudio
 
 We assume that you have installed both R, and Rstudio. Please visit both websites ([here](http://cran.r-project.org) for R, [here for Rstudio](www.rstudio.org)) to download the latest version for your platform. Note that Rstudio simply runs R for us (and provides many, many other features) - you still need to install R itself.
 
@@ -31,6 +36,32 @@ knitr::include_graphics("screenshots/rstudionocodecomplete.png")
 
 This text does not provide more information on Rstudio itself, since the software continues to evolve, add new features, and slightly modify old ones.
 
+
+### Example data used throughout this book {#exampledata}
+
+All example datasets used throughout this book are provided in the R package `lgrdata`. Install it like any other package (see \@ref(packages) for more information):
+
+```{r eval=FALSE}
+install.packages("lgrdata")
+```
+
+At the start of each script where you use an example dataset, load the package:
+
+```{r}
+library(lgrdata)
+```
+
+Then, you can make available any dataset from the package with :
+
+```{r}
+data(allometry)
+```
+
+Each dataset has help page, inspect it (`?allometry`) to learn a bit about the dataset, the meaning and units of the variables, and sometimes a simple example plot with the data.
+
+If you would like to practice reading data from CSV files (as described in Section \@ref(readcsv)), you can also download (nearly) every example dataset from [this page maintained by Western Sydney University](http://www.westernsydney.edu.au/hie/opportunities/training_courses/data_analysis_r/r_course_data_files).
+
+
 ## Basic operations {#basicops}
 
 In Rstudio, the R console is shown in one of the windows. The other windows include the 'Environment' window (with tabs 'Environment', 'History', etc.), a 'File management' window (where you can browse files, view plots, install packages, etc.), and a source window. The latter may not show up on your first use of Rstudio, but we return to this point in Section \@ref(scripts).
@@ -42,9 +73,9 @@ In the console, you can type R code and get immediate results, for example:
 1 + 1
 ```
 
-Here, we typed `1 + 1`, hit \keys{Enter}, and R produced `2`. The `[1]` means that the result only has one element (the number '2').
+Here, we typed `1 + 1`, hit `Enter`, and R produced `2`. The `[1]` means that the result only has one element (the number '2').
 
-In this book, the R output is shown after `\#\#`. Every example can be run by you, simply copy the section (use the text selection tool in Adobe reader), and paste it into the console (with \keys{Ctrl + Enter} on a Windows machine, or \keys{Cmd + Enter} on a Mac).
+In this book, the R output is shown after `\#\#`. Every example can be run by you, simply copy the section (use the text selection tool in Adobe reader), and paste it into the console (with `Ctrl + Enter` on a Windows machine, or `Cmd + Enter` on a Mac).
 
 We can do all sorts of basic calculator operations. Consider the following examples:
 
@@ -164,7 +195,7 @@ In each of the above examples, the operators (like `+` and so on) 'know' to make
 
 
 
-## Applying multiple functions at once {#multifunctions}
+### Applying multiple functions at once {#multifunctions}
 
 In R, we can apply functions and operators in combination. In the following examples, the *innermost* expressions are always evaluated first. This will make sense after some examples:
 

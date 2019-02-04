@@ -9,3 +9,105 @@
   \thm@postskip=\thm@preskip
 }
 \makeatother
+
+
+\usepackage{framed}
+\usepackage{etoolbox}
+
+
+% Colours for shaded boxes
+\definecolor{shadecolor}{rgb}{0.96,1,0.96}  %tryyourself box
+\definecolor{shadecolor2}{rgb}{0.96,1,1}   %furtherreading box
+
+\newlength{\boxwidth}
+\setlength{\boxwidth}{\textwidth}
+
+\newenvironment{rmdcaution}{%
+  \def\FrameCommand{\fboxsep=\FrameSep \fboxrule=\FrameRule \fcolorbox{black}{shadecolor}}%
+  \MakeFramed {\setlength{\boxwidth}{\textwidth}
+  \addtolength{\boxwidth}{-2\FrameSep}
+  \addtolength{\boxwidth}{-2\FrameRule}
+  \setlength{\hsize}{\boxwidth} \FrameRestore}
+  \begin{samepage}
+  \large{\textbf{\textsf{Caution}}} 
+%   \rule[2mm]{85mm}{.2pt}
+%   \\ \nopagebreak
+  \normalsize{}
+  \end{samepage}
+  }%
+{\endMakeFramed}
+
+\newenvironment{rmdinfo}{%
+  \def\FrameCommand{\fboxsep=\FrameSep \fboxrule=\FrameRule \fcolorbox{black}{shadecolor}}%
+  \MakeFramed {\setlength{\boxwidth}{\textwidth}
+  \addtolength{\boxwidth}{-2\FrameSep}
+  \addtolength{\boxwidth}{-2\FrameRule}
+  \setlength{\hsize}{\boxwidth} \FrameRestore}
+  \begin{samepage}
+  \large{\textbf{\textsf{Info}}} 
+%   \rule[2mm]{85mm}{.2pt}
+%   \\ \nopagebreak
+  \normalsize{}
+  \end{samepage}
+  }%
+{\endMakeFramed}
+
+\newenvironment{rmdtry}{%
+  \def\FrameCommand{\fboxsep=\FrameSep \fboxrule=\FrameRule \fcolorbox{black}{shadecolor}}%
+  \MakeFramed {\setlength{\boxwidth}{\textwidth}
+  \addtolength{\boxwidth}{-2\FrameSep}
+  \addtolength{\boxwidth}{-2\FrameRule}
+  \setlength{\hsize}{\boxwidth} \FrameRestore}
+  \begin{samepage}
+  \large{\textbf{\textsf{Try this yourself}}} 
+%   \rule[2mm]{85mm}{.2pt}
+%   \\ \nopagebreak
+  \normalsize{}
+  \end{samepage}
+  }%
+{\endMakeFramed}
+
+\newenvironment{rmdreading}{%
+  \def\FrameCommand{\fboxsep=\FrameSep \fboxrule=\FrameRule \fcolorbox{black}{shadecolor2}}%
+  \MakeFramed {\setlength{\boxwidth}{\textwidth}
+  \addtolength{\boxwidth}{-2\FrameSep}
+  \addtolength{\boxwidth}{-2\FrameRule}
+  \setlength{\hsize}{\boxwidth} \FrameRestore}
+  \begin{samepage}
+  \large{\textbf{\textsf{Further reading}}} 
+%   \rule[2mm]{85mm}{.2pt}
+%   \\ \nopagebreak
+  \normalsize{}
+  \end{samepage}
+  }%
+{\endMakeFramed}
+
+\newenvironment{rmdwarning}{%
+  \def\FrameCommand{\fboxsep=\FrameSep \fboxrule=\FrameRule \fcolorbox{black}{shadecolor}}%
+  \MakeFramed {\setlength{\boxwidth}{\textwidth}
+  \addtolength{\boxwidth}{-2\FrameSep}
+  \addtolength{\boxwidth}{-2\FrameRule}
+  \setlength{\hsize}{\boxwidth} \FrameRestore}
+  \begin{samepage}
+  \large{\textbf{\textsf{Warning}}} 
+%   \rule[2mm]{85mm}{.2pt}
+%   \\ \nopagebreak
+  \normalsize{}
+  \end{samepage}
+  }%
+{\endMakeFramed}
+
+\newenvironment{rmdnote}{%
+  \def\FrameCommand{\fboxsep=\FrameSep \fboxrule=\FrameRule \fcolorbox{black}{shadecolor}}%
+  \MakeFramed {\setlength{\boxwidth}{\textwidth}
+  \addtolength{\boxwidth}{-2\FrameSep}
+  \addtolength{\boxwidth}{-2\FrameRule}
+  \setlength{\hsize}{\boxwidth} \FrameRestore}
+  \begin{samepage}
+  \large{\textbf{\textsf{Note}}} 
+%   \rule[2mm]{85mm}{.2pt}
+%   \\ \nopagebreak
+  \normalsize{}
+  \end{samepage}
+  }%
+{\endMakeFramed}
