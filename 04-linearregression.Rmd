@@ -8,6 +8,20 @@ palette("default")
 
 # Linear modelling {#linmodel}
 
+
+- what do we cover here
+- methods for very few variables. that's what we prefer, since it is real nice to be able to visualize what is going on. that does not work for many variables
+- methods for many variables: select subset of predictors, make model 'stable'
+- testing for effects (as often in science), versus making a model for prediction (as often in data science). 
+- cross validation comes later though, because overfitting is best illustrated with a non-linear model
+
+
+```{block2 type="rmdreading"}
+An excellent book on linear modelling, including many tools that we did not cover in this chapter is:
+Fox, John, and Sanford Weisberg. *An R companion to applied regression*. Sage, 2010. This book describes the `car` package.
+```
+
+
 ## What is linear modelling
 
 Numeric response, with :
@@ -25,7 +39,7 @@ Equation linear in the parameters. We can interpret parameters.
 
 The examples will generally let you know which packages are used, but for your convenience, here is a complete list of the packages used. 
 
-For plotting, we often use `ggplot2` and `ggthemes` (these are usually omitted from the examples):
+For plotting, we often use `ggplot2`, `ggthemes`, `scales` and `ggpubr` (these are frequently omitted from the examples):
 
 Otherwise:
 
@@ -36,8 +50,6 @@ Otherwise:
 - `multcomp` (for multiple comparisons)
 - `visreg` (for visualizing regression models)
 - `car` (for various functions used in regression)
-- `scales` (for useful functions with ggplot2)
-- `ggpubr` (for arranging ggplot2 plots)
 - `emmeans` (for computing marginal effects from regression models)
 
 
@@ -600,7 +612,7 @@ In the following example, we inspect the height of trees against the stem diamet
 
 
 ```{r coweeta_twoplots, fig.cap="", warning=FALSE}
-coweeta <- read.csv("coweeta_subset.csv")
+data(coweeta)
 
 g1 <- ggplot(coweeta, aes(x = DBH, y = height)) +
   geom_point() + geom_smooth(method="loess", se=FALSE) +
@@ -718,18 +730,70 @@ emmeans(lm_ice1, specs = "location", at = list(temperature = 25))
 You can ignore the warning in this case, since we have used both the predictors in our model - there are no other 'hidden' predictors that may complicate matters. As you can see for yourself,  the `emmeans` package gives the same results as the basic `predict` approach, but it is certainly much more practical.
 
 
-### Quadratic and polynomial terms
+### Logarithmic transformation {#logtransform}
+
+- stabilize variance
+- but also: now we have a multiplicative model!
+
+See Fig. \@ref(fig:cowtransform).
+
+```{r cowtransform, fig.cap="An example of a dataset that screams for a logarithmic transformation. Left panel: untransformed data, showing very non-constant variance, indicating larger variation in the response variable for larger individuals. Right panel: both variables have been log-transformed, giving a nice linear relationship with constant variance."}
+data(coweeta)
+
+g1 <- ggplot(coweeta, aes(x = biomass, y = folmass)) + 
+  geom_point() +
+  theme_tufte() + 
+  #stat_smooth(method = "loess", se = FALSE, col="red2") +
+  labs(x = "Mass of tree (kg)", y = "Mass of leaves (kg)")
+    
+g2 <- g1 + scale_x_log10() + scale_y_log10()
+
+ggpubr::ggarrange(g1, g2) %>% plot
+```
+
+
+```{block2 type="rmdtry"}
+Redo the above plot, using `origin` (i.e. American, Japanese or European) to color the symbols. This is another good example that you should always consider covariates in a linear model.
+```
+
+The following code fits two linear models to the data above, one to the raw, untransformed data, and one after log10-transforming both the predictor and the response variable. In previous examples we used `residualPlot` from the `car` package to quickly make plots of residuals versus fitted values, here we implement a simple version using `ggplot2` (and note that we jump ahead and define our own function, a topic we return to in Chapter \@()).
+
+```{r cowdiagnostics, fig.cap="Residuals versus fitted for the Coweeta biomass regression model, either without (left panel) or with (right panel) log-transformation of x and y variables."}
+lm1 <- lm(folmass ~ biomass, data = coweeta)
+lm2 <- lm(log10(folmass) ~ log10(biomass), data = coweeta)
+
+residPlot <- function(model){
+  ggplot(model, aes(.fitted, .resid)) + 
+    geom_hline(yintercept = 0) + 
+    geom_point() +
+    theme_tufte() + 
+    stat_smooth(method="loess", span=0.8)
+}
+
+ggpubr::ggarrange(residPlot(lm1), 
+                  residPlot(lm2)) %>% plot
+
+```
+
+As Fig. \@ref(cowdiagnostics) shows, the log-transformation results in much better model diagnostics. We can expect that the model will give an overall better fit to the data, because when we did not transform, the location of the regression line will be overly influenced by values far away from the line. After transformation, this effect will be much reduced, and the model will be more robust. Second, the standard errors of the coefficients in the untransformed fit are very much biased, leading to confidence intervals that are much too narrow. In this case, a log-transformation could be used to remedy this problem, but in other cases we want to avoid transformations, or they are simply not adequate. In that case, we might use the bootstrap (see Section \@ref() for an example with the same dataset).
+
+
+
+
+
+### Quadratic and polynomial terms {#quadlm}
 
 So far we have seen models with just linear terms, but it is straightforward and often necessary to add quadratic ($x^2$) or higher-order terms (e.g. $x^3$) when the response variable is far from linear in the predictors. You can add any transformation of the predictors in an `lm` model by nesting the transformation inside the `I()` function, like so:
 
-```{r eval=FALSE}
-lmq1 <- lm(height ~ diameter + I(diameter^2), data=allom)
+```{r}
+data(allometry)
+lmq1 <- lm(height ~ diameter + I(diameter^2), data=allometry)
 ```
 
 This model fits both the linear (`diameter`) and squared terms (`I(diameter\^2)`) of the predictor, as well as the usual intercept term. If you want to fit all polynomial terms up to some order, you can use the `poly` function like so,
 
-```{r eval=FALSE}
-lmq1 <- lm(height ~ poly(diameter, 2), data=allom)
+```{r}
+lmq1 <- lm(height ~ poly(diameter, 2), data=allometry)
 ```
 
 This model specification is exactly equivalent to the above, and is more convenient when you have multiple quadratic / polynomial terms and interactions with factor variables. 
@@ -763,11 +827,5 @@ allomquadfit <- lm(height ~ poly(diameter, 2)*species, data=allometry)
 visreg(allomquadfit, "diameter", by="species", overlay=TRUE)
 ```
 
-
-
-```{block2 type="rmdreading"}
-An excellent book on linear modelling, including many tools that we did not cover in this chapter is:
-Fox, John, and Sanford Weisberg. *An R companion to applied regression*. Sage, 2010. This book describes the `car` package.
-```
 
 

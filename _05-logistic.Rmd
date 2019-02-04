@@ -14,6 +14,8 @@ notes
 
 # Logistic regression {#logistic}
 
+
+
 ## Generalized Linear Models {#glm}
   
 So far we have looked at modelling a continuous response to one or more factor variables (ANOVA), one or more continuous variables (multiple regression), and combinations of factors and continuous variables. We have also assumed that the predictors are normally distributed, and that, as a result, the response will be, too. We used a log-transformation in one of the examples to meet this assumption.
