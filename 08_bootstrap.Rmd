@@ -10,6 +10,9 @@ suppressPackageStartupMessages(library(resample))
 suppressPackageStartupMessages(library(car))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(lmerTest))
+suppressPackageStartupMessages(library(broom))
+suppressPackageStartupMessages(library(scales))
 ```
 
 
@@ -421,23 +424,9 @@ Once again the standard errors of the predictions are even larger. This makes se
 
 Finally, instead of just predicting at Time=15, it is now straightforward to predict across the entire range of the data, so we can plot confidence intervals around the prediction.
 
-First we need a function that plots a transparent polygon if we give it three vectors: X, y1 (the upper part of the prediction interval), and y2 (the lower end). Based on  `polygon`, I wrote this simple function which takes three vectors and plots a grey transparent region.
-
-```{r message=FALSE, eval=TRUE}
-# For the 'alpha' function which allows transparent colours.
-library(scales)
-
-# Function to add a polygon if we have an X vector and two Y vectors of the same length.
-addpoly <- function(x,y1,y2,col=alpha("lightgrey",0.8),...){
-  ii <- order(x)
-  y1 <- y1[ii]
-  y2 <- y2[ii]
-  x <- x[ii]
-  polygon(c(x,rev(x)), c(y1, rev(y2)), col=col, border=NA,...)
-}
-```
-
 To generate the figure with a confidence interval around the fitted line, we will redo the bootstrap, since this time we want predictions for all values of Time (not just Time=15). It is convenient to know that if we call `predict` without a data argument, it will predict for all X values used when fitting the model. The following example makes Fig. \@ref(fig:bootchickfig)).
+
+*Note* that we use here the `broom` package for `augment`, `dplyr` for `mutate`, `ggplot2` and `ggthemes` for plotting, and `scales` for transparency.
 
 ```{r bootchickfig, cache=TRUE, out.width='.6\\linewidth', fig.align='center', fig.cap='Confidence interval for the increase in chick weight over time as estimated with the bootstrap.', message=FALSE, warning=FALSE, fig.align='center'}
 # Bootstrap on a fitted model with lmer()
@@ -455,7 +444,7 @@ augment(fit2, ChickWeight) %>%
   geom_point(pch=19, col="grey") +
   geom_ribbon(aes(x = Time, ymin = lci, ymax=uci),
               fill = scales::alpha("grey", 0.7)) +
-  geom_line(aes(x = Time, y=weightpred, col=Diet), size=1.5) +
+  geom_line(aes(x = Time, y=.fixed, col=Diet), size=1.5) +
   scale_colour_tableau()
 
 ```

@@ -45,6 +45,7 @@ suppressPackageStartupMessages(library(broom))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(ggthemes))
 suppressPackageStartupMessages(library(lgrdata))
+suppressPackageStartupMessages(library(viridis))
 
 ```
 
@@ -373,7 +374,7 @@ To do so, we need the full model (fit with `nlsList`), and a simple `nls` model 
 
 ```{r }
 fit_foot_0 <- nls(foot_length ~ SSgompertz(age, Asym, b2, b3),
-            data=foot)
+            data=anthropometry)
 
 library(nlshelper)
 anova_nlslist(fit_foot_gender, fit_foot_0)
@@ -404,7 +405,7 @@ predict(nls_lob, newdata=newdat)
 Unlike the predict method for linear models (`predict.lm` in particular), we cannot easily estimate standard errors or confidence intervals for predictions (although `predict.nls` does have an argument `se.fit` which is actually ignored!). 
 ```
 
-In Section \@ref(paramcombboot) we use the bootstrap to produce confidence intervals on predictions.
+In Section \@ref(bootpredictionnls) we use the bootstrap to produce confidence intervals on predictions.
 
 ```{block2 type="rmdtry"}
 For the `nlsfitSS` model, verify that the estimated asymptote ('`Asym`') is equal to the value of the curve when age is infinity (`Inf`). Extra points if you can write a statement that gives `TRUE`, if this is true.
@@ -445,7 +446,7 @@ For models fit with `nlsList`, you can also use the `tidy` function but only aft
 library(nlshelper)
 
 fit_foot <- nlsList(foot_length ~ SSgompertz(age, Asym, b2, b3) | gender,
-            data=foot)
+            data=anthropometry)
 tidy(fit_foot, conf.int=TRUE)
 ```
 
@@ -696,11 +697,11 @@ print(g)
 
 
 
-## Bootstrapping
+## Bootstrapping {#nlsboot}
 
 ### Parameter combinations
 
-This example demonstrates that we can use the bootstrap to calculate any derived quantity from a fitted regression model. Consider the following example: we have a non-linear saturating dependence of `height` on `age` (Fig. \@ref(asympsimfig)).
+This example demonstrates that we can use the bootstrap to calculate any derived quantity from a fitted regression model. Consider the following example: we have a non-linear saturating dependence of `height` on `age` (Fig. \@ref(fig:asympsimfig)).
 
 
 ```{r asympsimfig, opts.label="smallsquare", fig.cap='Height and age for a group of !Khosan people (the Howell1 dataset).', fig.align='center'}
@@ -719,7 +720,7 @@ It seems reasonable to fit a function with an asymptote to this relationship. An
   
 Now suppose we want to know the age where height has reached 90% of the asymptotic value. We can calculate this value from the fitted curve directly, and use the bootstrap to estimate a confidence interval for this estimate.
 
-First, we are going to rearrange the fitted equation. We will fit the following equation, where $y_max$ is the asymptote, $k$ some curvature parameter and $b_0$ the value of y where x=0):
+First, we are going to rearrange the fitted equation. We will fit the following equation, where $y_{max}$ is the asymptote, $k$ some curvature parameter and $b_0$ the value of y where x=0):
   
 $$y = b_0 + y_{max}*(1-e^{-kx})$$
     
@@ -727,7 +728,7 @@ We want to know the value of `x` where `y = 0.9 * ymax`, inserting this into the
 
 $$x_{90} = log(1 - (0.9 - b_0)/y_{max})/-k$$
     
-Now let's find the distribution of $x_{90}$. We will use the `bootCase` function from the `car` package, which is a convenient function for bootstrapping (non-)linear models.
+Now let's find the distribution of $x_{90}$. We will use the `Boot` function from the `car` package, which is a convenient function for bootstrapping (non-)linear models.
   
 ```{r x90boot}
 # The bootCase function is contained in the car package
@@ -740,20 +741,25 @@ nls_howell <- nls(height ~ b0 + (ymax-b0)*(1-exp(-k*age)),
                   start=list(b0=50,ymax=150,k=0.1), data=howell)
 
 # Perform bootstrap, 500 times
-b <- car::Boot(nls_howell, B=500)
+b <- car::Boot(nls_howell, R=500)
 
 # This function calculates the 90% saturation point based on the fitted parameters:
 x90fun <- function(ymax,k)log(1 - 0.9)/-k
 
 # Calculate all 90% saturation points. 
-# The object 'b' is a matrix with the three parameters in columns.
-x90 <- x90fun(b[,"ymax"], b[,"k"])
+# The object 'b$t' is a matrix with the three parameters in columns.
+x90 <- x90fun(b$t[,"ymax"], b$t[,"k"])
 
 # The simulated distribution of x90 is an approximation to 
 # the sampling distribution. So, we can calculate the confidence 
 # interval using quantile.
-quantile(x90, c(0.025, 0.975))
+ci_x90 <- quantile(x90, c(0.025, 0.975))
+ci_x90
 
+```
+  
+```{block2 type="rmdwarning"}  
+When an error occurred during the execution of `car::Boot`, the function has a very annoying side-effect to switch off all error messages (and everything else, it seems). If, after using `Boot`, nothing is printed to your screen, check your code because an error has occurred. To switch error messages back on, use the command `options(show.error.messages = TRUE)`.
 ```
   
 And finally we can make a plot showing the confidence interval (Fig.~\ref{fig:bootsympcifig}) of the age where 90\% of the maximum height is reached, on average. The first panel of the plot shows the sampling distribution of this age, as estimated with the bootstrap.
@@ -763,14 +769,17 @@ And finally we can make a plot showing the confidence interval (Fig.~\ref{fig:bo
 # Store coefficients
 cf <- coef(nls_howell)
 
-# 
+# Build the plot: points, fitted curve, and a confidence interval for
+# the age where 90% of the maximum is reached.
 ggplot(howell, aes(x = age, y = height)) +
   geom_point(pch=21, bg="white") +
   lims(y=c(0, max(howell$height))) +
   theme_tufte() +
   
   # Add any curve using stat_function()
-  stat_function(fun = function(x)cf["b0"] + (cf["ymax"] - cf["b0"])*(1 - exp(-cf["k"]*x))) +
+  stat_function(fun = function(x){
+      cf["b0"] + (cf["ymax"] - cf["b0"])*(1 - exp(-cf["k"]*x))
+    }) +
   
   # Age where 90% max height is reached, with confidence interval
   geom_vline(xintercept = mean(x90)) +
@@ -785,7 +794,7 @@ In the above example, we fitted a single curve to the `howell` dataset. That dat
   
   
  
-#### Predictions
+### Predictions {#bootpredictionnls}
   
 Suppose we are interested in the predicted value of tree height at an age of 22.5 years, using the fitted model from the previous example. We can find an estimate of this height by interpolating with the fitted nonlinear model. There is really no viable alternative to the bootstrap in this situation - approximate methods can be very inaccurate.
   

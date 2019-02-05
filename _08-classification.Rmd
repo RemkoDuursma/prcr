@@ -37,6 +37,37 @@ addtable2plot(2, 8, testdf, bty = "o", display.rownames = TRUE, hlines = TRUE,
 
 
 
+```{r}
+data(titanic)
+
+library(rpart)
+
+titanic$Survived <- as.factor(titanic$Survived)
+r1_titanic <- rpart(Survived ~ PClass + Age + Sex, data=titanic)
+
+plot(r1_titanic)
+
+library(rpart.plot)
+prp(r1_titanic,
+    clip.right.labs = FALSE)
+
+# this seems like a nice option
+# box:
+# - 0 or 1 (predicted class on this leaf)
+# - classification rate (correct / n)
+# - % of all observations fall into this leaf
+xy <- rpart.plot(r1_titanic, type=3, extra=102)
+
+
+caret::confusionMatrix(predict(r1_titanic, type="class"),
+                       titanic$Survived,
+                       positive = "1")
+
+
+```
+
+
+
 
 
 ```{r eval=FALSE}
