@@ -1,0 +1,85 @@
+# Visualizing data and making reports
+
+## Introduction
+
+NOT a manual of either, and less detail on both since resources elsewhere are perfect.
+But see appendix for base plotting, we like our manual.
+
+We do have a list of DO's and DONT's, one for visualizing data, and one for making reports with rmarkdown.
+
+We also have a list of resources.
+
+
+### Should you use R for graphics?
+
+- yes because flexible, **reproducible code**
+- yes because even if you don't end up using R for publication, report, or fancy presentation - you still need visualization skills when doing analysis
+- R graphs were not originally designed for interactivity, but there are many recent inventions (shiny, plotly)
+- R not great at 3D graphs, but as a data analyst you probably should not use many of those (but see rgl!)
+- R is used as an interface to many, many more fancier graphic packages (plotly, highchartr, d3) 
+
+
+## Visualizing data {#visualizing}
+
+### Tips
+
+- do a lot of visualizing, all the time, make it a habit rather than what you do at the end. you understand your data this way (and mostly this way)
+- most people won't believe your cool results unless it is shown in a figure, **clearly**. I don't care about your tables or your dense statistical results (those you put at the end).
+- spend time formatting the figures so they don't look like anyone else's. This gives personal flavor to your visualizations. In ggplot2, you can also just pick a theme you like and stick with it (`ggthemes` link especially), and please do not use the default color scheme or background (also because it is hideous).
+- when stuck, quickly google what to do. I do this all the time. Do not read the help files except `?par` for base graphics, otherwise quickly do a web search. Everything can be found (this was a different affair in 2001).
+
+
+### base or ggplot2? Why not both?
+
+
+- base vs. ggplot2.
+- http://varianceexplained.org/r/why-I-use-ggplot2/
+
+
+- use ggplot2 if you are a newcomer, easiest to make more complex graphs, reasons include:
+  - much easier to make multi-panel, multi-line, multi-everything figures than with base graphics. Very notable examples include multi-panel figures with grouped bar plots, adding regression and smoothed lines *with* confidence bands to plots, overlapping area plots,  histograms and ribbons. 
+  - easier to achieve consistent figure formatting with the use of themes
+  - lots of graph types are easier to plot than with base (where you often have to find additional packages)
+- but you can learn a little base, just enough to adjust plots arising from built-in packages (this is common)
+- sometimes base is easier, especially when you are experimenting. To plot a mathematical function, we can do `curve(x^3, from=-1, to=1)` - not so easy in `ggplot2`. Also `ggplot2` has no support for 3D graphs (but we don't use those much anyway), base has quite a lot.
+
+For the reasons mentioned above, in this book we mostly use ggplot2, except when base graphics are a lot easier (use less code).
+
+
+## Getting started and resources {#reportresources}
+
+
+### base graphics
+
+one example
+
+
+### ggplot2 {#ggplot2}
+
+ggplot2
+
+one example
+
+
+### rmarkdown {#rmarkdown}
+
+Script files are good for simple analyses, and they are great for storing small amounts of code that you would like to use in lots of different projects. They are also the right solution if you want to produce R scripts that are executed as part of a larger project, for example from the command line, or executed on a schedule (e.g. daily data quality checking). In Section \@ref(scripts) we give a few more tips.
+
+But, scripts are not the best way to share your results with others. Instead, we strongly suggest you use R markdown - a document format that includes both text with markup, and *code chunks*, bits of R code that is executed, and the results placed in the document. 
+
+Markdown is a simple set of rules for formatting text files so that they are both human-readable and processable by software, and is used not just by `rmarkdown` but in many applications (like Github and Stackoverflow). R Markdown simply adds R, by allowing code chunks with various options.
+
+RStudio offers a handy editor for markdown files, and starts with an example file that shows many of the features. Start a new markdown file by choosing `File > New File > R Markdown...`. For now, leave the default settings. The new R markdown document (which is just a text file with the extension `.Rmd`) already contains some example code. Run this example by clicking the button just above the markdown document (Knit HTML). The example code will generate a new document (an HTML page), which opens in your browser You can see that the output contains text, R code, and even a plot.
+
+Throughout this book we assume that you use `rmarkdown` for all your reporting needs. It is by far the best option available at the moment, and provides many options for customization.
+
+
+
+**Find help**
+
+The documentation for `rmarkdown` based documents is a little scattered across various sources. The reason for this is that multiple packages are involved in making an HTML page from an `.Rmd` file. 
+
+- The `knitr` package handles the *execution* of the R code in the document, and the *integration* of the R output into the document. It provides all options that are set at the top of each code chunk, for example to show or hide the code, to control figure size and resolution, captions for tables. All chunk options are [listed on the `knitr` website](https://yihui.name/knitr/options/).
+- The `rmarkdown` package (from Rstudio) handles the *conversion* to the desired output format, for example HTML or PDF. To do so, it uses Pandoc (see below), which is installed automatically with Rstudio. The `rmarkdown` package provides all options at the top of the `Rmd` document (the so-called YAML header), including the desired output format, and to control many options like the table of contents, format style, custom CSS, and so on. All options for `rmarkdown` [are described on Rstudio's website](https://rmarkdown.rstudio.com/). (Make sure to scroll down and select an output format to read about available options).
+- Finally, Pandoc is the actual engine to convert our raw text file (including R output formatted by `knitr`) to an HTML page, or some other format. Normally you don't have to learn much about Pandoc's options, since many settings are already provided by `rmarkdown`, but [the various formatting rules and conversion options are described here](https://pandoc.org/MANUAL.html).
+

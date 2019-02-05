@@ -25,15 +25,6 @@ more practical approach, requiring no math/stat/computer science background
 
 
 
-visualizing data
-- base vs. ggplot2.
-- here mostly ggplot2 unless base is easier (less code), for example curve()
-- no introduction to ggplot2, see these resources (why copy them?)
-- see appendix for base graphics
-- learn from examples! and use google effectively
-- http://varianceexplained.org/r/why-I-use-ggplot2/
-
-
 
 This book is not a complete introduction to statistical theory. It should also not be the first statistics book you read. Instead, this book shows you how to implement many useful data analysis routines in R. Sometimes we explain a bit of theory behind the method, but this is an exception. We really assume that you have already learned statistics elsewhere and are here to learn how to actually do the analyses.
 
@@ -43,10 +34,17 @@ We have designed this book so it can be used for self-study. The exercises at th
 
 An index with the functions and packages used is provided at the end of this book.
 
+**How did I choose all the packages used here?**
+
+From experience and meeting criteria which include:
+- active user base (indicated by use in blogs, stackoverflow, publications)
+- easiest syntax: usually we can come up with many ways to solve a particular problem in R. I like to choose the easiest to learn syntax, but especially if **the code is understandable by reading it**. 
+- actively maintained (although this is not necessary)
+- I like to use base R when I can. Keeping dependencies to a minimum is one of the **R programmer's tips** (see Section)
 
 ## What is data analysis?
 
-Most scientists would answer that this is the part of the work where the p-values are calculated, perhaps alongside a host of other metrics and tables. We take the view that *data analysis* includes every step from raw data to the outputs}, where outputs include figures, tables and statistics. This view is summarized in the figure on the next page.
+We take the view that *data analysis* includes every step from raw data to the outputs, where outputs include figures, tables and statistics. This view is summarized in the figure on the next page.
 
 Because every step from raw data to output affects the outcome, every step should be well documented, and reproducible. By 'reproducible', we mean it should be possible for some other person (even if this is the future you) to re-run the analysis and get the same results. We agree with many others that R is particularly good for reproducible research of this kind [^1] because it has utilities for all steps of data analysis. 
 
@@ -57,15 +55,6 @@ We stress that it is absolutely vital to a successful data analysis to visualize
 [^2] Anscombe 1973 "Graphs in Statistical analysis", The American Statistician 27:17-21. 
 
 
-
-```{r eval = FALSE}
-
-# Custom blocks!
-# https://stackoverflow.com/questions/36293511/creating-custom-blocks-in-rstudios-bookdown
-
-# code for bookdown book, css/style.css !
-https://github.com/rstudio/bookdown/tree/master/inst/examples
-```
 
 
 ```{r echo=FALSE}

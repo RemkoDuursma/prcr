@@ -447,47 +447,28 @@ library(gplots)
 ?gplots::bandplot
 ```
 
-Don't get overwhelmed when looking at the help files. Much of R's reputation for a steep learning curve has to do with the rather obscure and often confusing help files. A good tip for beginners is to not read the help files, but skip straight to the Example section at the bottom of the help file. The first line of the help file, which shows what kind of input, or arguments, the function takes, can also be helpful.
+Do not get overwhelmed when looking at the help files. Much of R's reputation for a steep learning curve has to do with the rather obscure and often confusing help files. A good tip for beginners is to *not read the help files*, but skip straight to the Example section at the bottom of the help file. The first line of the help file, which shows what kind of input, or arguments, the function takes, can also be helpful.
 
-If you know what type of function that you are looking for but do not know its name, use `??`. This searches the help files for a given keyword:
+The built-in help files offer detailed documentation of built-in functions (and those offered by packages), but often you are looking for something, but don't quite know what exactly. This frustrating experience is well described by this quote, to R-help in 2006:
 
-```{r eval=FALSE, tidy=FALSE}
-??ANOVA
-```
+> "This is probably documented, but I cannot find the right words or   
+expression for a search. My attempts failed."
+>
+> --- Denis Chabot
 
-This is allright, but an internet search is usually far more effective.
+Sometimes it is useful to search all help files (including all *installed* packages, loaded or not) for a keyword, for example `??ANOVA` will find everything that mentions ANOVAs.
 
+The best advice, though, is simply to **just use Google**. As a search, simply type the question like you would ask someone else, for example "How to place legend outside plot with ggplot2?", "(Is there an) R package for 3D plots?".
 
+## Why you should write reports with rmarkdown
 
+**explain why rmarkdown instead of scripts - it should be your default way to write messy, "trying things out" code, not only the way you report.
 
-## Writing reports with rmarkdown
-
-Script files are good for simple analyses, and they are great for storing small amounts of code that you would like to use in lots of different projects. They are also the right solution if you want to produce R scripts that are executed as part of a larger project, for example from the command line, or executed on a schedule (e.g. daily data quality checking). In Section \@ref(scripts) we give a few more tips.
-
-But, scripts are not the best way to share your results with others. Instead, we strongly suggest you use R markdown - a document format that includes both text with markup, and *code chunks*, bits of R code that is executed, and the results placed in the document. 
-
-Markdown is a simple set of rules for formatting text files so that they are both human-readable and processable by software, and is used not just by `rmarkdown` but in many applications (like Github and Stackoverflow). R Markdown simply adds R, by allowing code chunks with various options.
-
-RStudio offers a handy editor for markdown files, and starts with an example file that shows many of the features. Start a new markdown file by choosing `File > New File > R Markdown...`. For now, leave the default settings. The new R markdown document (which is just a text file with the extension `.Rmd`) already contains some example code. Run this example by clicking the button just above the markdown document (Knit HTML). The example code will generate a new document (an HTML page), which opens in your browser You can see that the output contains text, R code, and even a plot.
-
-Throughout this book we assume that you use `rmarkdown` for all your reporting needs. It is by far the best option available at the moment, and provides many options for customization.
-
-**Reasons to use rmarkdown**
-
-- Seemless integration of R code, R results (figures, tables, etc.), and text with markup, section headers, links, images, etc.
+- Documents are mix of normal text, with markup (headers, captions, images, tables, formatting), and blocks of code, **code chunks**. 
+- The document can be quickly converted to html, pdf, or an MS Word document, and includes output from code chunks (text output, figures), well formatted.
 - Easy to learn syntax, and Rstudio provides many shortcuts and tools for working with `rmarkdown`.
 - Output formats include HTML, PDF (if LaTeX is installed) and MS Word. 
 - Make not just simple documents, but also HTML presentations (in many formats), blogs (with `blogdown`), books (with `bookdown`), auto-generated websites documenting R packages (with `pkgdown`), and many more templates provided by add-on packages.
-
-
-**Find help**
-
-The documentation for `rmarkdown` based documents is a little scattered across various sources. The reason for this is that multiple packages are involved in making an HTML page from an `.Rmd` file. 
-
-- The `knitr` package handles the *execution* of the R code in the document, and the *integration* of the R output into the document. It provides all options that are set at the top of each code chunk, for example to show or hide the code, to control figure size and resolution, captions for tables. All chunk options are [listed on the `knitr` website](https://yihui.name/knitr/options/).
-- The `rmarkdown` package (from Rstudio) handles the *conversion* to the desired output format, for example HTML or PDF. To do so, it uses Pandoc (see below), which is installed automatically with Rstudio. The `rmarkdown` package provides all options at the top of the `Rmd` document (the so-called YAML header), including the desired output format, and to control many options like the table of contents, format style, custom CSS, and so on. All options for `rmarkdown` [are described on Rstudio's website](https://rmarkdown.rstudio.com/). (Make sure to scroll down and select an output format to read about available options).
-- Finally, Pandoc is the actual engine to convert our raw text file (including R output formatted by `knitr`) to an HTML page, or some other format. Normally you don't have to learn much about Pandoc's options, since many settings are already provided by `rmarkdown`, but [the various formatting rules and conversion options are described here](https://pandoc.org/MANUAL.html).
-
 
 ## Writing scripts {#scripts}
 

@@ -56,7 +56,7 @@ print(plot(g, allTerms = TRUE), pages = 1)
 
 ```{r eval=FALSE}
 # gavinsimpson/gratia
-library(gratia)
+#library(gratia)
 library(ggplot2)
 library(ggthemes)
 
@@ -88,19 +88,54 @@ visreg(g, "hp", by="group", overlay=TRUE)
 
 
 
-> **Further reading**
-The book by Simon Wood, the developer of the `mgcv` package, is the standard text (Wood, 2006, 'Generalized Additive Models').
 
-
-
-> **Try this yourself**
 You can also fit multiple splines, one for each predictor variable. On the fitted object, you can then use `anova` to see if all or any terms are significant. Try the following example. 
-\begin{verbatim}
+
+```{r}
 g2 <- gam(height ~ s(age, k=5) + s(weight, k=5), data=howell)
 anova(g2)
 
 # Use visreg to make a 3D plot:
 library(visreg)
 visreg2d(g2, "age", "weight", plot.type="rgl")
-\end{verbatim}
+```
+
+
+```{r}
+# 3D prediction
+
+age_v <-  seq(0, 80, length = 31)
+weight_v <- seq(5, 65, length=31)
+m <- outer(age_v, weight_v, function(a,w){
+  predict(g2, newdata=data.frame(age = a, weight=w))
+})
+persp(m, xlab = "age", ylab="weight", zlab="height", 
+      theta=25, phi=20, 
+      col=scales::alpha("grey", 0.7),
+      border="dimgrey")
+
+```
+
+
+
+```{r}
+library(plot3D)
+age_v <-  seq(0, 80, length = 101)
+weight_v <- seq(5, 65, length=101)
+m <- outer(age_v, weight_v, function(a,w){
+  predict(g2, newdata=data.frame(age = a, weight=w))
+})
+
+
+library(plot3D)
+persp3D(z=m, theta=25, phi=20)
+
+
+```
+
+
+
+```{r}
+library(plot3D)
+```
 
