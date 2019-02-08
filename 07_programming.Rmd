@@ -1,0 +1,565 @@
+# Functions, lists and loops {#programming}
+
+
+## Introduction
+
+- functions
+- lists
+- loops
+- why?
+
+**Packages used in this chapter**
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+suppressPackageStartupMessages(library(lgrdata))
+suppressPackageStartupMessages(library(MASS))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(dplyr))
+```
+
+
+## Writing simple functions {#writefunctions}
+
+We have already used many built-in functions throughout this tutorial, but you can become very efficient at complex data tasks when you write your own simple functions. Writing your own functions can help with tasks that are carried out many times, which would otherwise result in a lot of code.
+
+For example, suppose you frequently convert units from pounds to kilograms. It would be useful to have a function that does this, so you don't have to type the conversion factor every time. This is also good practice, as it reduces the probability of making typos.
+
+```{r }
+# This function takes a 'weight' argument and multiplies it with some number 
+# to return kilograms.
+poundsToKg <- function(weight){
+  weight * 0.453592
+}
+```
+
+We can use this `function` just like any other in R, for example, let's convert 'weight' to kilograms in the weightloss data (Section~\ref{sec:weightlossdata}).
+```{r }
+# Read data
+data(weightloss)
+
+# Convert weight to kg.
+weightloss$Weight <- poundsToKg(weightloss$Weight)
+```
+
+Let's write a function for the standard error of the mean, a function that is not built-in in \R. 
+
+```{r }
+# Compute the standard error of the mean for a vector
+SEmean <- function(x){
+  se <- sd(x) / sqrt(length(x))
+  return(se)
+}
+```
+
+Here, the `function` SEmean takes one 'argument' called `x` (i.e., input), which is a numeric vector. The standard error for the mean is calculated in the first line, and stored in an object called `se`, which is then returned as output. We can now use the function on a numeric vector like this:
+
+```{r }
+# A numeric vector
+unifvec <- runif(10, 1,2)
+
+# The sample mean
+mean(unifvec)
+
+# Standard error for the mean
+SEmean(unifvec)
+```
+
+
+```{block2 type="rmdtry"}
+You can use functions that you defined yourself just like any other function, for example in `summaryBy`. First read in the `SEmean` function defined in the example above, and then use the cereal data to calculate the mean and SE of `rating` by `Manufacturer` (or use data of your choosing).
+```
+
+
+#### Functions with multiple arguments
+
+Functions can also have multiple arguments. The following very simple function takes two numbers, and finds the absolute difference between them, using `abs`.
+```{r }
+# Define function
+absDiff <- function(num1,num2)abs(num1 - num2)
+
+# Test it with two numbers:
+absDiff(5,1)
+
+# As in many functions in R, you can also give multiple values
+# as an argument.
+# The following returns the absolute difference between 
+# 1 and 3, then 5 and 6, and 9 and 0 (in that order).
+absDiff(c(1,5,9), c(3,6,0))
+```
+
+
+#### Functions can return many results
+
+What if a function should return not just one result, as in the examples above, but many results? 
+
+For example, this function computes the standard deviation and standard error of a vector, and returns both stored in a vector. Note that we also use the `SEmean` function, which we defined above.  
+```{r }
+# An function that computes the SE and SD of a vector
+seandsd <- function(x){
+  
+  seresult <- SEmean(x)
+  sdresult <- sd(x)
+
+  # Store results in a vector with names
+  vec <- c(seresult, sdresult)
+  names(vec) <- c("SE","SD")
+
+return(vec)
+}
+
+# Test it:
+x <- rnorm(100, mean=20, sd=4)
+seandsd(x)
+```
+
+#### Functions without arguments
+
+Sometimes, a function takes no arguments (input) at all. Consider this very helpful example. 
+```{r }
+sayhello <- function()message("Hello!")
+
+sayhello()
+```
+
+We will return to defining our own functions when we look at applying functions many times to sections of a dataframe (Section~\ref{sec:lapply}).
+
+
+
+## Working with lists {#workinglists}
+
+Sofar, we have worked a lot with vectors, with are basically strings of numbers or bits of text. In a vector, each element has to be of the same data type. Lists are a more general and powerful type of vector, where each element of the `list` can be anything at all. This way, lists are a very flexible type of object to store a lot of information that may be in different formats.
+
+Lists can be somewhat daunting for the beginning `R` user, which is why most introductory texts and tutorials skip them altogether. However, with some practice, lists can be mastered from the start. Mastering a few basic skills with lists can really help increase your efficiency in dealing with more complex data analysis tasks.
+
+To make a list from scratch, you simply use the `list` function. Here is a list that contains a numeric vector, a character vector, and a dataframe:
+
+```{r }
+mylist <- list(a=1:10, txt=c("hello","world"), dfr=data.frame(x=c(2,3,4),y=c(5,6,7)))
+```
+
+### Indexing lists
+
+To extract an element from this list, you may do this by its name ('a','txt' or 'dfr' in this case), or by the element number (1,2,3). For lists, we use a double square bracket for indexing. Consider these examples,
+
+```{r }
+# Extract the dataframe:
+mylist[["dfr"]]
+
+# Is the same as:
+mylist$dfr
+
+# Extract the first element:
+mylist[[1]]
+```
+
+Note that in these examples, the contents of the elements of the list are returned (for 'dfr', a dataframe), but the result itself is not a list anymore. If we select multiple elements, the result should still be a list. To do this, use the single square bracket.
+
+Look at these examples:
+```{r }
+# Extract the 'a' vector, result is a vector:
+mylist[['a']]
+
+# Extract the 'a' vector, result is a list:
+mylist['a']
+
+# Extract multiple elements (result is still a list):
+mylist[2:3]
+```
+
+
+### Converting lists to dataframes or vectors
+
+Although lists are the most flexible way to store data and other objects in larger, more complex, analyses, ultimately you would prefer to output as a dataframe or vector.
+
+Let's look at some examples using `do.call(rbind,...)` and `unlist`.
+```{r }
+# A list of dataframes:
+dfrlis <- list(data1=data.frame(a=1:3,b=2:4), data2=data.frame(a=9:11,b=15:17))
+dfrlis
+
+# Since both dataframes in the list have the same number of columns and names, 
+# we can 'successively row-bind' the list like this:
+do.call(rbind, dfrlis)
+
+# A list of vectors:
+veclis <- list(a=1:3, b=2:4, f=9:11)
+
+# In this case, we can use the 'unlist' function, which will 
+# successively combine the three vectors into one:
+unlist(veclis)
+```
+
+In real-world applications, some trial-and-error will be necessary to convert lists to more pretty formats.
+
+
+
+### Combining lists
+
+Combining two lists can be achieved using `c()`, like this:
+
+```{r }
+veclis <- list(a=1:3, b=2:4, f=9:11)
+qlis <- list(q=17:15)
+c(veclis,qlis)
+
+# But be careful when you like to quickly add a vector
+# the 'veclis'. You must specify list() like this
+veclis <- c(veclis, list(r=3:1))
+```
+
+
+### Extracting output from built-in functions
+
+One reason to gain a better understanding of lists is that many built-in functions return not just single numbers, but a diverse collection of outputs, organized in lists. Think of the linear model function (`lm`), it returns a lot of things at the same time (not just the p-value).
+
+Let's take a closer look at the `lm` output to see if we can extract the adjusted R$^2$. 
+
+```{r out.lines=10}
+# Read data
+data(allometry)
+
+# Fit a linear model
+lmfit <- lm(height ~ diameter, data=allometry)
+
+# And save the summary statement of the model:
+lmfit_summary <- summary(lmfit)
+
+# We already know that simply typing 'summary(lmfit)' will give 
+# lots of text output. How to extract numbers from there?
+# Let's look at the structure of lmfit:
+str(lmfit_summary)
+
+# The output of lm is a list, so we can look at the names of # that list as well:
+names(lmfit_summary)
+```
+
+So, now we can extract results from the summary of the fitted regression. Also look at the help file `?summary.lm`, in the section 'Values' for a description of the fields contained here.
+
+To extract the adjusted R$^2$, for example:
+```{r }
+lmfit_summary[["adj.r.squared"]]
+
+# Is the same as:
+lmfit_summary$adj.r.squared
+```
+
+
+This sort of analysis will be very useful when we do many regressions, and want to summarize the results in a table.
+
+```{block2 type="rmdtry"}
+Run the code in the above examples, and practice extracting some other elements from the linear regression. Compare the output to the summary of the `lm` fit (that is, compare it to what `summary(lmfit)` shows on screen).
+```
+
+### Creating lists from dataframes {#dfrlists}
+
+For more advanced analyses, it is often necessary to repeat a particular analysis many times, for example for sections of a dataframe. 
+
+Using the `allom` data for example, we might want to split the dataframe into three dataframes (one for each species), and repeat some analysis for each of the species. One option is to make three subsets (using `subset`), and repeating the analysis for each of them. But what if we have hundreds of species? 
+
+A more efficient approach is to `split` the dataframe into a list, so that the first element of the list is the dataframe for species 1, the 2nd element species 2, and so on. In case of the allom dataset, the resulting list will have three components. 
+
+Let's look at an example on how to construct a list of dataframes from the allom dataset, one per species:
+
+```{r allomsplit, cache=FALSE}
+# Read allom data and make sure 'species' is a factor:
+data(allometry)
+is.factor(allometry$species)
+
+# The levels of the factor variable 'species'
+levels(allometry$species)
+
+# Now use 'split' to construct a list:
+allomsp <- split(allometry, allometry$species)
+
+# The length of the list should be 3, with the names equal to the 
+# original factor levels:
+length(allomsp)
+names(allomsp)
+```
+
+> **Try this yourself**
+Run the code in the above example, and confirm that `allomsp[[2]]` is identical to taking a subset of `allom` of the second species in the dataset (where 'second' refers to the second level of the factor variable `species`, which you can find out with `levels`).
+
+
+Let's look at an example using the `hydro` data. The data contains water levels of a hydrodam in Tasmania, from 2005 to 2011 (see Section~\ref{sec:hydrodata}).
+
+```{r hydrosplit, cache=FALSE}
+# Read hydro data, and convert Date to a proper date class.
+data(hydro)
+
+library(lubridate)
+library(dplyr)
+
+hydro <- mutate(hydro, 
+                Date = dmy(Date),
+                year = year(Date))
+
+# Look at the Date range:
+range(hydro$Date)
+
+# Let's get rid of the first and last years (2005 and 2011) since they are incomplete
+hydro <- filter(hydro, !year %in% c(2005,2011))
+
+# Now split the dataframe by year. This results in a list, where every
+# element contains the data for one year:
+hydrosp <- split(hydro, hydro$year)
+
+# Properties of this list:
+length(hydrosp)
+names(hydrosp)
+```
+
+To extract one element of the two lists that we created (`allomsp` and `hydrosp`), recall the section on indexing lists.
+
+
+### Applying functions to lists {#lapply}
+
+We will introduce two basic tools that we use to apply functions to each element of a list: `sapply` and `lapply`. The `lapply` function always returns a list, whereas `sapply` will attempt to `s`implify the result. When the function returns a single value, or a vector, `sapply` can often be used. In practice, try both and see what happens!
+
+
+#### Using `sapply`
+
+First let's look at some simple examples:
+```{r }
+# Let's make a simple list with only numeric vectors (of varying length)
+numlis <- list(x=1000, y=c(2.1,0.1,-19), z=c(100,200,100,100))
+
+# For the numeric list, let's get the mean for every element, and count 
+# the length of the three vectors.
+# Here, sapply takes a list and a function as its two arguments,
+# and applies that function to each element of the list.
+sapply(numlis, mean)
+sapply(numlis, length)
+```
+
+
+You can of course also define your own functions, and use them here. Let's look at another simple example using the `numlis` object defined above. 
+
+For example,  
+```{r }
+# Let's find out if any diameters are duplicated in the allom dataset.
+# A function that does this would be the combination of 'any' and 'duplicated',
+anydup <- function(vec)any(duplicated(vec))
+# This function returns TRUE or FALSE
+
+# Apply this function to numlis (see above):
+sapply(numlis, anydup)
+
+# You can also define the function on the fly like this:
+sapply(numlis, function(x)any(duplicated(x)))
+```
+
+
+Now, you can use any function in `sapply` as long as it returns a single number based on the element of the list that you used it on. Consider this example with `strsplit`.
+
+```{r }
+# Recall that the 'strsplit' (string split) function usually returns a list of values. 
+# Consider the following example, where the data provider has included the units in 
+# the measurements of fish lengths. How do we extract the number bits?
+fishlength <- c("120 mm", "240 mm", "159 mm", "201 mm")
+
+# Here is one solution, using strsplit
+strsplit(fishlength," ")
+
+# We see that strsplit returns a list, let's use sapply to extract only 
+# the first element (the number)
+splitlen <- strsplit(fishlength," ")
+sapply(splitlen, function(x)x[1])
+
+# Now all you need to do is use 'as.numeric' to convert these bits of text to numbers.
+```
+
+The main purpose of splitting dataframes into lists, as we have done above, is so that we can save time with analyses that have to be repeated many times. In the following examples, you must have already produced the objects `hydrosp` and `allomsp` (from examples in the previous section).Both those objects are *lists of dataframes*, that is, each element of the list is a dataframe in itself. Let's look at a few examples with `sapply` first.
+
+```{r sapplyexamples}
+# How many observations per species in the allom dataset?
+sapply(allomsp, nrow)
+# Here, we applied the 'nrow' function to each separate dataframe.
+# (note that there are easier ways to find the number of observations per species!,
+# this is just illustrating sapply.)
+
+# Things get more interesting when you define your own functions on the fly:
+sapply(allomsp, function(x)range(x$diameter))
+# Here, we define a function that takes 'x' as an argument:
+# sapply will apply this function to each element of the list,
+# one at a time. In this case, we get a matrix with ranges of the diameter per species.
+
+# How about the correlation of two variables, separate by species:
+sapply(allomsp, function(x)cor(x$diameter, x$height))
+
+
+# For hydro, find the number of days that storage was below 235, for each year.
+sapply(hydrosp, function(x)sum(x$storage < 235))
+
+```
+
+
+#### Using `lapply`
+
+
+The `lapply` function is much like `sapply`, except it always returns a list.
+
+For example, 
+```{r lapplyexamples, out.lines=10}
+# Get a summary of the hydro dataset by year:
+lapply(hydrosp, summary)
+```
+
+Suppose you have multiple similar datasets in your working directory, and you want to read all of these into one list, use `lapply` like this (run this example yourself and inspect the results).
+```{r eval=FALSE}
+# Names of your datasets:
+filenames <- c("pupae.csv","pupae.csv","pupae.csv")
+# (This toy example will read the same file three times).
+
+# Read all files into one list,
+alldata <- lapply(filenames, read.csv)
+
+# Then, if you are sure the datasets have the same number of columns and names,
+# use do.call to collapse the list:
+dfrall <- do.call(rbind, alldata)
+```
+
+```{block2 type="rmdtry"}
+Recall the use of `dir` to list files, and even to find files that match a specific pattern (see Section \@ref(fileswd). Read all CSV files in your working directory (or elsewhere) into a single list, and count the number of rows for each dataframe.
+```
+
+Finally, we can use `lapply` to do all sorts of complex analyses that return any kind of object. The use of `lapply` with lists ensures that we can organize even large amounts of data in this way.
+
+Let's do a simple linear regression of log(leafarea) on log(diameter) for the Allometry dataset, by species:
+
+```{r }
+# Run the linear regression on each element of the list, store in a new object:
+lmresults <- lapply(allomsp, function(x)lm(log10(leafarea) ~ log10(diameter), data=x))
+
+# Now, lmresults is itself a list (where each element is an object as returned by lm)
+# We can extract the coefficients like this:
+sapply(lmresults, coef)
+# This shows the intercept and slope by species.
+# Also look at (results not shown):
+# lapply(lmresults, summary) 
+
+# Get R2 for each model. First write a function that extracts it.
+getR2 <- function(x)summary(x)$adj.r.squared
+sapply(lmresults, getR2)
+```
+
+```{block2 type="rmdtry"}
+Try to fully understand the difference between `sapply` and `lapply` by using `lapply` in some of the examples where we used `sapply` (and vice versa).
+```
+
+
+## Loops {#simpleloops}
+
+Loops can be useful when we need to repeat certain analyses many times, and it is difficult to achieve this with `lapply` or `sapply`. To understand how a `for` loop works, look at this example:
+```{r }
+for(i in 1:5){
+  message(i)
+}
+```
+Here, the bit of code between {} is executed five times, and the object `i` has the values 1,2,3,4 and 5, in that order. Instead of just printing `i` as we have done above, we can also index a vector with this object:
+
+```{r }
+# make a vector
+myvec <- round(runif(5),1)
+
+for(i in 1:length(myvec)){
+  message("Element ", i, " of the vector is: ", myvec[i])
+}
+```
+Note that this is only a toy example: the same result can be achieved by simply typing `myvec`.
+
+Now let's look at a useful application of a `for` loop: producing multiple plots in a `pdf`, using the `allomsp` object we created earlier.
+
+This bit of code produces a `pdf` in your current working directory. If you can't find it, recall that you can use `getwd`() to get the current working directory.
+
+```{r eval=FALSE}
+# Open a pdf to send the plots to:
+pdf("Allom plot by species.pdf", onefile=TRUE)
+for(i in 1:3){
+  with(allomsp[[i]],
+       plot(diameter, leafarea, pch=15, xlim=c(0,80), ylim=c(0,450),
+            main=levels(allom$species)[i]))
+}
+# Close the pdf (important!)
+dev.off()
+```
+
+Here, we create three plots (`i` goes from 1 to 3), every time using a different element of the list `allomsp`. First, `i` will have the value 1, so that we end up using the dataframe `allomsp[[1]]`, the first element of the list. And so on. Take a look at the resulting PDF to understand how the code works.
+
+*Note:* On windows (with Adobe reader) If the pdf (\file{Allom plot by species.pdf}) is open, the above will fail. If you try this anyway, close the pdf and try again. You may have to run the command `dev.off`() another time to make sure the device is ready.
+
+
+Another way to achieve the same result is to avoid splitting the dataframe into a list first, and simply take subsets on the fly. Consider this template (make your own working example based on any dataset).
+
+We assume here you have a dataframe called 'dataset' with a factor 'species', for which you want to create separate plots of Y vs. X.
+```{r eval=FALSE}
+pdf("somefilename.pdf", onefile=TRUE)
+for(lev in levels(dataset$species)){
+  
+  with(subset(dataset, species==lev),
+       plot(X,Y, 
+            main=as.character(lev)))
+}
+dev.off()
+```
+
+
+
+
+## Advanced working example
+
+In this example, we use lists, `lapply`, `sapply` as well as loops. We also introduce `fitdistr` from the `MASS` package, and use `curve` to add curves to a histogram.
+
+Let's fit a weibull distribution to the vessel diameter data, separately for the base and apex positions (see Section~\ref{sec:vesseldata}). We will also visualize the results, and print the coefficients of the fit.
+
+Note that in the following example, you could also simply make two subsets and repeat the analysis for both. But this way of working also applied to datasets where you have hundreds of species.
+
+```{r }
+# Read raw data
+data(vessel)
+
+# Split the dataframe
+vesselsp <- split(vessel, vessel$position)
+
+# Load MASS package
+library(MASS)
+
+# Fit the weibull (results are stored in a list 'weibfits' containing all outputs).
+weibfits <- lapply(vesselsp, function(x)fitdistr(x$vesseldiam, "weibull"))
+
+# To look at the standard print output for the first one:
+weibfits[[1]]
+
+# But if you look at str(weibfits), you will notice the output is a list with many
+# components. We will extract 'estimate' which gives the two parameters of the weibull:
+weibcoefs <- sapply(weibfits, function(x)x$estimate)
+
+# And look at the results:
+weibcoefs
+```
+
+Next, we will plot the two distributions again (as we did in Section \@ref(vesselexample), together with a curve of the fitted weibull.
+
+This code produces Fig. \ref(fig:vesselweib).
+
+```{r vesselweib, opts.label="wide", fig.cap='Two histograms of the vessel diameter data, with fitted Weibull curves'}
+
+# First define a plotting function that makes a histogram of 'vesseldiam', 
+# and adds a curve with a weibull distribution, given the shape and scale parameters:
+plotHistWeib <- function(dfr, shape, scale){ 
+    hist(dfr$vesseldiam, freq=FALSE, main="", xlab="Vessel diameter")
+    curve(dweibull(x, shape, scale), add=TRUE)
+}
+
+# Setup a plotting region with two plots:
+par(mfrow=c(1,2))
+
+# Loop through the vesselsp list, plot histogram and weibull curve for each:
+for(i in 1:length(vesselsp)){
+  plotHistWeib(vesselsp[[i]], shape=weibcoefs[1,i], scale=weibcoefs[2,i])
+}
+```
+
+
+
+

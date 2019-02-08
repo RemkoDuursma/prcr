@@ -1,27 +1,4 @@
 
-
-notes
-
-- https://mfasiolo.github.io/mgcViz/articles/mgcviz.html
--https://cran.r-project.org/web/packages/plot3D/vignettes/plot3D.pdf
-
-```{r}
-library(lme4)
-library(ggplot2)
-library(ggthemes)
-data(sleepstudy)
-
-
-with(sleepstudy, plot(Days, Reaction))
-
-ggplot(sleepstudy, aes(x = Days, y = Reaction, group = Subject)) +
-  geom_point(size=0.5) +
-  geom_path(col = "grey") +
-  theme_tufte() +
-  stat_smooth(method = "lm", se = FALSE, col="black")
-```
-
-
 # Generalized additive models {#gam}
 
 In this section we very briefly introduce generalized additive models (GAMs), with the `mgcv` package. 

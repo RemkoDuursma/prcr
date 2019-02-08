@@ -1,6 +1,6 @@
 
 ```{r echo=FALSE, cache=FALSE, results="hide"}
-opts_chunk$set(echo=TRUE)
+knitr::opts_chunk$set(echo=TRUE)
 set.seed(1234)
 palette("default")
 ```
@@ -9,9 +9,11 @@ palette("default")
 # Linear modelling {#linmodel}
 
 
+## Introduction
+
 - what do we cover here
 - methods for very few variables. that's what we prefer, since it is real nice to be able to visualize what is going on. that does not work for many variables
-- methods for many variables: select subset of predictors, make model 'stable'
+- methods for many variables: select subset of predictors, make model 'stable', hopefully end up with few variables that we can visualize
 - testing for effects (as often in science), versus making a model for prediction (as often in data science). 
 - cross validation comes later though, because overfitting is best illustrated with a non-linear model
 
@@ -523,7 +525,7 @@ We are going to use the Cereals data to inspect the "health rating" (`rating`), 
 data(cereals)
 
 library(scales)
-library(ggpubr)
+library(gridExtra)
 
 # Two simple scatter plots on a log-log scale
 g1 <- ggplot(cereals, aes(y = rating, x = fiber)) +
@@ -534,7 +536,7 @@ g2 <- ggplot(cereals, aes(y = rating, x = sugars)) +
   geom_point(pch=19, col="dimgrey") + theme_tufte()  + lims(y=c(0,100)) +
   geom_smooth(method='lm')
 
-ggpubr::ggarrange(g1, g2) %>% plot
+grid.arrange(g1, g2, ncol = 2)
 ```
 
 Here we make use of `ggplot2`'s built-in regression lines, which are easily added to the plot. The default behaviour is to add a 95% confidence band as well. In this case we immediately see that `fiber` is a worse predictor than `sugars` for the health rating, given the wider confidence interval for the location of the mean response (i.e. the regression line). 
@@ -621,7 +623,8 @@ g1 <- ggplot(coweeta, aes(x = DBH, y = height)) +
 g2 <- ggplot(coweeta, aes(x = DBH, y=height, col=species)) +
   geom_point() + geom_smooth(method="lm", se=FALSE) +
   theme_tufte() + scale_colour_tableau() + lims(x=c(0,60), y=c(0,30))
-ggpubr::ggarrange(g1, g2) %>% plot
+
+grid.arrange(g1, g2, ncol = 2)
 ```
 
 
@@ -748,7 +751,7 @@ g1 <- ggplot(coweeta, aes(x = biomass, y = folmass)) +
     
 g2 <- g1 + scale_x_log10() + scale_y_log10()
 
-ggpubr::ggarrange(g1, g2) %>% plot
+grid.arrange(g1, g2, ncol = 2)
 ```
 
 
@@ -770,8 +773,7 @@ residPlot <- function(model){
     stat_smooth(method="loess", span=0.8)
 }
 
-ggpubr::ggarrange(residPlot(lm1), 
-                  residPlot(lm2)) %>% plot
+grid.arrange(residPlot(lm1), residPlot(lm2), ncol = 2)
 
 ```
 

@@ -13,6 +13,10 @@ suppressPackageStartupMessages(library(lubridate))
 suppressPackageStartupMessages(library(lmerTest))
 suppressPackageStartupMessages(library(broom))
 suppressPackageStartupMessages(library(scales))
+suppressPackageStartupMessages(library(lgrdata))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(ggthemes))
+
 ```
 
 
@@ -94,7 +98,7 @@ means_boot <- replicate(999, mean(sample(mysample, replace=TRUE)))
 # The curve is the sampling distribution as calculated for the normal distribution.
 # Due to the Central Limit Theorem, the sampling distribution should be approx. normal.
 curve(dnorm(x, mean=mean(mysample), sd=sd(mysample)/sqrt(n)), from=10, to=25,
-      ylab="Density", ylim=c(0,0.2))
+      ylab="Density", ylim=c(0,0.3))
 
 # The histogram shows the sampling distribution for the bootstrap.
 hist(means_boot, freq=FALSE, add=TRUE, breaks=25, col="#D3D3D380")
@@ -180,7 +184,8 @@ coins <- c(1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0)
 library(resample)
 
 # Bootstrap on series of heads/tails defined above.
-b <- bootstrap(coins, mean)
+# (we use resample:: here, as boots)
+b <- resample::bootstrap(coins, mean)
 
 # Take a look at the estimated standard error and bias.
 b
@@ -213,13 +218,13 @@ hfe_wide <- unstack(hfe)
 
 # If the first argument is a dataframe, simply refer
 # to the column names like this.
-hfeboot <- bootstrap(hfe_wide, mean(I/C))
+hfeboot <- resample::bootstrap(hfe_wide, mean(I/C))
 
 # Inspect object
 hfeboot
 
 # And print the confidence interval for the treatment ratio
-CI.bca(hfeboot)
+resample::CI.bca(hfeboot)
 ```
 
 

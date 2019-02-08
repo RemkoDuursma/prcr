@@ -1,0 +1,1383 @@
+# Linear mixed-effects models {#mixed}
+
+
+
+
+
+```{r}
+library(lme4)
+library(ggplot2)
+library(ggthemes)
+data(sleepstudy)
+
+
+with(sleepstudy, plot(Days, Reaction))
+
+ggplot(sleepstudy, aes(x = Days, y = Reaction, group = Subject)) +
+  geom_point(size=0.5) +
+  geom_path(col = "grey") +
+  theme_tufte() +
+  stat_smooth(method = "lm", se = FALSE, col="black")
+```
+
+
+- simplify content (esp. p-values, just do one thing!)
+- first section on random effects
+
+- a random effect is something you want to control for, but are not interested in
+- sleepstudy example
+
+  - why bother with random effects:
+    - experimental design, test the right thing!
+    - random effects can obscure the presence of real effects (tree canopy example)
+    - sometimes we are interested in the variance (and variance partitioning, mouse example)
+    - why not just fit a linear regression per group, and average the results? Shrinkage!
+
+
+
+
+## Introduction {#mixedintro}
+
+In Chapter \@ref(linmodel), we used linear models to estimate 'fixed' effects, which consist of specific and repeatable categories/variables that are representative of an entire population (e.g., species, age). In longitudinal studies (repeated measures) and in studies using hierarchical (nested) sampling, it is also possible to estimate effects associated with individuals sampled at random from the population of interest. These are 'random' effects and convey information about the degree that individuals in a population differ but not how or why they differ.
+
+One way to differentiate fixed and random effects is that fixed effects contain levels that are informative beyond the current analysis (e.g., a species of tree or a specific management type) while random effects contain levels that are not informative beyond the current analysis (e.g., a group of trees within an observation plot or a field under specific management). Another way to understand the difference is that fixed effects influence the *mean* of the response while random effects influence the *variance* of the response.
+
+Mixed-effects models estimate both fixed and random effects and are particularly useful when dealing with potential pseudoreplication and unbalanced designs. Including random effects can also account for variation that could mask patterns in an analysis considering only fixed effects. 
+
+Two commonly used packages for fitting mixed-effects models are `nlme` and `lme4`. In this chapter, we will use the newer `lme4` package, but note that more complex correlation structures are only possible with the `nlme` package.
+
+Rather than to present the theory underlying mixed-effects models, which is very complex, we will treat this topic by example, and thus aim at a practical application. 
+
+> **Further reading**
+We encourage you to study other text books on more general descriptions of mixed-effects models, as well as many other examples and extensions. The list below contains a few recommended books and articles.
+
+\begin{itemize}
+\item Pinheiro, J. and Bates, D., 2006. Mixed-effects models in S and S-PLUS. Springer Science \& Business Media. - *Seminal text on mixed-effects models in R, using the nlme package but still important reading when using the lme4 package*
+\item Crawley, M.J. 2007. The R Book. Wiley. - *The chapter on mixed-effects models includes many practical examples and readable explanation of the output*
+\item Bolker, B. M., et al. 2009, Generalized linear mixed models: a practical guide for ecology and evolution., Trends in ecology \& evolution 24: 127-135. - *A seminal, practical description of the use of the lme4 package for generalized linear mixed models, by one of the developers of the lme4 package*
+\item Bates, D. et al. 2015. Fitting Linear Mixed-Effects Models Using lme4. J. Stat. Software 67(1):1-48. - *The main publication describing the lme4 package, although largely very technical, includes practical tips and a nice table to understand random effects specifications*
+\item Faraway, J. J. Extending the linear model with R: generalized linear, mixed effects and nonparametric regression models. Vol. 124. CRC press. - *Rigorous detail on mixed-effects models, useful examples and extensions, as well as many other more advanced linear modelling approaches*
+\end{itemize}
+
+
+
+
+### A note about p-values {#lmerpval1}
+
+The `lme4` package does not report p-values. The developers made this decision because p-values require calculating degrees of freedom. Random effects don't necessarily have to expend the same degrees of freedom as treating them as fixed effects, so the package developers have decided not to fudge this by calculating them for you. 
+
+In this chapter, we use two approaches to calculate p-values of fixed effects. To obtain the p-values of all fixed effects in a model, we use the Kenward-Roger approximation to the degrees of freedom, as recommended by Halekoh and H\"{o}jsgaard (2014) \footnote{Ulrich Halekoh and S\"{o}ren H\"{o}jsgaard, 2014, A Kenward-Roger Approximation and Parametric Bootstrap Methods for Tests in Linear Mixed Models -- The {R} Package pbkrtest, J. Stat. Software 59, 1-30}. This approximation is most conveniently implemented in the `Anova` function from the `car` package (not `anova`!), and used like this (if you have a fitted model `mymodel` returned by `lmer`),
+
+```{r eval=FALSE}
+library(car)
+Anova(mymodel, test="F")
+```
+
+Note that we cannot use `test="F"` for generalized linear mixed-effects models (i.e. fit with `glmer`), and some caution needs to be applied with the `Anova` default use of the chi-squared test statistic.
+
+The second approach is to use likelihood-ratio tests to test the significance of a single fixed effect in a model. To do this, we fit two models (one with, and one without the fixed effect of interest), and use the `KRmodcomp` function from the `pbkrtest` package (again using the Kenward-Roger approximation as mentioned above). Note that the results are usually slightly different, and sometimes very different, if you use the standard likelihood-ratio test with the `anova` function.
+
+%Finally, to test whether a more complicated random effects structure is supported by the data, you can use the `anova` function (neither `Anova` or `KRmodcomp` can be used for that). 
+
+% \begin{table}[!htbp]
+% \begin{tabular}{|p{2cm}|p{2cm}|p{6cm}|p{4.5cm}|p{1cm}}
+% Function & Package & Notes & Methods & glmer? \\ \hline
+% `anova(m1, m2)` & `base` & The standard anova can be used to compare two models (useful for one-term deletion p-values). Inaccurate for smaller sample sizes.  & Likelihood-ratio test & Yes \\
+% `KRmodcomp` & `pbkrtest` & Frequently recommended method, works for one-term deletion only, but `Anova(model, test="F")` provides a convenient interface (see below). For complex models, is very slow & Kenward-Roger approximation & No \\
+% `Anova(m1, test.statistic="Chisq")` & `car` &  Some sources claim this is an inaccurate method & Uses a chis-square distribution approximation &  Yes \\
+% `Anova(m1, test.statistic="F")` & `car` & Exactly the same method as `KRmodcomp`, but more convenient. Also very slow for complex models & Kenward-Roger approximation & No \\
+% `anova` & `lmerTest` & The package must be loaded before fitting the `lmer`, replacing the standard anova. & By default, Satterthwaite's approximation (but with `ddf="Kenward-Roger"`, uses `KRmodcomp`) & No \\
+% `PBmodcomp` & `pbkrtest` & The gold-standard for any p-value calculation, at the cost of very long computation time for more complex models & The parametric bootstrap & Yes \\
+% `pamer.fnc` & `LMERConve-` `nienceFunctions` & Lower and upper limits for the p-values & Most conservative and anti-conservative approximations, the true p-value must be in between & No \\
+% \end{tabular}
+% \end{table}
+
+Finally, you may wish to inspect p-values for individual coefficients in the `summary` statement of the fitted model. With the `lmerTest` package loaded, fit the model with `lmer`, which will now show p-values in the `summary`. This even works for `glmer`, but the z-score approximation is probably quite poor. Use with caution.
+
+We will demonstrate the use of each of these functions in the examples that follow. 
+
+> **Further reading**
+See the help page `?pvalues` for references to several options to calculate p-values with `lme4`.
+
+
+
+## Example: individual-level variation in tree canopy gradients
+{#sec:preflme}
+
+The following example uses the `pref` data (not yet described in Appendix A, download the file \file{prefdata.csv}). The dataset contains measurements of leaf mass per area (LMA), and distance from the top of the tree (dfromtop) on 35 trees of two species. We want to know whether LMA decreases with `dfromtop`, as expected, and whether this decrease in LMA with distance from top differs by species.
+
+```{r }
+# Read the data and inspect the first few rows, and the species factor variable.
+pref <- read.csv("prefdata.csv")
+head(pref)
+levels(pref$species)
+```
+
+Before we fit mixed-effects models, let's start with a linear regression that includes `dfromtop` and `species` as the predictor variables to observe the general patterns. We use `visreg` to quickly visualize the fitted linear model. The following code produces Fig.~\ref{fig:lmbyspp}. 
+
+```{r lmbyspp, opts.label="smallsquare", fig.cap='Leaf mass per area as a function of tree species (two colours) and the distance from the top of each tree, as fitted with a simple linear model and visualized with visreg.'}
+
+# Fit a linear regression by species (ignoring individual-level variation)
+lm1 <- lm(LMA ~ species + dfromtop + species:dfromtop, data=pref)
+
+# Plot predictions
+library(visreg)
+visreg(lm1, "dfromtop", by="species", overlay=TRUE)
+```
+
+As we can see in Fig.~\ref{fig:lmbyspp}, there is a strong effect of species, but it appears that `LMA` and `dfromtop` are not significantly correlated.
+
+> **Try this yourself**
+Look at the `anova` table for the fitted linear regression model from the example above to confirm that LMA does not significantly change with dfromtop.
+
+
+To see whether the relationship between `LMA` and `dfromtop` potentially varies from tree to tree, we fit a linear regression separately for each tree using the `lmList` function in the `lme4` package and then plot the outcome (in Fig.~\ref{fig:lmlistbytree}).
+
+```{r lmlistbytree, opts.label="smallsquare", fig.cap='Leaf mass per area as a function of tree species (two colours) and the distance from the top of each tree. The solid lines represent the slope of the relationship for each individual tree.', message=FALSE}
+# For the lmList function (Note: the nlme package also includes the lmList function)
+library(lme4)
+
+# fit linear regression by tree ('ID')
+lmlis1 <- lmList(LMA ~ dfromtop | ID, data=pref)
+
+# Extract coefficients (intercepts and slopes) for each tree
+liscoef <- coef(lmlis1)
+
+# load plottix for the 'ablineclip' function, which clips lines within the range of x
+library(plotrix)
+
+# split pref by tree (prefsp is a list)
+prefsp <- split(pref, pref$ID)
+
+# Plot
+palette(c("red","blue"))
+with(pref, plot(dfromtop, LMA, col=species, pch=16, cex=0.8))
+for(i in 1:length(prefsp)){
+  
+  # Find min and max values of dfromtop, to send to ablineclip
+  xmin <- min(prefsp[[i]]$dfromtop)
+  xmax <- max(prefsp[[i]]$dfromtop)
+    
+  # add regression lines
+  ablineclip(liscoef[i,1], liscoef[i,2], x1=xmin, x2=xmax,
+             col=prefsp[[i]]$species)
+}
+
+```
+
+From the figure we can conclude (informally) that:
+
+\begin{enumerate}
+\item Intercepts vary a lot between trees
+\item There seems to be a negative relationship for many trees
+\item It seems there is less variation between slopes than intercepts
+\end{enumerate}
+
+We know the individual data points are not independent, as they are nested within trees (that is, multiple samples were collected for each tree). To properly account for this non-independence, we have to use a mixed-effects model. In the example below, we will fit two models: one with a random intercept only, and one with a random intercept and slope. 
+
+
+### A simple equation for a mixed-effects model
+
+Before we fit a mixed-effects model, let's write down an equation that illustrates the roles of the fixed effects and random effects in the model.
+
+For a simple linear regression of Y versus X (where X is numeric), we fit the model:
+
+$$Y = \beta_0 + \beta_1 \cdot X$$ 
+
+where the $\beta$'s are the intercept and the slope of the fitted regression line. 
+
+A mixed-effects model additionally fits two random parameters, and we can write the model as:
+
+$$Y = (\beta_0 + b_0) + (\beta_1 + b_1) \cdot X$$ 
+
+where $b_0$ is the random intercept (which is normally distributed with mean zero, and some standard deviation), and $b_1$ is the random slope (also assumed to be normally distributed with mean of zero and some standard deviation).
+
+When we fit a mixed-effects model, not only do we get an estimate of the variance (or standard deviation) of the random effects, we also get estimates of this random effect for each individual. These estimates are known as the BLUPs (best linear unbiased predictors).
+
+
+### Fitting the mixed-effects model
+
+To specify random effects with `lmer`, we add it to the formula in the right-hand side. For example, a random intercept for 'ID' (that is, the intercept will vary randomly among ID's) is coded as `(1|ID)`. If we also allow the slope of the relationship to vary, we specify it as `(dfromtop|ID)` so that the slope and intercept of the relationship between LMA and dfromtop will vary randomly between tree ID's.
+
+```{r dfromtoplme, message=FALSE}
+# Random intercept only
+pref_m1 <- lmer(LMA ~ species + dfromtop + species:dfromtop + (1|ID), data=pref)
+
+# Random intercept and slope
+pref_m2 <- lmer(LMA ~ species + dfromtop + species:dfromtop + (dfromtop|ID), data=pref)
+
+# The AIC and a likelihood-ratio test tell us that we don't need a random slope.
+# lower AIC indicates that model fit is better (more efficient)
+AIC(pref_m1, pref_m2)  
+
+# Likelihood ratio test : the more complex model is not supported by the data.
+# Note: the models will be re-fitted with ML instead of REML; this is necessary
+# when performing likelihood-ratio tests.
+anova(pref_m1, pref_m2)
+
+# Output from the random intercept model - not shown (inspect yourself!)
+# summary(pref_m1)
+
+# Using Anova from car, we get p-values for the main effects.
+library(car)
+Anova(pref_m1)
+```
+
+```{r echo=FALSE, message=FALSE}
+library(lmerTest)
+library(pbkrtest)
+```
+
+
+```{r eval=FALSE, echo=FALSE}
+# Notes for p-value comparisons. Ignore!
+library(lmerTest)
+library(pbkrtest)
+
+tmp <- some(pref, 50)
+
+lme1 <- lmer(LMA ~ species + dfromtop + species:dfromtop + (1|ID), data=tmp, REML=FALSE)
+lme2 <- lmer(LMA ~ species + (1|ID), data=tmp, REML=FALSE)
+lme3 <- lmer(LMA ~ species + dfromtop + (1|ID), data=tmp, REML=FALSE)
+lme4 <- lmer(LMA ~ dfromtop + (1|ID), data=tmp, REML=FALSE)
+# practically the same p-values
+car::Anova(lme1)
+
+anova(lme1, lme3)
+anova(lme3, lme4)
+KRmodcomp(lme3, lme4)
+anova(lme1, type=2)   # 
+
+# These two are exactly the same; both call KRmodcomp
+car::Anova(lme1, test.statistic="F")
+anova(lme1, type=2, ddf="Kenward-Roger") 
+
+
+comp_p <- function(n=50){
+  tmp <- some(pref, n)
+  
+  lme1 <- lmer(LMA ~ species + dfromtop + species:dfromtop + (1|ID), data=tmp)
+  lme2 <- lmer(LMA ~ species + (1|ID), data=tmp)
+  lme3 <- lmer(LMA ~ species + dfromtop + (1|ID), data=tmp)
+  lme4 <- lmer(LMA ~ dfromtop + (1|ID), data=tmp)
+
+  v <- c()  
+  v[1] <- suppressMessages(anova(lme1, lme2)[["Pr(>Chisq)"]][2])
+  v[2] <- anova(lme1, type=2, ddf="Kenward-Roger")[["Pr(>F)"]][2]
+  v[3] <- anova(lme1, type=2, ddf="Satterthwaite")[["Pr(>F)"]][2]
+  v[4] <- car::Anova(lme1, test.statistic="F")[["Pr(>F)"]][2]
+  v[5] <- car::Anova(lme1, test.statistic="Chisq")[["Pr(>Chisq)"]][2]
+
+names(v) <- c("LRT","lmerTestKR","lmerTestSW","AnovaF","AnovaChisq")
+return(v)
+}
+
+r <- replicate(100, comp_p())
+r <- as.data.frame(t(r))
+
+# I assumed these would be closer 
+with(r, plot(log10(AnovaF), log10(lmerTestKR)))
+abline(0,1)
+
+# but these are very closer
+with(r, plot(log10(lmerTestSW), log10(lmerTestKR)))
+abline(0,1)
+
+# Is Chi-sq based LRT too conservative?
+with(r, plot(log10(LRT), log10(lmerTestKR)))
+abline(0,1)
+
+# !!! interesting
+with(r, plot(log10(AnovaF), log10(AnovaChisq)))
+abline(0,1)
+
+# Chisq definitely anti-conservative
+with(r, plot(AnovaF, AnovaChisq))
+abline(0,1)
+
+# unbiasedly related - but why not more close together?
+with(r, plot(log10(AnovaF), log10(lmerTestSW)))
+abline(0,1)
+
+```
+
+
+Note that in the above, we use the familiar `anova` function to test between models with different random effects structure. Since we use `anova` on an object returned by `lmer`, this command invokes the `anova.merMod` function, from the `lme4` package.
+
+> **Try this yourself**
+Inspect the help file `?anova.merMod`, and find out that you can name the two models, simplifying the interpretation of the command `anova(lme1, lme2)` from the above example.
+
+
+
+We now conclude that `LMA` decreases significantly with `dfromtop`. Compare this with the fixed-effects model we started with:
+
+```{r }
+summary(lm1)
+```
+
+To visualise these differences, also compare predictions from the mixed-effects model, in Fig.~\ref{fig:lmebyspp}, to those of the fixed-effects model depicted in Fig.~\ref{fig:lmbyspp}. 
+
+```{r lmebyspp, opts.label="smallsquare", fig.cap='Leaf mass per area as a function of tree species (two colours) and the distance from the top of each tree, as fitted with a linear mixed-effects model and visualized with visreg.'}
+
+# Plot predictions
+visreg(pref_m1, "dfromtop", by="species", overlay=TRUE)
+```
+
+Ignoring the tree-to-tree variance thus resulted in drawing the wrong conclusion from our data. When we accounted for this variation with a mixed-effects model, we did find a significant overall relationship between LMA and dfromtop. The reason for this discrepancy is that the large variation in intercepts between the individual trees (between-subject variation) masked the relationship between the two variables within individuals (within-subject variation).
+
+Finally, we may be interested in quantifying the variation between individuals in terms of the intercept and slope. These are the standard deviations of the random effects, and can be extracted with the `VarCorr` function (it is also shown in the `summary` statement of the mixed-effects model). 
+
+```{r }
+# Standard deviation of the intercept and slope ('dfromtop') between individuals,
+# as estimated from the random effects.
+VarCorr(pref_m1)
+
+# For comparison, output from a model with random slope and intercept.
+VarCorr(pref_m2)
+
+```
+
+
+
+> **Try this yourself**
+Try using `ranef` on `lme1` and `lme2`; the first will show intercepts for each of the random effects (trees), while the second will show both estimated intercepts and slopes for the random effects. 
+
+
+To this point, we have put a lot of effort into evaluating the significance of different terms in the model, but we have not run any model diagnostics. The following code makes a plot (Fig.~\ref{fig:lmadiagn}) of the residuals versus fitted, and a quantile-quantile plot of the residuals. Unfortunately, these diagnostics suggest that our assumptions regarding normality and/or heteroscedasticity are violated.
+
+```{r lmadiagn, fig.cap="Diagnostic plots for the pref\\_m2 model.",  echo=-c(1:2), message=FALSE, warning=FALSE, opts.label="wide"}
+par(mfrow=c(1,2), mar=c(5,5,1,1))
+palette("default")
+
+# plot residuals against fitted values 
+# done by calling 'plot' on object returned by 'lmer'
+plot(pref_m1)
+
+# quantile-quantile plot
+library(car)
+qqPlot(residuals(pref_m1))
+```
+
+The positive scaling of the residuals with increasing fitted values suggest that either a log- or square root-transformation might be appropriate. Here we try a log-transformation; Fig.~\ref{fig:lmadiagn2} suggests that this transformation worked.
+
+```{r lmadiagn2, fig.cap="Diagnostic plots for the model following log-transformation.",  echo=-1, message=FALSE, warning=FALSE, opts.label="wide"}
+par(mfrow=c(1,2), mar=c(5,5,1,1))
+
+# fit model with log-transformed response
+pref_m2.ln <- lmer(log(LMA) ~ species + dfromtop + species:dfromtop + 
+                     (dfromtop|ID), data=pref)
+
+# plot residuals against fitted values
+plot(resid(pref_m2.ln) ~ fitted(pref_m2.ln))
+abline(h=0)
+
+# quantile-quantile plot
+library(car)
+qqPlot(residuals(pref_m2.ln))
+```
+
+> **Try this yourself**
+Check the significance of the fixed and random effects for the log-transformed data. 
+
+
+```{r echo=FALSE, eval=FALSE}
+# More notes on p-value comparisons. Ignore!
+
+#van de Pol & Wright (2009, Animal Behaviour) show how to separate within-subject from between-subject variation
+# with a very simple method. All we have to do is add the subject mean as a fixed effect.
+pref$dfromtop_mean <- with(pref, ave(dfromtop, ID, FUN=mean, na.rm=TRUE))
+lme3 <- lmer(LMA ~ species + dfromtop + species:dfromtop + dfromtop_mean + dfromtop_mean:species + (1|ID), data=pref)
+# looking at the coefficients:
+summary(lme3)
+# we find the very interesting result that the between-subject slope ('dfromtop_mean') is positive, while the 
+# overall slope ('dfromtop') is negative! The latter is what the original model showed, but the former
+# shows something new: across trees, LMA increases with average dfromtop (which is a proxy for tree height, since all
+# trees were sampled along the crown length). This effect was reported by Marshall&Monserud, but here we show both at the
+# same time.
+# Visually, also:
+with(pref, plot(dfromtop_mean, LMA))
+# shows the clear increase with dfromtop_mean
+
+# within-subject vatiation can also be tested with the centered mean
+# (Eq. 2 in de Pol & Wright)
+library(doBy)
+pref2 <- scaleBy(dfromtop ~ ID, data=pref, scale=TRUE)
+lme4 <- lmer(LMA ~ species + dfromtop + species:dfromtop + dfromtop_mean + dfromtop_mean:species + (1|ID), data=pref2)
+Anova(lme4, test="F")
+```
+
+
+## Example: individual-level variation in metabolic rate of mice
+{#sec:mousemetabol}
+
+In this example we will look at a dataset containing metabolic rate measured on mice at three different temperatures. Measurements on every mouse were repeated three times. We are interested in estimating the change in metabolic rate with temperature, and whether this relationship changes with body mass, sex (male or female), whether the mice were fed on the day of measurements, and whether they were using a wheel.
+
+First we read and inspect the dataset (data not yet described in the Appendix).
+
+```{r }
+mouse <- read.csv("wildmousemetabolism.csv")
+
+# Make sure the individual label ('id') is a factor variable
+mouse$id <- as.factor(mouse$id)
+```
+
+As a first step let's look at the data. We would like to visualize whether temperature has an effect on metabolic rate, and whether individuals were very different in terms of metabolic rate (`rmr`) at a fixed temperature. The following code makes Fig.~\ref{fig:mouse15id}.
+
+```{r mouse15id, fig.cap="Resting metabolic rate (rmr) for individual mice. Left panel: raw data against temperature, demonstrating increase in rmr with decreasing temperature, and larger variance at lower temperature. Right panel: rmr at a measurement temperature of 15C, by individual (id).", opts.label="wide", echo=-1}
+par(mfrow=c(1,2), cex.lab=1.2)
+
+# Raw data of rmr versus temperature (temp). Note use of jitter() 
+# to minimize overlap between data.
+with(mouse, plot(jitter(temp),rmr, pch=21, bg="#BEBEBE99", ylim=c(0,0.6)))
+
+# Take a subset, and reorder the 'id' factor levels by rmr.
+mouse15 <- subset(mouse, temp == 15)
+mouse15$id <- with(mouse15, reorder(id, rmr, median, na.rm=TRUE))
+
+# A simple boxplot showing variation in rmr across and within individuals
+boxplot(rmr ~  id, data=mouse15, xlab="id", ylab="rmr",ylim=c(0,0.6))
+```
+
+A practical way to test for multiple variables is to start with a simple model that includes the most important variables, and gradually increase model complexity. Every time we add one variable to a model, the significance can be tested with a likelihood ratio test. As discussed, we can use the built-in `anova` function, but probably more precise is the use of `KRmodcomp` from the `pbkrtest` package. We will demonstrate its use in this example but note that all conclusions will be the same when using `anova`.
+
+We know for sure that resting metabolic rate should increase when the temperature decreases, so let's start with a model that only includes `temp` and appropriate random effects. Since each individual was measured multiple times (indicated by the `run` variable), we specify a `run` random effect nested within individual (`id`). 
+
+```{r }
+mouse_m0 <- lmer(rmr ~ temp + (1|id/run), data=mouse )
+```
+
+In this first model we only allow the intercept to vary between individuals (`1|id/run`). A side-effect of the nested random effect is that we can quickly quantify the variation between individuals, as well as 'runs' within individuals, using the `VarCorr` function:
+
+```{r }
+VarCorr(mouse_m0)
+```
+
+This demonstrates that the variation between individuals (`id`) is in fact similar to variation between runs within individuals (`run:id`). It is quite obvious that the fixed effect `temp` is significant in this model (inspect the `Anova` table yourself). We could add a random slope effect by `id`, but since there are few data points for every individual, this causes some problem that we would like to avoid (but feel free to try this for yourself).
+
+%Next, we can see in the `summary` statement of the `mouse\_m1` model that the slope and intercept are highly correlated. This can be a problem when we want to interpret those estimates. 
+Note that the intercept of the model is defined as the value of the response variable (`rmr`) when the predictor (`temp`) is zero. This is not very informative since we did not measure metabolic rate at zero C. In a case like this, it is advisable to recenter the data so that the intercept is more meaningful. We will subtract 31C from `temp`, so that the intercept can now be interpreted as the metabolic rate at 31C. This is no choice of convenience, but rather has a biological justification: 31C approximates the lower critical limit of the thermal neutral zone (the range of temperature where metabolic rate does not vary). Below this temperature, metabolic rate increases to counter heat loss.
+
+We will make a new variable and add it to the dataframe, and refit the model.
+
+```{r }
+mouse$temp31 <- mouse$temp - 31
+
+mouse_m1 <- lmer(rmr ~ temp31 + (1|id/run), data=mouse )
+```
+
+Compare the summary statement from this model with `mouse\_m0`, and also note that the two models are identical in goodness of fit (compare the AIC, for example). We are only expressing the intercept differently, allowing biological interpretation of the coefficients.
+
+Next we include body mass as a predictor, as well as the interaction with temperature. It is well known that body mass is an important determinant of metabolic rate, so we should not be surprised by a strong significant effect:
+
+```{r }
+mouse_m2 <- lmer(rmr ~ temp31*bm + (1|id/run), data=mouse )
+
+library(pbkrtest)
+KRmodcomp(mouse_m2, mouse_m1)
+```
+
+The F-test shows that body mass is highly significant overall. The `Anova` shows that both the main effect and interaction are significant:
+
+```{r }
+Anova(mouse_m2, test="F")
+```
+
+An interesting side effect of including body mass as a fixed effect is that the estimated variance of the `id` is now much smaller. This makes sense because body mass varies between individuals, and thus including it in the model reduces the individual-level variation *after having accounted for body mass*. 
+
+Compare the standard deviation for `id` for the `mouse\_m2` model (see below) with that estimated for the `mouse\_m0` model above.
+
+```{r }
+# Random effects for the mixed-effects model including body mass
+VarCorr(mouse_m2)
+```
+
+Next we test whether individuals vary significantly in terms of their response to temperature, by adding a random slope effect. The models above only allowed the intercept (i.e. `rmr` at 31C) to vary between individuals. To test whether a more complex random effects structure is supported by the data, we fit two models and compare them with a likelihood ratio test (with `anova`), like so:
+
+```{r warning=FALSE, message=FALSE}
+# Like mouse_m2, but with random slope (temp31)
+mouse_m3 <- lmer(rmr ~ temp31*bm + (temp31|id/run), data=mouse )
+
+anova(mouse_m3, mouse_m2)
+```
+
+The test shows that the more complex model is better, providing evidence that individuals differ substantially in their response to temperature.
+
+```{r echo=FALSE, eval=FALSE}
+# test whether slope varies between runs within individuals by excluding it
+# like so
+mouse_m4 <- lmer(rmr ~ temp31*bm + (1|id:run) + (temp31|id), data=mouse )
+
+# i.e. intercept varying for runs within id, slope and intercept between id.
+anova(mouse_m3, mouse_m4) # shows mouse_m3 is better
+```
+
+
+As always, when we have a significant main effect and interaction, it is not easy to see *how* they affect the response variable. As always, it is most convenient to plot the model predictions with the `visreg` package. The following code makes Fig.~\ref{fig:mousevisreg1}. The figure shows that `rmr` increases with body mass (`bm`) and temperature (`temp`), and the temperature effect increases with body mass.
+
+
+```{r mousevisreg1, fig.cap="Plot fitted effects of the mouse m2 model, demonstrating significant effects of body mass and temperature on resting metabolic rate (rmr). Note that temp31 is temperature - 31, bm is body mass.", opts.label="smallsquare", echo=-1}
+#par(cex.lab=1.2)
+# Model predictions as a function of body mass, for the three temperatures.
+# The argument 'partial=FALSE' turns off the partial residuals, producing a cleaner plot.
+visreg(mouse_m3, "bm", by="temp31",overlay=TRUE, partial=FALSE, ylim=c(0,0.4))
+```
+
+Next, we test for the effect of three additional fixed effects on metabolic rate. As before, we test these effects one by one. The following code shows tests of `sex` and `wheel` on the `rmr` response variable.
+
+```{r warning=FALSE, message=FALSE}
+# No effect of sex
+mouse_m4 <- lmer(rmr ~ bm*temp31 + sex + (temp31|id/run), data=mouse)
+KRmodcomp(mouse_m4, mouse_m3)
+
+# We add 'wheel' only as an additive effect. The interaction cannot be estimated because
+# the only cases where 'wheel=No' were at a temperature of 31C:
+with(mouse, table(temp,wheel))
+
+mouse_m5 <- lmer(rmr ~ bm*temp31 + wheel + (temp31|id/run), data=mouse)
+KRmodcomp(mouse_m5, mouse_m3)
+```
+
+*Note:* the first test will print a note to the screen which you may ignore.
+
+We finish with the standard anova table, showing p-values for the main effects.
+
+```{r }
+Anova(mouse_m5, test="F")
+```
+
+Finally we visualize the individual-level variation in resting metabolic rate and its response to temperature, as estimated by the mixed-effects model. We use the `mouse\_m2` model to visualize the predicted effects for every individual, ignoring effects of `wheel` and `food`. One interesting aspect of the data is that the variance in `rmr` was clearly higher for lower `temp`. The mixed-effects model is able to partially account for this as a result of a) the variation in body mass between individuals (which, as you recall, interacted with the temperature response), and b) the random variation in intercepts and slopes between individuals. This is a good result because it is otherwise very difficult to model changes in variance with response variables.
+
+The following, more advanced, code produces Fig.~\ref{fig:mouseranplot}. 
+
+
+```{r mouseranplot, fig.cap="Measured (symbols) and predicted (lines) resting metabolic rate for the mouse dataset. Lines are predictions from the mouse m3 model for the individuals in the dataset, using the random variation in intercepts and slopes as well as the individual level variation in body mass.", opts.label="smallsquare", echo=-1}
+par(cex.lab=1.2)
+
+# Make a dataframe with all combinations of temp and id, for run 1 only
+pred_dfr <- expand.grid(temp31=c(-16,-11,0),
+                        id=levels(mouse$id), run=1)
+
+# Get average body mass by individual, merge onto pred_dfr
+library(doBy)
+bmid <- summaryBy(bm ~ id, FUN=mean, data=mouse, keep.names=TRUE)
+pred_dfr <- merge(pred_dfr, bmid)
+
+# Predict rmr for every id and temp, from the mouse_m3 model
+# The default behaviour is to make predictions including the random
+# effects (i.e. id and run:id)
+pred_dfr$rmr_pred <- predict(mouse_m3, pred_dfr)
+
+# Plot the data for run 1
+with(subset(mouse, run==1), plot(jitter(temp),rmr, pch=21, bg="#BEBEBE99", ylim=c(0,0.6)))
+
+# Add a prediction line for every individual. This is an alternative implementation,
+# avoiding a for loop. The use of invisible() avoids lapply from printing output.
+invisible(lapply(split(pred_dfr, pred_dfr$id), function(x)lines(x$temp31 + 31, x$rmr_pred)))     
+```
+
+
+## Example: blocked designs in the litter decomposition data
+{#sec:blocked}
+
+Blocked designs are often used in field experiments to account for known or suspected environmental gradients at the study site. By blocking the experimental design, the effect of the environmental gradient can be separated from the effect of the treatment(s) of interest increasing the ability to detect significant effects. Let's look at the effects of herbicide and profile on soybean litter decomposition as a function of agricultural management (herbicide usage), microenvironment, and time. In this experiment, herbicide treatments were applied at the level of whole plots, with both treatments represented within each of four blocks. Both levels of variety and profile were each represented within each plot, with six replicates of each treatment added to each plot. The data description can be found in Section~\ref{sec:masslost}.
+
+The following code prepares the dataset for analysis, and produces Fig.~\ref{fig:masslost1}.
+```{r masslost1, opts.label="mediumrect", fig.cap='Proportion of litter mass lost from bags during field incubation as a function of microenvironment and herbicide program.', message=FALSE}
+# Read data
+litter <- read.csv("masslost.csv")
+
+# Make sure the intended random effects (plot and block) are factors
+litter$plot <- as.factor(litter$plot)
+litter$block <- as.factor(litter$block)
+
+# Represent date as number of days since the start of the experiment
+library(lubridate)
+litter$date <- mdy(litter$date)
+litter$date2 <- litter$date - ymd("2006-05-23")
+
+# Quickly visualize the data to look for treatment effects
+library(lattice)
+bwplot(masslost ~ factor(date) | profile:herbicide, data=litter)
+
+```
+
+From inspecting Fig.~\ref{fig:masslost1}, the buried litter appears to be decomposing faster than the surface litter (`masslost` is higher for `buried` compared to `surface`). If there are effects of herbicide (`gly` vs. `conv`), they are not immediately clear from the figure. 
+
+The blocking can be treated as a fixed effect or random effect. However, the design is unbalanced because some litter bags were lost, resulting in a variable number of litter bags recovered from each treatment. This affects the calculation of sums of squares, which vary depending on the order the terms are introduced to the model. It is therefore more appropriate to treat the blocking factor as a random effect, and use a mixed-effects model.
+
+We first fit a simple linear model which ignores some details of the experimental design, and use block as a fixed effect. It is often very useful to start with a linear model, perhaps on subsets of the data, to gradually try to make sense of the data.
+
+```{r masslost2}
+
+# Count the data to confirm that the design is unbalanced (ignore blocks for brevity)
+ftable(xtabs(~ date2 + profile + herbicide, data=litter))
+
+# Simple linear model with 'herbicide' as the first predictor in the model,
+m1fix <- lm(masslost ~ date2 + herbicide * profile + block, data = litter)
+anova(m1fix)
+
+# ... or listing 'profile' first in the model.
+m2fix <- lm(masslost ~ date2 + profile * herbicide + block, data = litter)
+anova(m2fix)
+
+```
+
+The sums of squares and p-values differ for `profile` and `herbicide` across the two fits (although they are still highly significant). Note that the order of the variables entered in the model matters because each next term is tested against a model that includes *all terms preceding it* (so-called Type-I tests). These standard tests with `anova` are sequential tests, which is perhaps not the most intuitive behaviour.
+
+In many cases it is more intuitive to use so-called Type-II tests, in which each main effect is tested against a model that includes *all other terms*. We can use `Anova` (from the `car` package) to do this.
+
+```{r }
+library(car)
+Anova(m1fix, test="F")
+Anova(m2fix, test="F")
+```
+
+If the data were in fact balanced, the sequential (Type-I) and Type-II tests would be identical.
+
+We also have not yet accounted for the fact that multiple litter bags were placed within single plots and that the 'herbicide' treatment was applied at the level of the plots, not the individual bags, which further complicates the analysis. Treating `block` and `plot` as random effects addresses both the imbalance and the hierarchical nature of the design.
+
+In this example, we specify the nested nature of the data (plots within blocks) in the formula for the random effects as `(1|block/plot)`.
+
+```{r masslost3, tidy=FALSE}
+# fit model with random effects, plots nested within blocks
+litter_m1 <- lmer(masslost ~ date2 + herbicide * profile + (1|block/plot), 
+           data = litter)
+# examine random effects, 'plot' explains essentially zero variance
+VarCorr(litter_m1)
+
+# refit model without 'plot'
+litter_m2 <- lmer(masslost ~ date2 + herbicide * profile + (1|block), 
+           data = litter)
+anova(litter_m1, litter_m2)
+
+# look at significance of main effects and interactions
+Anova(litter_m2, test="F")
+```
+
+Note that in the model, we used `date2` as a numeric variable, which assumes that the relationship between `masslost` and `date2` is more or less linear. Figure~\ref{fig:littervisreg} shows that this is a resonable assumption. However, in the case where you have a timeseries where no transformation exists to linearize the relationship, you will have to represent your time variable as a factor. We return to this issue in Section~\ref{sec:timefactor}, after we treat another repeated measures example where time was continuous in Section~\ref{sec:timefactor}.
+
+Finally we visualize the fit, to make sense of the fitted coefficients, and to make sure we draw the right conclusions as to the direction of the significant effects. As we saw in Chapter~\ref{chap:linmodel}, we can use `visreg` to quickly visualize the fitted model.
+
+```{r littervisreg, fig.cap="Visualization of the fixed effects of the mixed-effects model fit to the litter decomposition data.", opts.label="wide", warning=FALSE, echo=-1}
+par(mfrow=c(1,2))
+library(visreg)
+
+# Because we have three fixed effects, we can make two plots to visualize 
+# certain pairs of combinations.
+visreg(litter_m2, "date2", by="profile", 
+       ylab='mass lost (proportion)', overlay=TRUE)
+visreg(litter_m2, "profile", by="herbicide", cond=list(date2=100), 
+       ylab='mass lost (proportion)', overlay=TRUE)
+```
+
+
+
+### Likelihood ratio tests
+% {#sec:lmerpval2}
+% 
+% As we mentioned at the top of this chapter, p-values in `lme4` are a bit controversial. We here used the `Anova` function, but another option is to use the `LMERConvenienceFunctions` package. This package includes functions to estimate of p-values from *conservative* and *liberal* assumptions about random effect degrees of freedom, and thus gives a range of possible p-values.
+% 
+% <<masslost4a, message=FALSE>>=
+% library(LMERConvenienceFunctions)
+% 
+% # To use the function below, we must fit with ML, not REML.
+% litter_m2ml <- update(litter_m2, REML=FALSE)
+% 
+% # calculate upper- and lower-bounds on p-values
+% pamer.fnc(litter_m2ml)
+% @
+% 
+% Each main effect and interaction has two p-values: one assuming that each random effect accounts for one degree of freedom (`lower.p.val`) or no degrees of freedom (`upper.p.value`). The 'true' p-value will be somewhere in between these two bounds. 
+% 
+% In this particular case, the results are highly significant (both lower and upper p-values are very small) because the effect size is quite large, but this will not always be the case.
+% 
+% 
+% > **Try this yourself**
+% Use `pamer.fnc` on the model above that contains random effects for both `Block` and `Plot`. What effect does this have on the degrees of freedom and p-value calculations? Why?
+% 
+% 
+
+Another approach is to evaluate the importance of a term by comparing models that contain or do not contain that term using likelihood ratio tests (as already mentioned in Section~\ref{sec:lmerpval1}). The recommended method for this is the `KRmodcomp` function (from the `pbkrtest` package), but the familiar `anova` can also be used (though p-values are approximate since likelihood ratios don't quite fit a chi-square distribution). You could also rely on model selection based on `AIC` (the lower the better). The following code shows all three approaches, and shows, as is often the case, that all methods show similar results.
+
+```{r masslost5}
+
+# remove the interaction term from the model
+litter_m2.int <- lmer(masslost ~ date2 + herbicide + profile + (1|block), data = litter)
+
+# 1. anova
+# Note that anova() will refit the models with ML (not REML) automatically,
+# this is necessary when comparing models with different fixed or random effects terms.
+anova(litter_m2, litter_m2.int)
+
+# 2. KRmodcomp
+library(pbkrtest)
+KRmodcomp(litter_m2, litter_m2.int)
+
+# 3. AIC
+AIC(litter_m2, litter_m2.int)
+```
+
+The model that includes the interaction provides the much better model fit. We can tell this by the significant p-value from `anova` and `KRmodcomp` result and by the lower AIC score for the model that includes an interaction. When an interaction is significant, the automatic follow-up question is 'what is the source of this interaction?'. Again inspecting Fig.~\ref{fig:littervisreg}, it appears that the herbicide treatments affected decomposition differently, but only on the surface of the soil. To further understand the nature of the interactions, it is useful to combine variables into a single variable, as the following example illustrates. 
+
+```{r masslost6}
+
+# Create a new variable containing the combinations of herbicide and profile.
+# This new variable will have 4 levels
+litter$combtrt <- paste(litter$herbicide, litter$profile, sep='-')
+
+# Lump all observations for which the bags were buried into a single level,
+# we now have just three levels in the new combined variable.
+litter$combtrt[litter$profile == 'buried'] <- 'buried'
+
+# Make this new variable into a factor
+litter$combtrt <- as.factor(litter$combtrt)
+
+# Fit a models using this new factor (3 levels) and a model without herbicide (2 levels)
+litter_m3 <- lmer(masslost ~ date2 + combtrt + (1|block), data = litter, REML=FALSE)
+litter_m3.herb <- lmer(masslost ~ date2 + profile + (1|block), data = litter, REML=FALSE)
+
+# Compare the models by AIC (lower is 'better')
+AIC(litter_m2, litter_m3, litter_m3.herb)
+
+```
+
+The model with the lowest AIC is `m3`, which is the model describing the relationship where herbicide affected decomposition rates only at the soil surface (because for that model, we combined all 'buried' litter samples into one level, regardless of the herbicide application).
+
+
+
+## Example: repeated measures in tree measurements
+
+This example shows a very common use of mixed-effects models in repeated measurements. The basic idea is that when you have measurements on the same individuals (or plots, or some other unit) over time, you cannot treat the measurements as independent because that would be pseudo-replication, inflation of your sample size, and anti-conservative conclusions about significant effects.
+
+We use data from the Hawkesbury Forest Experiment irrigation by fertilisation experiment (HFEIF, see Section~\ref{sec:ifdatatree} for description of the data). In this experiment, sixteen plots of 72 *Eucalyptus saligna* trees were remeasured 20 times for height and diameter (although on a number of dates, not all trees were measured). Four treatments were applied (control, irrigated, fertilised, irrigated + fertilised). We ask in the following example whether tree height differs by treatment.
+
+It is important that you recognize that the experimental unit in this example is the plot, not the tree, because the treatments were applied at a plot level. We therefore have to take into account the fact that trees are nested in plots, to avoid pseudoreplication.
+
+```{r }
+# Read data, make proper date and make sure the intended factor variables are factors.
+hfeif <- read.csv("HFEIFbytree.csv")
+hfeif$Date <- as.Date(hfeif$Date)
+
+# Make sure plot number (plotnr) is a factor; it is read in as a numeric variable.
+hfeif$plotnr <- as.factor(hfeif$plotnr)
+
+# Days since start of experiment
+# The as.numeric statement converts this into a simple numeric variable
+hfeif$Time <- as.numeric(with(hfeif, Date - min(Date)))
+```
+
+Before we do anything, always explore the data with a few simple figures. Here we show tree height over time, colored by treatment (Fig.~\ref{fig:hfeifovertime}). The data show some separation between at least some of the treatments over time. Also note that the increase in height over time is perhaps not exactly linear, but we will ignore this in the remainder of the example (and further note that no straightforward transformation exists in this case).
+
+Note the use of `jitter` in the example below, this adds some random noise to the Time variable to avoid excessive overlap of data points on each Date. We also use `sample` to randomly reorder the rows of the dataset to avoid the final treatment in the dataset to be plotted on top (this way, it is easier to see treatment differences).
+
+The following code produces Fig.~\ref{fig:hfeifovertime}.
+
+```{r hfeifovertime, opts.label="smallsquare", fig.cap='Plot tree height over time for the HFE irrigation x fertilisation experiment.', message=FALSE}
+# For the alpha() function (transparency)
+library(scales)
+
+# Set colours, transparent
+palette(alpha(c("blue","red","forestgreen","darkorange"), 0.5))
+with(hfeif[sample(nrow(hfeif)),], 
+     plot(jitter(Time,3), height, col=treat, pch=19, 
+                 xlab="Time (days)", ylab="Height (m)"))
+legend("topleft", levels(hfeif$treat), pch=19, col=palette())
+```
+
+Again, the reason we want to use mixed-effects models in this case is because we want to use the correct number of degrees of freedom to test for the treatment effect. If you are not sure what that should be, let's start with a linear model on the data from just one date, when we have averaged the data by plot (our experimental unit). In this case we can simply use `lm`, as follows.
+
+The following example produces Fig.~\ref{fig:hfeiflastfig}.
+```{r hfeiflastfig, opts.label="smallsquare", fig.cap='Simple visualization of fitted linear model (with lm) of tree height on the last date of the HFE IF data.', message=FALSE}
+# Take subset of data at last Date
+hfeif_last <- subset(hfeif, Date == max(Date))
+
+# Average all variables by plot (and include the 'treat' factor variable in the result)
+library(doBy)
+hfeif_last_plot <- summaryBy(. ~ Date + plotnr, data=hfeif_last, 
+                             FUN=mean, na.rm=TRUE,
+                             id=~treat, keep.names=TRUE)
+
+# Linear model with treatment only.
+lm_last <- lm(height ~ treat, data=hfeif_last_plot)
+
+# Note that height is highly significant, and that we use 3 numerator df 
+# to test for treatment effects
+anova(lm_last)
+
+# A quick visualization of the fitted model shows much taller trees
+# in I and IL,
+library(visreg)
+visreg(lm_last, "treat", xlab="Treatment", ylab="Tree height (m)")
+```
+
+The above shows 3 numerator degrees of freedom in the F-test, which makes sense because we have 4 levels of our treatment (thus df = 4 - 1). You can do no such simple check for the denominator degrees of freedom, but it's a useful check nonetheless.
+
+To account for the repeated measures nature of the data as well as the fact that the experimental unit is the plot, not the tree, all we need is to specify the plot as the random effect. We will fit two models, one without and one with the interaction between `Time` and `treat`, and again use `Anova` (from the `car` package) to test for significant effects.
+
+Note that we specify `Time` as a numeric variable, which assumes that the relationship between `height` and `Time` is more or less linear, which according to Figure~\ref{fig:hfeifovertime} is a reasonable assumption. We return to this issue in Section~\ref{sec:timefactor}.
+
+```{r digits=4}
+# Effect of treatment on intercept only.
+lmeif1 <- lmer(height ~ treat + Time + (1|plotnr), data=hfeif)
+Anova(lmeif1)
+
+# Effect of treatment on intercept and slope (i.e. main effect + interaction)
+lmeif2 <- lmer(height ~ treat*Time + (1|plotnr), data=hfeif)
+Anova(lmeif2)
+
+# A likelihood ratio tests shows the interaction is highly significant
+anova(lmeif1, lmeif2)
+```
+
+> **Try this yourself**
+Repeat the likelihood-ratio test with the more accurate `KRmodcomp` function from the `pbkrtest` package. 
+
+
+Note that in the above, we have correctly used 3 numerator degrees of freedom to test for the effect of treatment on height. The individual `Anova` statements summarize the significance of the fixed effects in each model, whereas the `anova` of the two models uses a likelihood-ratio test on the two models. In this case, it effectively tests for significance of the interaction (because the only difference between the two models was the inclusion of the `treat` by `Time` interaction in `lmeif2`). The interaction is overwhelmingly significant.
+
+The final step is to try to understand this interaction, how large is the effect size, and which direction does it point? The time by treatment interaction is significant, but in which way? It is never sufficient in an analysis to state that an interaction was 'significant', we must make more sense of it. One simple approach is to use the `visreg` package to visualize the fit (see Fig.~\ref{fig:hfeifvisreg}).
+
+```{r hfeifvisreg, opts.label="smallsquare", fig.cap='Visualized effect of Time on height, by treatment for the HFE IxF dataset, fitted with a linear mixed-effects model.',  message=FALSE}
+library(visreg)
+visreg(lmeif2,"Time", by="treat", overlay=TRUE)
+```
+
+In this case it is abundantly clear that irrigated (I) and irrigated + fertilised (IL) have a steeper slope of height with Time (that is, they have a faster height growth), compared to control (C) and fertilised (F). If there was no significant interaction (or a small effect size), the lines would be parallel to each other.
+
+We can further look at the p-values for the individual effects (slopes and intercepts by treatment). Note that p-values in the `summary` statement are only computed if we have loaded the `lmerTest` package before fitting the model. Consider this example,
+
+```{r digits=4}
+# Loading this package first affects both summary and anova methods
+library(lmerTest)
+
+# ... we must refit the model after loading lmerTest
+lmeif2 <- lmer(height ~ treat*Time + (1|plotnr), data=hfeif)
+
+# Print just the coefficients table from the summary
+summary(lmeif2)$coefficients
+```
+
+> **Try this yourself**
+The `lmerTest` package also modifies the `anova` function, so that it calculates p-values for a fitted model with `lmer`. Compare `anova(lmeif2)` with `Anova(lmeif2)`, these will rarely be exactly the same as they use different methods to approximate the degrees of freedom of the random effects.
+
+
+Looking at the interaction terms (treat:Time),the summary table shows that `treatF:Time` is not significantly different from the first level (`treatC:Time`), that is, there is no difference between fertilized and control in terms of the interaction with Time. But both irrigated (I) and irrigated + fertilised (IF) are highly significant, again, this comparison is in relation to the first level of the factor (control, C).
+
+Although there is a significant main effect of treatment, none of the levels are actually different from the first (the control). This shows that the intercept itself is different from zero, but the treatments are not actually different in terms of the intercept. This makes sense, because seedlings were planted at time zero before any treatment was applied.
+
+
+### Repeated measures: is time numeric or factor?
+{#sec:timefactor}
+
+In both examples in this chapter where we used time as a predictor in our models, we treated time as a continuous (numeric) variable. This was appropriate in both cases because the relationship between the dependent variable (`masslost` or `height`) showed a nearly linear relationship with time, allowing us to estimate and interpret an intercept and a slope of the variable with time. In the example with the tree height measurements, the slope of `height` with time can actually be interpreted as the height growth rate.
+
+But there are many cases in which it would be more appropriate to use time as a factor variable. These include cases where the relationship is highly non-linear and cannot be transformed, or you only have two or three dates of measurements. The example below shows a simple example for the latter case. (see also Fig.~\ref{fig:hfeif2}).
+
+
+
+```{r hfeif2, fig.cap='Boxplots of height vs. treatment and time (days since start of experiment, shown in the panel label) for a subset of the HFE IF data.',opts.label="smallsquare"}
+# A repeated measures example with only two dates of measurement.
+# Though it is possible to have time as a continuous variable, it is much
+# more useful to code it as a factor.
+
+# We take a subset of hfeif.
+hfeif2 <- subset(hfeif, Date %in% as.Date(c("2010-09-01","2011-06-01")))
+
+# Convert Time to a factor
+hfeif2$Time_fac <- as.factor(hfeif2$Time)
+
+# As before, we can quickly use bwplot to inspect the data
+library(lattice)
+bwplot(height ~ treat | Time_fac, data=hfeif2)
+```
+
+> **Try this yourself**
+Repeat the above example, but using the entire dataset (rather than a subset of the data for two dates). Inspect the model with `Anova`, and also look at the `summary` statement.
+
+
+
+Let's fit the mixed-effects model on this small subset of the data to test whether a) treatment affects height, b) there is an effect of time on height, c) there is an interaction (i.e. height response to treatment depends on time). 
+
+```{r warning=FALSE, message=FALSE}
+# Fit the model
+lmeif4 <- lmer(height ~ treat*Time_fac + (1|plotnr), data=hfeif2)
+
+# Overall significance shows no interaction
+Anova(lmeif4, test="F")
+```
+
+> **Try this yourself**
+Use `visreg` to visualize the fit, and compare it to the box plots produced above.
+
+
+
+
+## Example: repeated measures in leaf photosynthesis
+{#sec:leafgaslmer}
+
+In this example we look at another case of repeated measurements, this time for measurements of leaf photosynthesis at the EucFACE. Measurements were repeated during four campaigns in 2013 (labelled simply as A-D), in all six rings at the EucFACE (three of which have an ambient CO$_2$ concentration, and three an elevated CO$_2$ concentration), on a few trees per ring. The random effects naturally follow from the experimental design, as measurements were performed on trees nested within rings. 
+
+In this example we are particulary interested in comparing the four dates with each other - we would like to know not only if leaf photosynthesis was enhanced by elevated CO$_2$, but also whether this enhancement differed between the campaigns.
+
+We start out with a simple barplot showing averages by campaign and treatment. The following code produces Fig.~\ref{fig:eucgasbar}. Note that the error bars cannot be used for judging differences between treatments, as these are simply calculated across all the individual data points. 
+
+```{r eucgasbar, fig.cap="Average net leaf photosynthesis (Photo) by Date and CO2 treatment for the \`eucgas` dataset.", opts.label="smallsquare",}
+eucgas <- read.csv("eucface_gasexchange.csv")
+
+library(sciplot)
+bargraph.CI(Date, Photo, CO2, data=eucgas, legend=TRUE,
+            ylab="Photo")
+```
+
+Next, we fit the mixed-effects model. We have just two fixed effects in the model: `Date` and `CO2`, and the random effects structure is tree within ring (`1|Ring/Tree`). We can test whether we need to include a Date x CO2 interaction by fitting two models and comparing them with a likelihood ratio test, as before.
+
+We also load the `lmerTest` package here because we would like to inspect the p-values for the individual coefficients printed in the `summary` statement, in what follows.
+
+```{r }
+library(lmerTest)
+
+eucgas_m0 <- lmer(Photo ~ Date + CO2 + (1|Ring/Tree), data=eucgas)
+eucgas_m1 <- lmer(Photo ~ Date * CO2 + (1|Ring/Tree), data=eucgas)
+
+# Compare the two models - this tests for the significance of Date:CO2
+library(pbkrtest)
+KRmodcomp(eucgas_m0, eucgas_m1)
+```
+
+The F-test shows that the interaction is marginally non-significant (p = 0.088). Make sure that you understand the difference between these two models: the interaction allows for a different CO2 response at different dates. The model fits are visualized in Fig.~\ref{fig:gasvisreg1}, produced by the following code.
+
+```{r gasvisreg1, fig.cap="A model for net leaf photosynthesis without (left) and with (right) an interaction between Date and CO2 treatment.", echo=-1, message=FALSE, warning=FALSE, opts.label="wide"}
+par(mfrow=c(1,2), mar=c(5,5,1,1))
+visreg(eucgas_m0, "Date", by="CO2", overlay=TRUE)
+visreg(eucgas_m1, "Date", by="CO2", overlay=TRUE)
+```
+
+*Note:* if you are using an older version of `visreg`, you will see some warnings printed that you can ignore.
+
+Comparing the two panels in Fig.~\ref{fig:gasvisreg1}, we are not quite yet convinced that the CO2 response was the same for all dates. For Date B, the response seems particularly small. Also, although the F-test above did not give us evidence for a significant interaction, the model with the interaction does have a lower AIC, suggesting it does improve the model somewhat:
+
+```{r }
+AIC(eucgas_m0, eucgas_m1)
+```
+
+Before we continue, it is a good idea as always to check the model diagnostics. The following code makes a plot (Fig.~\ref{fig:eucgasdiag}) of the residuals versus fitted, and a quantile-quantile plot of the residuals. These diagnostics look quite good, so we are happy to continue.
+
+```{r eucgasdiag, fig.cap="Diagnostic plots for the eucgas\\_m1 model.",  echo=-1, message=FALSE, warning=FALSE, opts.label="wide"}
+par(mfrow=c(1,2), mar=c(5,5,1,1))
+
+plot(eucgas_m1)
+
+library(car)
+qqPlot(residuals(eucgas_m1))
+```
+
+To address our question, we are interested to find out whether there was a significant CO2 response on each of the four dates. With the standard way that R codes the factor levels, this is not straightforward to address. Recall that each factor level is tested against the first level, as we can see in the coefficients printed as part of the `summary` table. Here is a subset of the output of `summary(eucgas\_m1)`: 
+
+```{r echo=FALSE}
+printfixef <- function(model){
+  x <- as.data.frame(summary(model)$coefficients)
+  x$Signif <- symnum(x[,5], corr = FALSE, na = FALSE, 
+                 cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
+                 symbols = c("***", "**", "*", ".", " "))
+  names(x)[ncol(x)] <- ""
+  x[,5] <- format.pval(x[,5])
+print(x)
+}
+```
+
+```{r echo=FALSE, digits=5}
+printfixef(eucgas_m1)
+```
+
+In this table, `(Intercept)` is the estimated `Photo` for the first Date (A), for the first level of CO2 (`Amb`). All other values are expressed relative to this value. Thus, `CO2Ele` tests the CO2 effect for the first Date. It shows that for Date A, `Photo` was 4.24 units higher in elevated compared to the ambient treatment. The next three parameters (`DateB:CO2Ele` and so on) are expressed relative to the first date, so that `DateB:CO2Ele` tests the difference in CO2 response between Date B and Date A.
+
+This table therefore does not address our question: was CO2 significant on each date? A straightforward way to compute the right tests is to refit the model without an intercept, so that the individual coefficients are not tested against the first level, but against zero.  
+
+```{r }
+# Refit the model, without an intercept ("-1"), and including CO2 only as
+# the interaction
+eucgas_m2 <- lmer(Photo ~ Date  + Date:CO2 -1 + (1|Ring/Tree), data=eucgas)
+
+# Note that this model is exactly the same as before - see the AIC for example
+AIC(eucgas_m1, eucgas_m2)
+```
+
+The new model expresses the coefficients very differently, as we can see from this extract 
+from `summary(eucgas\_m2)`:
+
+```{r echo=FALSE, digits=5}
+printfixef(eucgas_m2)
+```
+
+This time, the first four rows give the estimates for the four dates in the ambient CO2 treatment, together with the p-values of a test against zero (not very meaningful in this case). The next four rows give the actual CO2 response, that is, the difference between elevated and ambient CO2 for each of the four dates. Since we loaded the `lmerTest` package before fitting this model, the p-values are computed for each of these effects. The results show that, as we suspected, there was no significant CO2 effect on Date B (p = 0.49). 
+
+Finally we show another method to test individual coefficients against zero, using the `glht` function from the `multcomp` package. We have met this package before for performing Tukey tests on fitted models (in the introductory, week-long workshop). 
+
+To test coefficients against zero, we can do:
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(multcomp)
+```
+
+```{r }
+library(multcomp)
+summary(glht(eucgas_m2, linfct=c("DateA:CO2Ele = 0",
+                                 "DateB:CO2Ele = 0",
+                                 "DateC:CO2Ele = 0",
+                                 "DateD:CO2Ele = 0")))
+```
+
+Note that the p-values will be different from the ones computed above because a) `lmerTest` approximates the degrees of freedom and uses a t-test, whereas `glht` relies on a normal approximation (the two will be closer together for larger sample sizes), and b) `glht` adjusts the p-values for multiple comparisons. This time, though, the conclusions are no different using either method.
+
+Using the `glht` function, we can also test various parameter combinations quite easily. This final example shows how we can test whether the CO2 response was different on Date C from Date D:
+
+```{r }
+summary(glht(eucgas_m2, linfct="DateC:CO2Ele - DateD:CO2Ele = 0"))
+```
+
+From this test we can conclude that there is no evidence to suggest that CO2 increased photosynthesis more on Date C compared to Date D.
+
+
+
+
+## Example: analysis of count data with the groundcover data (glmer)
+{#sec:groundcoverlmer}
+
+The EucFACE ground cover dataset (see Section~\ref{sec:groundcover}) contains estimates of plant and litter cover within the rings of the EucFACE experiment, evaluating forest ecosystem responses to elevated CO$_2$, on two dates. There are six rings (`Ring`), three for each treatment (`Trt`; ambient and elevated CO$_2$). Within each ring are four plots (`Plot`) and within each plot are four 1m by 1m subplots (`Sub`). Here we will test for an interaction between `Trt` and `Date` on ground cover measurements of `Forbes` (these are count data). 
+
+The following code produces Fig.~\ref{fig:forb1}, showing a plot of the raw groundcover data. 
+
+```{r forb1, fig.cap='Counts of forbs within plant communities exposed to ambient or elevated carbon dioxide concentrations at two dates. Points represent estimates within subplots, subplots common to the same plot within each ring have a common colour.', opts.label="mediumrect"}
+
+# read data and convert random effects to factors
+eucface <- read.csv("eucfaceGC.csv")
+eucface$Ring <- as.factor(paste(eucface$Ring, eucface$Trt, sep='-'))
+eucface$Plot <- as.factor(eucface$Plot)
+eucface$Sub <- as.factor(eucface$Sub)
+
+# load packages
+library(lme4)
+library(lattice)
+
+# A quick plot to visualize ground cover by Date and Ring.
+# Colours represent 'Plot'.
+xyplot(Forbes~Date|Ring,groups=Plot,data=eucface,pch=16,jitter.x=T)
+
+```
+
+
+Since the data are count data, it is usually appropriate to use the Poisson distribution. The following code fits a `glmer` with the `poisson` error family, and produces diagnostic plots in Fig.~\ref{fig:glmerdiag3}.
+
+To usual way to decide on the appropriate family is to inspect the diagnostic plots, especially a plot of residuals versus the fitted values. In the following, we fit the model three times, first with normal errors (using `lmer`), then with Poisson errors (the distribution we expect to be appropriate), and a Poisson distribution with square-root link function.
+
+
+The following code produces three diagnostic plots (Fig.~\ref{fig:glmerdiag3}).
+```{r glmerdiag3, fig.cap='Diagnostic plots for three model fits of the EucFACE groundcover data.', opts.label="wide",tidy=FALSE}
+forb.norm <- lmer(Forbes~Date*Trt+(1|Ring/Plot/Sub), 
+                   data=eucface)
+
+forb.pois <- glmer(Forbes~Date*Trt+(1|Ring/Plot/Sub), 
+                   family=poisson, data=eucface)
+
+forb.pois.sqrt <- glmer(Forbes~Date*Trt+(1|Ring/Plot/Sub), 
+                        family=poisson('sqrt'), data=eucface)
+
+# The standard plot() on an (g)lmer object makes a 'grid-based'
+# plot. To arrange plots side-by-side we have to use gridExtra, like so.
+library(gridExtra)
+p1 <- plot(forb.norm, main="Normal")
+p2 <- plot(forb.pois, main="Poisson (log-link)")
+p3 <- plot(forb.pois.sqrt, main="Poisson (sqrt-link)")
+grid.arrange(p1,p2,p3,ncol=3)
+```
+
+Note that the syntax of `glmer` is identical to that of `lmer`, with the exception of the `family` argument.
+
+Inspecting Fig.~\ref{fig:glmerdiag3}, the residuals look better for the models fit with the Poisson family compared to the gaussian error (as assumed by `lmer`). The residuals improve a bit more when using the `sqrt` link function in the Poisson family.
+
+It is however difficult to assess the model goodness of fit with these plots. A more dependable approach is provided by the `DHARMa` package. The function `simulateResiduals` simulates a number of residuals by drawing randomly from the specified error distribution (e.g. binomial or normal distribution), and then plotting the distribution of these simulated residuals against the distribution of the actual residuals. If the error distribution was specified correctly, a quantile-quantile plot of the two distributions will show a straight line.
+
+To use this, try the following. This produces two plots, a QQ plot of the simulated vs. observed residuals, and residuals versus fitted with quantiles shown. The following example makes Fig.~\ref{fig:dharmpois}.
+
+```{r dharmpois, fig.cap="Model diagnostics with the DHARMa package for the groundcover data.", opts.label="wide", message=FALSE}
+library(DHARMa)
+r <- simulateResiduals(forb.pois.sqrt)
+plotSimulatedResiduals(r)
+```
+
+
+Note that the fit of the model may be improved further by using one of the other plant cover variables as a covariate or by incorporating other data from the site, but for the purpose of this chapter the fit is good enough.
+
+Something else to consider when it comes to poisson errors is that overdispersion can result in the underestimation of error terms for the model coefficients. Overdispersion occurs when you have a large number of zeros in the data and/or an important predictor is not accounted for. Testing hypotheses from models where overdispersion is evident is dangerous as the probability of Type I error is increased. A good model fit should result in the ratio of residual deviance to degrees of freedom being close to one. 
+
+```{r }
+# Calculate the residual deviance
+sum(resid(forb.pois.sqrt, type='pearson')^2)
+
+# The degrees of freedom for the residual,
+df.residual(forb.pois.sqrt)
+```
+
+Overdispersion does not appear to be a problem here as the ratio (171.4 / 185) is less than one. We can also perform a statistical test using functions in the `DHARMa` package to confirm. For example:
+
+```{r }
+# Evaluate whether overdispersion evident
+testOverdispersionParametric(forb.pois.sqrt)
+
+```
+
+The p-value is very high so we conclude that overdispersion is not an issue here. If overdispersion was a problem, we could use a quasipoisson family as for GLMs (but unfortunately `glmer` does not support that family). It has also been suggested that including individual-level random effects in the model could alleviate the problem of overdispersion. We try this in the following example.
+
+```{r }
+# Create a variable for individual-level random effects
+eucface$Ind <- as.factor(1:nrow(eucface))
+
+# fit the model and look at the model summary
+forb.pois.ind <- glmer(Forbes~Date*Trt+(1|Ring/Plot/Sub/Ind), 
+                       family=poisson(sqrt), data=eucface)
+
+# The estimated variances of the random effects
+VarCorr(forb.pois.ind)
+
+# Inspect the entire summary yourself:
+# summary(forb.pois.ind)
+```
+
+The random effects block indicates that a small amount of variance is accounted for by the individual level random effects. This is expected as we did not observe overdispersion.
+
+We can use `Anova` function from the `car` package to calculate significance associated with the main effects and interaction. Note that is is only one way of many to calculate p-values, as we discussed above linear mixed models.
+
+```{r }
+library(car)
+Anova(forb.pois.sqrt)
+```
+
+There appears to be a significant interaction between `Date` and `Trt`. Again, when an interaction is significant we must dig deeper to understand the source of the interaction. Looking at Fig.~\ref{fig:forb4}, it appears that :
+\begin{enumerate}
+\item Forbs decreased in frequency between the two dates in the control but not in the elevated CO$_2$ treatment
+\item Forb abundance was lower in the control than in the elevated CO$_2$ treatment on the second date, but not the first date.
+\end{enumerate}
+
+```{r forb4, fig.cap='Model predictions, looking at treatment effects by date (left) and date effects by treatment (right).', opts.label="wide", warning=FALSE, echo=-1}
+par(mfrow=c(1,2))
+
+# plot model preditions and data
+visreg(forb.pois.sqrt, 'Date', 'Trt', overlay=TRUE)
+visreg(forb.pois.sqrt, 'Trt', 'Date', overlay=TRUE)
+
+```
+
+% We can evaluate each of these hypotheses through model selection after combining treatment levels as for section ~\ref{sec:blocked}.
+% 
+% <<>>=
+% # create a three level factor that combines both dates in the 'elev' treatment
+% eucface$trtcomb.elev <- with(eucface, paste(Trt, Date, sep='-'))
+% eucface$trtcomb.elev[eucface$Trt == 'elev'] <- 'elev'
+% eucface$trtcomb.elev <- as.factor(eucface$trtcomb.elev)
+% levels(eucface$trtcomb.elev)
+% 
+% # create a three level factor that combines both treatments for the '11/06/13' sampling
+% eucface$trtcomb.date <- with(eucface, paste(Trt, Date, sep='-'))
+% eucface$trtcomb.date[eucface$Date == '11/06/13'] <- '11/06/13'
+% eucface$trtcomb.date <- as.factor(eucface$trtcomb.date)
+% levels(eucface$trtcomb.date)
+% 
+% # fit model with three level combination factors
+% m2.elev <- glmer(Forbes ~ trtcomb.elev + (1|Ring/Plot/Sub), 
+%                  family=poisson('sqrt'), data=eucface)
+% 
+% m2.date <- glmer(Forbes ~ trtcomb.date + (1|Ring/Plot/Sub), 
+%                  family=poisson('sqrt'), data=eucface)
+% 
+% # fit models with only one main effect (Date or Trt)
+% m3.Trt <- glmer(Forbes ~ Date + (1|Ring/Plot/Sub), 
+%                 family=poisson(sqrt), data=eucface)
+% 
+% m3.Date <- glmer(Forbes ~ Trt + (1|Ring/Plot/Sub), 
+%                  family=poisson(sqrt), data=eucface)
+% 
+% # compare models (model with the lowest AIC is the most efficient at predicting the response)
+% AIC(forb.pois.sqrt, m2.elev, m2.date, m3.Trt, m3.Date)
+% 
+% @
+% 
+% The three-level model in which date effects are estimated in the control treatment but not the elevated treatment (`m2.elev`) is not an improvement over the fully factorial model (`forb.pois.sqrt`), so we do not consider it further. The three-level model in which treatment effects are estimated on the second date but not the first date (`m2.date`) has the lowest AIC score in comparison to the fully factorial model (`forb.pois.ind`) and to the two-level models that do not estimate an effect of treatment (`m3.Trt`) or date (`m3.Date`), so is the model that we select as the one that best predicts forb dynamics. 
+
+We can evaluate each of these hypotheses using the approach described in section ~\ref{sec:leafgaslmer}, with multiple comparisons based on specified contrasts. First we refit the model without an intercept term so that we can interpret the model coefficients in a more straightforward way. We are also going to generate a new factor representing `Date` for the new model because mathematical symbols in character strings result in errors when passed to the `linfct` argument. 
+
+```{r }
+# new factor for specifying dates without mathematical symbols
+eucface$Date.fac <- factor(with(eucface, paste('date', as.numeric(Date), sep='')))
+
+# fit intercept-free model
+forb.pois.int <- glmer(Forbes~Date.fac*Trt-1+(1|Ring/Plot/Sub), 
+                        family=poisson('sqrt'), data=eucface)
+```
+
+```{r echo=FALSE}
+printfixef1 <- function(model){
+  x <- as.data.frame(summary(model)$coefficients)
+  x$Signif <- symnum(x[,4], corr = FALSE, na = FALSE, 
+                 cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
+                 symbols = c("***", "**", "*", ".", " "))
+  names(x)[ncol(x)] <- ""
+  x[,4] <- format.pval(x[,4])
+print(x)
+}
+```
+
+```{r echo=FALSE, digits=5}
+printfixef1(forb.pois.int)
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(multcomp)
+```
+
+```{r }
+library(multcomp)
+
+# Test for an elevated CO2 effect on each of the two dates
+summary(glht(forb.pois.int, linfct=c("Trtelev - Date.facdate1 = 0",
+                                     "Date.facdate2:Trtelev - Date.facdate2 = 0")))
+
+# Test for a change through time within each CO2 treatment
+summary(glht(forb.pois.int, linfct=c("Date.facdate2 - Date.facdate1 = 0",
+                                     "Date.facdate2:Trtelev - Trtelev = 0")))
+```
+
+The only significant contrast is between the two dates within the ambient CO$_2$ treatment, which supports hypothesis 1 above (forbs decreased in frequency between the two dates in the control but not in the elevated CO$_2$ treatment).
+
+
+## Example: logistic regression with the ground cover data (glmer)
+
+Something that wasn't mentioned regarding this EucFACE ground cover dataset is that vegetation was assessed at a maximum of 16 points within each subplot and, therefore, the maximum number of observations per plot is constrained. This does not affect our analysis of forb abundances because these are generally low (less than ten in almost all plots) and so interpreting these as count data is appropriate. This is not the case for other response variables. As an example, let's look at grass cover in Fig.~\ref{fig:grass1}. 
+
+```{r grass1, fig.cap='Grass cover within plant communities exposed to ambient or elevated carbon dioxide concentrations at two dates. Cover was assessed based on presence at each of sixteen locations within a subplot. Points represent estimates within subplots, subplots common to the same plot within each ring have a common colour.', opts.label="mediumrect"}
+
+# A quick plot to visualize ground cover by Date and Ring.
+# Colours represent 'Plot'.
+xyplot(Grass~Date|Ring,groups=Plot,data=eucface,pch=16,jitter.x=T)
+```
+
+The data are clearly bounded at both the lower and upper range. We can treat these as binomial distributed, with the presence or absence of grass assessed at each of the sixteen points within each subplot. To do this, we use `cbind` to create a two-column response matrix indicating the number of presences and absences within each subplot, as we did for logistic regression in Section~\ref{sec:logistic}. We also specify the random effects as we did for the analysis of forb abundance above.
+
+```{r }
+# fit model with binomial error distribution
+grass.binom <- glmer(cbind(Grass, 16-Grass)~Date*Trt+(1|Ring/Plot/Sub), 
+                     family=binomial, data=eucface)
+
+# test significance of main effects and interaction
+Anova(grass.binom)
+```
+
+The results suggest a highly significant effect of `date` and a signficant `date` by `treatment` interaction. The model predictions are shown in Fig.~\ref{fig:grass2}. A similar approach could be used to tease apart the source of the interaction as was used for forb abundances.
+
+```{r grass2, fig.cap='Model predictions, looking at treatment effects by date.', opts.label="smallsquare", warning=FALSE}
+
+# plot model preditions and data
+visreg(grass.binom, 'Date', 'Trt', overlay=TRUE)
+```
+
+
+## Example: logistic regression with seed germination data (glmer) {#seedgermlmer}
+
+In this example we will take another look at logistic regression when we have random effects, using a generalized linear mixed effects model. We have to related datasets on germination success of seeds. Seeds of four Tea Tree (*Melaleuca* sp.) species were collected at 9 sites, and subjected to either a 'fire cue' treatment (the `seedfire` dataset), or a dehydration treatment (`seedwater` data). Multiple cabinets were used for the experiment in the `seedfire` data, but not for the `seedwater` data. Each replicate contains ca. 20 seeds (given by the `n` variable), for which the germinated seeds were counted after some time. We thus have tabulated data, which we can use in a generalized linear model with a simple trick (we encountered this already in Section~\ref{sec:tabuldataglm}).
+
+First we read the data, and make a simple plot of germination success (number of germinated seeds divided by sample size) for the `seedwater` data, producing Fig.~\ref{fig:seedwaterraw}.
+
+```{r seedwaterraw, fig.cap='Germination success by species and as a function of water potential for the seedwater data. ', opts.label="mediumrect", warning=FALSE}
+seedfire <- read.csv("germination_fire.csv")
+
+# Make sure temperature treatment is a factor
+seedfire$temp <- as.factor(seedfire$temp)
+
+seedwater <- read.csv("germination_water.csv")
+
+palette(terrain.colors(4))
+with(seedwater, plot(jitter(water.potential), germ/n, pch=21, bg=species))
+legend("topleft", levels(seedwater$species), pch=21, pt.bg=palette(), cex=0.8)
+```
+
+We will first work with the `seedfire` dataset to test for temperature effects, and whether the fire cue treatment had any effect on germination success. We choose to treat the `site` variable as a random effect, since we are at this point not interested in specific site-to-site comparisons, but we do wish to account for the source of variation. It is also possible to treat `site` as a fixed effect, demonstrating that a variable can be either fixed or random depending on the question.
+
+As mentioned above, we use a trick to allow the use of tabulated data in the `glmer` specification, using `cbind(germ, n - germ)`, it represents a matrix with number of 'successes' and 'failures' tabulated in the two columns. We here treat the temperature treatment (`temp`) as a factor since the response is very non-linear, as we will see.
+
+```{r }
+# A simple first fit with species and temperature
+firefit1 <- glmer(cbind(germ, n-germ) ~ species + temp + 
+                  (1|site), data=seedfire, family=binomial)
+Anova(firefit1)
+```
+
+Clearly both `species` and `temp` are highly significant. Next we test whether the interaction between `species` and `temp` is significant, as well as the `fire` treatment. We prefer to test additional variables in steps, as follows.
+
+```{r echo=FALSE}
+set.seed(101)
+```
+
+
+```{r warning=FALSE}
+# Fire cue is not significant
+firefit2 <-  glmer(cbind(germ, n-germ) ~ species + temp + fire.cues + 
+                  (1|site), data=seedfire, family=binomial)
+
+# fire.cues is not significant
+anova(firefit1, firefit2)
+
+# Include the interaction between species and temperature.
+firefit3 <-  glmer(cbind(germ, n-germ) ~ species * temp + 
+                  (1|site), data=seedfire, family=binomial)
+
+# The interaction is very significant (also note large decrease in AIC)
+anova(firefit1, firefit3)
+```
+
+> **Try this yourself**
+
+
+*Note:* When fitting the `firefit3` model, you will get a warning that says \textbf{Model failed to converge}. This is a fairly common problem when fitting `glmer` models, and it is generally not possible to say whether it is a serious problem or not. Read the help page `?convergence` for more information. In this case (and many others), using a different optimizer fixes the problem (but in this case all coefficients, random effects, and F values did not change). Try the following :
+\begin{verbatim}
+firefit3 <-  glmer(cbind(germ, n-germ) ~ species * temp + 
+                     (1|site), data=seedfire, family=binomial,
+                   control = glmerControl(optimizer = "bobyqa"))
+\end{verbatim}
+
+
+
+We can now conclude that there is ample evidence that the different species respond very differently to temperature, but that there is no evidence for the fire cue to have any effect on germination success.
+
+Finally we visualize the effects estimated with the `visreg` package. When visualizing a fitted `glmer` model, we have to specify `scale="response"` to convert the link function back to the original scale. The following code makes Fig.~\ref{fig:seedfirevis}. Note the various settings to simplify the plot, and the use of `line.par` to change the colour of the lines.
+
+```{r seedfirevis, fig.cap="The firefit3 model visualized.", opts.label="smallsquare", warning=FALSE}
+visreg(firefit3, "temp", by="species", overlay=TRUE, 
+       partial=FALSE,scale="response",
+       ylab="P(Germination)", 
+       line.par=list(col=terrain.colors(4)), 
+       legend=FALSE, rug=FALSE)
+```
+
+Next, we will use the `seedwater` dataset to test for effects of dehydration on germination success. The degree of dehydration is measured as the water potential, where more negative values indicate drier seed. The model fitted will be similar as for the seedfire data, except our main predictor (in addition to `species`) is a numeric variable, not a factor.
+
+```{r }
+fitwater1 <- glmer(cbind(germ, n-germ) ~ species + water.potential + 
+                     (1|site), data=seedwater, family=binomial)
+fitwater2 <- glmer(cbind(germ, n-germ) ~ species * water.potential + 
+                     (1|site), data=seedwater, family=binomial)
+
+anova(fitwater1, fitwater2)
+```
+
+
+The following code makes Fig.~\ref{fig:seedvis2}, and shows a simple way to include the raw data alongside the fitted model. Note that the model does not fit equally well for all species - the response is steeper than expected for at least two of the species. This suggests some transformation of water potential would be appropriate, but we have not included further analyses here.
+
+```{r seedvis2, fig.cap="The fitwater2 model visualized, with the raw data superimposed", opts.label="smallsquare"}
+visreg(fitwater2, "water.potential", by="species", 
+       overlay=TRUE, rug=FALSE, legend=FALSE,
+       line.par=list(col=terrain.colors(4)),
+       scale="response", ylab="P(Germination)")
+with(seedwater, points(jitter(water.potential), germ/n, pch=19, col=species))
+```
+
+

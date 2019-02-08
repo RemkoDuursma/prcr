@@ -8,31 +8,26 @@ In the previous chapter, we looked in detail at logistic regression models. Thes
 
 After we know how to construct a classifier, we will look at a few different popular classification algorithms, without going into much of the theory underlying them. Instead, we will treat the topic by example.
 
+**Packages used in this chapter**
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+suppressPackageStartupMessages(library(caret))
+suppressPackageStartupMessages(library(rpart))
+suppressPackageStartupMessages(library(ranger))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(ggthemes))
+```
+
+- `caret`
+- `rpart`
+- `ranger`
+
+
 
 ## From probabilities to classification
 
 threshold
 confusion matrix
-
-
-
-```{r eval=FALSE}
-# ROC curve with two confusion matrices plotted,
-# each for a different threshold
-library(plotrix)
-
-testdf <- data.frame(Before = c(10, 7, 5, 9), During = c(8, 6, 2, 5),
-                     After = c(5, 3, 4, 3))
-rownames(testdf) <- c("Red", "Green", "Blue", "Lightblue")
-barp(testdf, main = "Test addtable2plot", ylab = "Value",
-     names.arg = colnames(testdf), col = 2:5)
-# show most of the options including the christmas tree colors
-abg <- matrix(c(2, 3, 5, 6, 7, 8), nrow=4, ncol=3)
-addtable2plot(2, 8, testdf, bty = "o", display.rownames = TRUE, hlines = TRUE,
-              vlines = TRUE, title = "The table", bg = abg)
-
-```
-
 
 
 
@@ -69,9 +64,17 @@ caret::confusionMatrix(predict(r1_titanic, type="class"),
 
 
 
+```{r eval=FALSE}
+# Make ROC figure with two confusion matrices pointed out
+# plot table on top of plot with plotrix::addtable2plot
+```
+
+
+
 
 ```{r eval=FALSE}
 library(dplyr)
+data(cereals)
 cereals <- read.csv("Cereals.csv") %>%
   filter(Manufacturer != "A") %>%
   droplevels

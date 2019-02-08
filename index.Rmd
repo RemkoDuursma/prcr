@@ -62,7 +62,6 @@ We stress that it is absolutely vital to a successful data analysis to visualize
 library(knitr)
 knit_theme$set("earendel")
 opts_chunk$set(background="grey94")
-opts_knit$set(root.dir="data")
 
 # Avoid long output
 hook_output = knit_hooks$get("output")

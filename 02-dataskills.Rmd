@@ -1674,7 +1674,9 @@ The following code produces Fig. \@ref(fig:coweetabar).
 
 # Here we read the data, add a reordered factor variable,
 # and continue with making the summary table used in the plot.
-coweeta_table <- read.csv("coweeta.csv") %>%
+data(coweeta)
+
+coweeta_table <- coweeta %>%
   mutate(species = reorder(species, height, mean, na.rm=TRUE)) %>%
   group_by(species) %>%
   dplyr::summarize(height_mean = mean(height, na.rm=TRUE),
@@ -1692,7 +1694,6 @@ The above example uses the more modern approach with `ggplot2`  and `dplyr`, but
 
 ```{r results='hide', fig.keep='none'}
 library(doBy)
-coweeta <- read.csv("coweeta.csv")
 coweeta$species <- with(coweeta, reorder(species, height, mean, na.rm=TRUE))
 coweeta_agg <- summaryBy(height ~ species, data=coweeta, FUN=c(mean,sd))
 
@@ -1806,44 +1807,6 @@ merge(data1, data2, by=c("unit","Time"), all=TRUE)
 ```
 
 
-
-### Merging multiple datasets {#multmerge}
-
-
-Consider the cereal dataset (Section sec:cerealdata}), which gives measurements of all sorts of contents of cereals. Suppose the measurements for 'protein', 'vitamins' and 'sugars' were all produced by different labs, and each lab sends you a separate dataset. To make things worse, some measurements for sugars and vitamins are missing, because samples were lost in those labs. 
-
-How to put things together?
-
-```{r}
-# Read the three datasets given to you from the three different labs:
-cereal1 <- read.csv("cereal1.csv")
-cereal2 <- read.csv("cereal2.csv")
-cereal3 <- read.csv("cereal3.csv")
-
-# Look at the datasets:
-cereal1
-cereal2
-cereal3
-
-# Note that the number of rows is different between the datasets, 
-# and even the index name ('Cereal.name') differs between the datasets.
-
-# To merge them all together, use merge() twice, like this.
-cerealdata <- merge(cereal1, cereal2, 
-                    by.x="Cereal.name", 
-                    by.y="cerealbrand", all.x=TRUE)
-# NOTE: all.x=TRUE specifies to keep all rows in cereal1 that do not exist in cereal2.
-
-# Then merge again:
-cerealdata <- merge(cerealdata, cereal3, 
-                    by.x="Cereal.name", 
-                    by.y="cerealname", all.x=TRUE)
-
-# And double check the final result
-cerealdata
-# Note that missing values (NA) have been inserted where some data was not available.
-```
-
 ### Using join from `dplyr`
 
 We showed how to use the `merge` function above, which is provided by base R. For larger datasets, it is advisable to use the `join*` functions from `dplyr`.
@@ -1863,6 +1826,32 @@ Instead of specifying which rows to keep with arguments `all.x`, `all`, etc., `d
 +------------------------------------+-------------------------------+
 
 One other function is provided that has no simple equivalent in base R, `anti_join`, which can be used to find all observations that have *no match* between the two datasets. This can be handy for error-checking.
+
+Consider the cereal dataset, which gives measurements of all sorts of contents of cereals. Suppose the measurements for 'protein', 'vitamins' and 'sugars' were all produced by different laboratories, and each lab sent you a separate dataset. To make things worse, some measurements for sugars and vitamins are missing, because samples were lost in those labs. 
+
+```{r}
+# Read the three datasets given to you from the three different labs:
+data(cereal1)
+data(cereal2)
+data(cereal3)
+
+# As always, look at the first few rows of each dataset.
+head(cereal1, 3)
+head(cereal2, 3)
+head(cereal3, 3)
+
+# The name of the variable that ties the datasets together, 
+# the 'cereal name' differs between the datasets, as do the number of rows.
+# We can use merge() three times, but the data are easiest to merge with dplyr:
+library(dplyr)
+
+cereal_combined <- full_join(cereal1, cereal2, by=c("Cereal.name" = "cerealbrand")) %>%
+                   full_join(cereal3, by=c("Cereal.name" = "cerealname"))
+
+cereal_combined
+
+# Note that missing values (NA) have been inserted where some data were not available.
+```
 
 
 ### Row-binding dataframes {#rbind}
