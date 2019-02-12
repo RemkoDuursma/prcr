@@ -281,7 +281,7 @@ names(allomsp)
 Run the code in the above example, and confirm that `allomsp[[2]]` is identical to taking a subset of `allom` of the second species in the dataset (where 'second' refers to the second level of the factor variable `species`, which you can find out with `levels`).
 
 
-Let's look at an example using the `hydro` data. The data contains water levels of a hydrodam in Tasmania, from 2005 to 2011 (see Section~\ref{sec:hydrodata}).
+Let's look at an example using the `hydro` data. The data contains water levels of a hydrodam in Tasmania, from 2005 to 2011.
 
 ```{r hydrosplit, cache=FALSE}
 # Read hydro data, and convert Date to a proper date class.

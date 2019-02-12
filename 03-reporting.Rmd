@@ -1,9 +1,17 @@
 # Visualizing data and making reports
 
+
+```{r echo=FALSE, message=FALSE}
+suppressPackageStartupMessages(library(lgrdata))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(ggthemes))
+suppressPackageStartupMessages(library(scales))
+```
+
 ## Introduction
 
 NOT a manual of either, and less detail on both since resources elsewhere are perfect.
-But see appendix for base plotting, we like our manual.
+But see appendix for base plotting.
 
 We do have a list of DO's and DONT's, one for visualizing data, and one for making reports with rmarkdown.
 
@@ -14,9 +22,9 @@ We also have a list of resources.
 
 - yes because flexible, **reproducible code**
 - yes because even if you don't end up using R for publication, report, or fancy presentation - you still need visualization skills when doing analysis
-- R graphs were not originally designed for interactivity, but there are many recent inventions (shiny, plotly)
+- R graphs were not originally designed for interactivity, but there are many recent inventions (shiny, ggiraph) and ports to Javascript-based graphing tools (plotly, highchartr, d3) 
 - R not great at 3D graphs, but as a data analyst you probably should not use many of those (but see rgl!)
-- R is used as an interface to many, many more fancier graphic packages (plotly, highchartr, d3) 
+- No when you prefer to modify your figure by hand, dragging items, clicking on things to change color etc. Perhaps you have your favorite tool to make figures already.
 
 
 ## Visualizing data {#visualizing}
@@ -31,24 +39,67 @@ We also have a list of resources.
 
 ### base or ggplot2? Why not both?
 
+R comes with two graphics systems, that cannot be used together. The `base` graphics system has been part of R from the start, and continues to be used today. The second system is the `grid` system, and the most popular package that uses this system is `ggplot2`, a package in development for over 10 years that now sees very wide application, and numerous add-ons and extensions. 
 
-- base vs. ggplot2.
-- http://varianceexplained.org/r/why-I-use-ggplot2/
+Personally, I have used base graphics since 2001, and resisted switching to `ggplot2` for a very long time. I now use `ggplot2` for visualizing data, but continue to use base graphics as well, for a few reasons - especially because many add-on packaged include some quick plotting function that returns a base plot.
 
+You can read around the web for many opinionated accounts on why we should use `ggplot2` or the other ([for example here](http://varianceexplained.org/r/why-I-use-ggplot2/)). 
 
 - use ggplot2 if you are a newcomer, easiest to make more complex graphs, reasons include:
   - much easier to make multi-panel, multi-line, multi-everything figures than with base graphics. Very notable examples include multi-panel figures with grouped bar plots, adding regression and smoothed lines *with* confidence bands to plots, overlapping area plots,  histograms and ribbons. 
   - easier to achieve consistent figure formatting with the use of themes
   - lots of graph types are easier to plot than with base (where you often have to find additional packages)
-- but you can learn a little base, just enough to adjust plots arising from built-in packages (this is common)
-- sometimes base is easier, especially when you are experimenting. To plot a mathematical function, we can do `curve(x^3, from=-1, to=1)` - not so easy in `ggplot2`. Also `ggplot2` has no support for 3D graphs (but we don't use those much anyway), base has quite a lot.
+- Many packages include some built-in plotting function, usually in base graphics. It is usually much easier to use those functions directly than to implement the figure from scratch in `ggplot2`. Examples include `car::residualPlot`, `visreg::visreg`, and many others.
+- Sometimes base is easier, especially when you are experimenting. To plot a mathematical function, we can do `curve(x^3, from=-1, to=1)` - not so easy in `ggplot2`. Also `ggplot2` has no support for 3D graphs (but we don't use those much anyway), base has quite a lot.
+- Use base when you are making a simple plot, and wish to avoid *dependencies*. Keeping dependencies to a minimum will make it more likely your code works in the future, and on someone else's machine.
 
-For the reasons mentioned above, in this book we mostly use ggplot2, except when base graphics are a lot easier (use less code).
+For the reasons mentioned above, in this book we mostly use ggplot2, except when base graphics are a lot easier (that is, use less code).
 
 
 ### base graphics
 
-one example
+In base graphics, we can choose from the following main plotting functions (this list is not complete, especially if you consider add-on packages):
+
++------------------+------------------------------------------------+
+| Function         | Key functions                                   |
++==================+================================================+
+| `plot`           |       Scatter plots, line plots, various others.        |
++------------------+------------------------------------------------+
+| `barplot`        |    Bar plot (including stacked and grouped bar plots)                  |
++------------------+------------------------------------------------+
+| `hist`           |      Histograms and (relative) frequency diagrams                |
++------------------+------------------------------------------------+
+| `curve`          |       Curves of mathematical expressions               |
++------------------+------------------------------------------------+
+| `pie`            |       Pie charts (for less scientific uses)               |
++------------------+------------------------------------------------+
+| `boxplot`        |    Box-and-whisker plots                  |
++------------------+------------------------------------------------+
+| `symbols`        |   Like scatter plot, but symbols are sized by another variable                   |
++------------------+------------------------------------------------+
+
+Here it is useful to know that `plot` is a so-called *generic function*, which has *methods* for many special objects in R. For example, if we fit a linear regression:
+
+```{r eval=FALSE}
+lmfit <- lm(disp ~ hp, data = mtcars)
+```
+
+We can use the very brief command `plot(lmfit)` to produce four diagnostic plots. This works because a function called `plot.lm` is actually used when you send an `lm` object to the `plot` function (thus we can look at useful options in this case in the help page `?plot.lm`).
+
+Similarly, `plot` will make different plots based on what type of data you use. In Fig. \@ref(fig:plotdefault) four examples are shown; each of these is the result from a call to `plot()`, but with different data types.
+
+```{r plotdefault, fig.width=3.5, fig.height=3.5, echo=FALSE, fig.cap="Four possible outcomes of a basic call to plot(), depending on whether the Y and X variables are numeric or factor variables. The term 'numeric dataframe' means a dataframe where all columns are numeric.", fig.show='hold'}
+data(allometry)
+data(titanic)
+
+par(cex=0.9, cex.lab=0.9, cex.axis=0.8, cex.main=0.9, font.main=3)
+plot(height ~ diameter, data=allometry, main="numeric vs. numeric")
+plot(diameter ~ species, data=allometry, main="numeric vs. factor")
+plot(allometry[,2:4], main="numeric dataframe")
+plot(as.factor(Survived) ~ PClass, data=titanic, ylab="Survived", main="factor vs. factor")
+```
+
+
 
 #### Resources
 
@@ -58,11 +109,107 @@ one example
 
 ### ggplot2 {#ggplot2}
 
-ggplot2
+The `ggplot2` package is an incredibly rich and powerful toolkit to construct plots. It is far beyond the scope of this book to provide a complete overview of the package, but luckily lots of free online resources are available (see Section \@ref(ggplotresources)).
 
-one example
+We will show the functionality of `ggplot2` by providing two examples, one scatterplot, and one barplot. Since we use `ggplot2` throughout this book, you can find many more examples. The following three examples were chosen because they highlight a few key options.
 
-nice theme? https://rpubs.com/Koundy/71792
+
+#### Formatting data for `ggplot2`
+
+To use `ggplot2`, our data have to always be in *long format*, where each row represents an observation, and each column in the dataframe represents a type of measurement. Most of the datasets included in the `lgrdata` package are already in long format. One exception is the `dutchelection` dataset:
+
+```{r}
+data(dutchelection)
+head(dutchelection, 3)
+```
+
+We cannot really use `ggplot2` when the data are formatted like this. Instead we want to have a dataframe with columns 'Date', 'party', and 'vote_percent', so that we can label the graph by political party. As we will see in Section \@ref(), quite magically we can use `melt` from `reshape2` :
+
+```{r message=FALSE}
+library(reshape2)
+dutchlong <- melt(dutchelection, variable.name = "party", value.name="vote_percent")
+head(dutchlong, 3)
+```
+
+
+
+#### Scatterplot example
+
+
+
+
+#### Area plot example
+
+
+```{r}
+data(oil)
+ggplot(oil, aes(x=year, y=production/1000, fill=country)) + 
+  geom_area() + 
+  labs(x = "", y = "Crude Oil Production (MOE)") +
+  scale_fill_economist() + 
+  theme_tufte()
+```
+
+
+
+#### Barplot example
+
+More complex barplots is one area where `ggplot2` is much, much easier to use than base graphics. If you want to represent count data as bars - a common application of barplots - `ggplot2` does the counting for you automatically, saving a step where such tables of counts have to be constructed (as in Section \@ref()). 
+
+If instead you want to make a barplot of data *as they are* (that is, don't make tables first), use the setting `geom_bar(stat = "identity")`, instead of `stat = "count"`, as in the example below.
+
+In the following example we use the `titanic` data, available in the `lgrdata` package. 
+
+```{r}
+library(lgrdata)
+data(titanic)
+
+# Important to convert factor variables to factors!
+# 'Survived' is coded as 0,1 - but this is really a factor.
+titanic$Survived <- as.factor(titanic$Survived)
+
+library(ggplot2)
+library(ggthemes)
+```
+
+The following code is the minimal code needed to make a barplot with two panels (one for female passengers, one for male), counting passengers that have survived or died, for each of the three passenger classes.
+
+```{r eval = FALSE}
+# Result not shown - see next example
+ggplot(titanic, aes(x=PClass, fill=Survived)) +
+  geom_bar(stat="count", position=position_dodge()) +
+  facet_wrap(~Sex)
+```
+
+You can run the code above yourself to see what is produced. It does not look great, so instead we re-format the legend, the colors, etc., and end up with Fig. \@ref(fig:titanicplot1). For both of these figures, *make sure that `Survived` is a factor variable*, otherwise the plot won't look right.
+
+```{r titanicplot1}
+ggplot(titanic, aes(x=PClass, fill=Survived)) +        # bars by passenger class,
+                                                       # split by 'Survived'  
+  scale_fill_manual(labels=c("Died", "Survived"),      # labels for legend
+                    values=c("red2","grey")) +         # colors for bars (and legend)
+  geom_bar(stat="count", position=position_dodge()) +  # count data, bars side by side
+  facet_wrap(~Sex) +                                   # panels by Sex
+  theme_tufte() +                                      # a very minimal theme
+  theme(legend.position = "right",                     # legend position (default)
+        legend.title=element_blank())                  # no legend title
+```
+
+
+Same figure but stacked bars, expressed as percent of total (Fig. \@ref(fig:titanicplot2)).
+
+
+```{r titanicplot2}
+ggplot(titanic, aes(x=PClass, fill=as.factor(Survived))) +
+  scale_fill_manual(labels=c("Died", "Survived"),      # labels for legend
+                    values=c("red2","grey")) +         # colors for bars (and legend)
+  geom_bar(stat="count", position=position_fill()) +   # count the data, stack the bars
+  scale_y_continuous(labels=scales::percent) +         # express y-axis as % 
+  facet_wrap(~Sex) +                                   # two panels for each sex
+  theme_tufte() +                                      # a very minimal theme
+  theme(legend.position = "right",                     # legend position (default)
+        legend.title=element_blank())                  # no legend title
+```
 
 
 The `ggplot2` package has many extensions, packages that offer additional options, themes, plotting layouts, etc. In this book, we only use a couple of add-on packages for reasons of brevity. These include:
@@ -72,7 +219,7 @@ The `ggplot2` package has many extensions, packages that offer additional option
 - `gridExtra` : to arrange multiple, separate plots, on one page 
 
 
-#### Resources
+#### Resources {#ggplotresources}
 
 - my favorite: http://www.cookbook-r.com/Graphs/, lots of small examples
 - also very practical gallery guide at http://www.sthda.com/english/wiki/ggplot2-essentials
