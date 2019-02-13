@@ -12,7 +12,9 @@ bookdown::render_book('index.Rmd', 'bookdown::pdf_book', new_session=TRUE, clean
 
 # Quick command to re-render some of the document.
 # Do this when you are adjusting the CSS, for example
-# bookdown::render_book(input=c('index.Rmd',"01-intro.Rmd"),
-#                       'bookdown::gitbook', 
-#                       preview=TRUE,
-#                       new_session=TRUE, clean=TRUE)
+if(FALSE){
+  bookdown::render_book(input=c('index.Rmd',"01-intro.Rmd"),
+                        'bookdown::gitbook',
+                        preview=TRUE,
+                        new_session=TRUE, clean=TRUE)
+}

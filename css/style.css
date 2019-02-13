@@ -2,6 +2,13 @@
 .book.font-family-0 {font-family: Georgia, serif;}
 .book.font-family-1 {font-family: "Roboto", sans-serif;}
 
+div.sourceCode { 
+  margin: 0.1em 0; 
+}
+
+.book .book-body .page-wrapper .page-inner section.normal {
+  line-height: 1.2em;
+}
 
 .rmdcaution, .rmdimportant, .rmdnote, .rmdtip, .rmdwarning, .rmdtry, .rmdreading {
   padding: 1em 1em 1em 4em;
@@ -37,7 +44,8 @@ p.caption {
 	color: #000000;
 }
 .date{
-	font-size: 0.8em;
+  display: none;
+	/*font-size: 0.8em;*/
 }
 p code {
   white-space: inherit;
@@ -77,6 +85,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 h1.title {
   font-weight: 700;
+  line-height: 1.7em
+  ;
 }
 .smallcaps {
   font-variant: small-caps;
