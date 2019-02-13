@@ -16,13 +16,13 @@ suppressPackageStartupMessages(library(magrittr))
 
 ## Installing R and Rstudio {#installingr}
 
-We assume you have installed R and Rstudio. We occassionally give some tips on how to use Rstudio effectively, but since Rstudio is likely to change more quickly than R - we instead suggest you keep an eye on their documentation (link).
+We assume you have installed R and Rstudio. We occasionally give some tips on how to use Rstudio effectively, but since Rstudio is likely to change more quickly than R - we instead suggest you keep an eye on their documentation (link).
 
 We assume that you have installed both R, and Rstudio. Please visit both websites ([here](http://cran.r-project.org) for R, [here for Rstudio](www.rstudio.org)) to download the latest version for your platform. Note that Rstudio simply runs R for us (and provides many, many other features) - you still need to install R itself.
 
 **Rstudio settings**
 
-We strongly recommend you change the following default settings in Rstudio. The default behaviour is to save all your objects to an 'RData' file when you exit, and loads the same objects when you open RStudio. This is very dangerous behaviour, and you must turn it off. See Section~\ref{sec:savewd} for more information on 'RData' files. For now, make sure you go to `Tools > Global Options...` and on the `General` tab, make sure the settings are like the figure below.
+We strongly recommend you change the following default settings in Rstudio. The default behaviour is to save all your objects to an 'RData' file when you exit, and loads the same objects when you open RStudio. This is very dangerous behaviour, and you must turn it off. See Section \@ref(savewd) for more information on 'RData' files. For now, make sure you go to `Tools > Global Options...` and on the `General` tab, make sure the settings are like the figure below.
 
 ```{r echo=FALSE, out.width='33%'}
 knitr::include_graphics("screenshots/neverloadrdata.png")

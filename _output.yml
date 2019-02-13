@@ -20,6 +20,11 @@ bookdown::gitbook:
     favicon: "favicon.ico"
     githubrepo: RemkoDuursma/prcr
     description: "A Learning Guide to R: : data, analytical, and programming skills"
+    fontsettings:
+      theme: white
+      family: sans
+      size: 2
+    
       
 bookdown::pdf_book:
   includes:

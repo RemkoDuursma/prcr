@@ -32,7 +32,7 @@ poundsToKg <- function(weight){
 }
 ```
 
-We can use this `function` just like any other in R, for example, let's convert 'weight' to kilograms in the weightloss data (Section~\ref{sec:weightlossdata}).
+We can use this `function` just like any other in R, for example, let's convert 'weight' to kilograms in the weightloss data (Section \@ref(weightlossdata)).
 ```{r }
 # Read data
 data(weightloss)
@@ -41,7 +41,7 @@ data(weightloss)
 weightloss$Weight <- poundsToKg(weightloss$Weight)
 ```
 
-Let's write a function for the standard error of the mean, a function that is not built-in in \R. 
+Let's write a function for the standard error of the mean, a function that is not built-in in R. 
 
 ```{r }
 # Compute the standard error of the mean for a vector
@@ -121,7 +121,7 @@ sayhello <- function()message("Hello!")
 sayhello()
 ```
 
-We will return to defining our own functions when we look at applying functions many times to sections of a dataframe (Section~\ref{sec:lapply}).
+We will return to defining our own functions when we look at applying functions many times to sections of a dataframe (Section \@ref(lapply)).
 
 
 
@@ -486,7 +486,7 @@ dev.off()
 
 Here, we create three plots (`i` goes from 1 to 3), every time using a different element of the list `allomsp`. First, `i` will have the value 1, so that we end up using the dataframe `allomsp[[1]]`, the first element of the list. And so on. Take a look at the resulting PDF to understand how the code works.
 
-*Note:* On windows (with Adobe reader) If the pdf (\file{Allom plot by species.pdf}) is open, the above will fail. If you try this anyway, close the pdf and try again. You may have to run the command `dev.off`() another time to make sure the device is ready.
+*Note:* On windows (with Adobe reader) If the pdf (`Allom plot by species.pdf`) is open, the above will fail. If you try this anyway, close the pdf and try again. You may have to run the command `dev.off`() another time to make sure the device is ready.
 
 
 Another way to achieve the same result is to avoid splitting the dataframe into a list first, and simply take subsets on the fly. Consider this template (make your own working example based on any dataset).
@@ -510,7 +510,7 @@ dev.off()
 
 In this example, we use lists, `lapply`, `sapply` as well as loops. We also introduce `fitdistr` from the `MASS` package, and use `curve` to add curves to a histogram.
 
-Let's fit a weibull distribution to the vessel diameter data, separately for the base and apex positions (see Section~\ref{sec:vesseldata}). We will also visualize the results, and print the coefficients of the fit.
+Let's fit a weibull distribution to the vessel diameter data, separately for the base and apex positions (see Section \@ref(vesseldata)). We will also visualize the results, and print the coefficients of the fit.
 
 Note that in the following example, you could also simply make two subsets and repeat the analysis for both. But this way of working also applied to datasets where you have hundreds of species.
 
@@ -540,7 +540,7 @@ weibcoefs
 
 Next, we will plot the two distributions again (as we did in Section \@ref(vesselexample), together with a curve of the fitted weibull.
 
-This code produces Fig. \ref(fig:vesselweib).
+This code produces Fig. \@ref(fig:vesselweib).
 
 ```{r vesselweib, opts.label="wide", fig.cap='Two histograms of the vessel diameter data, with fitted Weibull curves'}
 

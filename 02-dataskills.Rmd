@@ -1165,7 +1165,7 @@ The 2012 Sydney marathon started at 7:20AM on September 16th. The winner complet
 
 Now let's use a real dataset to practice the use of date-times. We also introduce the functions `month`, `yday`, `hour` and `minute` to conveniently extract components of date-time objects.
 
-The last command produces Fig.~\ref{fig:hfemetdate}.
+The last command produces Fig. \@ref(fig:hfemetdate).
 ```{r hfemetdate, opts.label="smallsquare", fig.cap='Air temperature for June at the HFE'}
 # Read the 2008 met dataset from the HFE.
 data(hfemet2008)
@@ -1521,7 +1521,7 @@ summaryBy(. ~ species, data=allometry, FUN=quantile, probs=c(0.05, 0.95))
 ```
 
 
-### Summarizing dataframes with `dplyr` {#summaryby}
+### Summarizing dataframes with `dplyr` {#dplyr}
 
 We started with the `summaryBy` package, since it is so easy to use. A more modern and popular approach is to use `dplyr` for all your dataframe summarizing needs. The main advantage is that `dplyr` is very, very fast. For datasets with > hundreds of thousands of rows, you will notice an incredible speed increase. For millions of rows, you really have to use `dplyr` (or `data.table`, but we don't cover that package in this book).
 

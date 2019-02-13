@@ -1,3 +1,8 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto|Source+Sans+Pro');
+.book.font-family-0 {font-family: Georgia, serif;}
+.book.font-family-1 {font-family: "Roboto", sans-serif;}
+
+
 .rmdcaution, .rmdimportant, .rmdnote, .rmdtip, .rmdwarning, .rmdtry, .rmdreading {
   padding: 1em 1em 1em 4em;
   margin-bottom: 10px;
@@ -55,14 +60,17 @@ blockquote > p:first-child {
 }
 .header-section-number {
   padding-right: .2em;
-  font-weight: 500;
+  font-weight: 600;
 }
 .level1 .header-section-number {
   display: inline-block;
-  border-bottom: 3px solid;
+  /*border-bottom: 1px solid;*/
 }
 .level1 h1 {
-  border-bottom: 1px solid;
+  /*border-bottom: 3px solid;*/
+  border-left: 1px solid;
+  padding-left: 20px;
+  font-weight: 450;
 }
 h1, h2, h3, h4, h5, h6 {
   font-weight: normal;

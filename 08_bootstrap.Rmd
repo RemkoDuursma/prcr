@@ -308,7 +308,7 @@ Xopt_CI <- quantile(Xopt, c(0.025, 0.975))
 Xopt_CI
 ```
 
-And now we can make a plot with the prediction, the location of the optimum and its confidence interval (Fig. \ref(fig:bootoptfig)).
+And now we can make a plot with the prediction, the location of the optimum and its confidence interval (Fig. \@ref(fig:bootoptfig)).
 
 ```{r bootoptfig, out.width='.6\\linewidth', fig.cap='Confidence interval for the location of the optimum as estimated with the bootstrap.', fig.align='center'}
 # Dataset along with model fits (and other useful metrics)

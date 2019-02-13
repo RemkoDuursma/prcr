@@ -577,8 +577,15 @@ In this case, the command `visreg::visreg(fit4)` would show two plots very simil
 
 ```{r visregcereal}
 library(visreg)
-visreg(fit4, "sugars", by = "fiber", overlay = TRUE,
+visreg(fit4, "sugars", by = "fiber", overlay = TRUE, 
        ylim=c(0,100))
+
+
+visreg(fit4, "sugars", by = "fiber", overlay = TRUE, 
+       gg = TRUE) +
+  lims(y = c(0,100)) +
+  theme_tufte()
+
 ```
 
 Here we clearly, and in one panel, visualize the negative effect of adding more sugar in a cereal, and the positive effect of adding more fiber. The `visreg` function plots the *predictions* from our model at an arbitrary selection of predictor values (here, 0, 1.5 and 5). 

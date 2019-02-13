@@ -9,8 +9,7 @@ Before we delve into non-linear regression, we first briefly describe when each 
 
 In general, as the name suggests, non-linear methods are to be used when the relationship between your response variable and predictor is not linear. 
 
-#### Packages used
-
+**Packages used in this chapter**
 
 Packages used in this chapter. The `nls` function and associated methods are in the `stats` package, which is base R, and therefore not mentioned in this table.
 
@@ -51,9 +50,9 @@ suppressPackageStartupMessages(library(viridis))
 
 
 
-#### Transformations
+### Transformations
 
-In this case, one common approach is to transform the predictor and/or response so as to linearize the relationship between the two. When this is possible, it is usually the preferred approach. For example, you may find that your data can be well described with an equation of the form:
+When the relationship between the response and the predictor(s) seems very non-linear, one common approach is to transform the predictor and/or response in order to linearize the relationship. When a suitable transformation can be found, this is often the preferred approach as we can use the standard linear regression approach. For example, you may find that your data can be well described with an equation of the form:
 
 $$Y = a \cdot X^b$$
 
@@ -66,23 +65,21 @@ And thus we can use linear regression of $log(Y)$ against $log(X)$.
 In a number of cases, though, there is no simple transformation that linearizes the relationship. Typical cases are relationships with a clear asymptote (though exceptions exist), peaked relationships, or very irregular relationships with lots of peaks and curves.
 
 
-#### Parametric or non-parametric?
+### Parametric or non-parametric?
 
 In the case where no transformation can be found, or you have a specific equation that you want to fit to your data, non-linear regression may be an appropriate technique. This is an example of a parametric method, because you end up estimating specific parameters, and in doing so making assumptions about the underlying distribution. This can be useful because a fitted non-linear regression model can be applied in a new setting, for example predicting for a new dataset, or reliably extrapolating beyond your data. 
 
 In non-parametric approaches, you either cannot find or are not interested in finding an equation that describes your data. You may simply be interested in describing or visualizing a (potentially irregular) trend, maybe comparing groups, but not estimating specific parameters or predicting for new situations (let alone extrapolation). In this chapter we will briefly look at `loess` (Section \@ref(loess), a flexible non-parametric regression method, and generalized additive models (Section \@ref(gam)), a semi-parametric approach.
 
 
-#### Means or quantiles?
+### Means or quantiles?
 
 In the usual linear models, as well as non-parametric regression, we are usually forced to be interested in the mean relationship between response and predictor. Often this is what you want, but there are many cases in which you are actually interested in questions like 'What is the maximum value of my response as a function of my predictors?'. Instead of actually estimating the maximum, a particular quantile will be much more robust to outliers (for example, the 95% quantile). In this case we can use quantile regression, which will be introduced in Section \@ref(rq). This is not strictly a non-linear method, but we present it in this chapter because it is such a constrast to the usual linear models, and because non-linear quantile regression can also be applied (Section \@ref(rqnonlinear)).
 
 
-```{r echo=FALSE, out.width='66%'}
+```{r echo=FALSE, out.width='66%', fig.cap="A simple flow chart to select regression methods."}
 knitr::include_graphics("screenshots/lmflow_3.png")
 ```
-*A simple flow chart to select regression methods.*
-
 
 
 
@@ -762,7 +759,7 @@ ci_x90
 When an error occurred during the execution of `car::Boot`, the function has a very annoying side-effect to switch off all error messages (and everything else, it seems). If, after using `Boot`, nothing is printed to your screen, check your code because an error has occurred. To switch error messages back on, use the command `options(show.error.messages = TRUE)`.
 ```
   
-And finally we can make a plot showing the confidence interval (Fig.~\ref{fig:bootsympcifig}) of the age where 90\% of the maximum height is reached, on average. The first panel of the plot shows the sampling distribution of this age, as estimated with the bootstrap.
+And finally we can make a plot showing the confidence interval (Fig. \@ref(fig:bootsympcifig)) of the age where 90% of the maximum height is reached, on average. The first panel of the plot shows the sampling distribution of this age, as estimated with the bootstrap.
   
 ```{r bootsympcifig, opts.label="wide", fig.cap='Confidence interval on the x-value where y reaches 90\\% of its estimated asymptotic value, calculated with the bootstrap.', fig.align='center', echo=-1}
 
