@@ -3,11 +3,37 @@
 
 ## Introduction
 
+
+```{block2 type="rmdtry"}
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent vel mauris non urna feugiat vehicula. Ut nec aliquam magna. Sed ac elit in turpis porttitor lacinia a feugiat risus. In vitae nunc non purus venenatis iaculis. Sed feugiat lacus in est facilisis, in consectetur dui ultrices. Vestibulum non mi quis quam iaculis lacinia non id risus. Sed posuere libero vitae nisl malesuada, non
+
+Try some code
+
+`x <- 20`
+`y <- mean(x)`
+
+fringilla ipsum sodales. Pellentesque id mollis erat, ut volutpat felis. Aliquam congue viverra mauris quis porta. Donec maximus id libero non viverra.
+```
+
+```{block2 type="rmdcaution"}
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent vel mauris non urna feugiat vehicula. Ut nec aliquam magna. Sed ac elit in turpis porttitor lacinia a feugiat risus. In vitae nunc non purus venenatis iaculis. Sed feugiat lacus in est facilisis, in consectetur dui ultrices. Vestibulum non mi quis quam iaculis lacinia non id risus. Sed posuere libero vitae nisl malesuada, non fringilla ipsum sodales. Pellentesque id mollis erat, ut volutpat felis. Aliquam congue viverra mauris quis porta. Donec maximus id libero non viverra.
+```
+
+```{block2 type="rmdreading"}
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent vel mauris non urna feugiat vehicula. Ut nec aliquam magna. Sed ac elit in turpis porttitor lacinia a feugiat risus. In vitae nunc non purus venenatis iaculis. Sed feugiat lacus in est facilisis, in consectetur dui ultrices. Vestibulum non mi quis quam iaculis lacinia non id risus. Sed posuere libero vitae nisl malesuada, non fringilla ipsum sodales. Pellentesque id mollis erat, ut volutpat felis. Aliquam congue viverra mauris quis porta. Donec maximus id libero non viverra.
+```
+
+```{block2 type="rmdnote"}
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent vel mauris non urna feugiat vehicula. Ut nec aliquam magna. Sed ac elit in turpis porttitor lacinia a feugiat risus. In vitae nunc non purus venenatis iaculis. Sed feugiat lacus in est facilisis, in consectetur dui ultrices. Vestibulum non mi quis quam iaculis lacinia non id risus. Sed posuere libero vitae nisl malesuada, non fringilla ipsum sodales. Pellentesque id mollis erat, ut volutpat felis. Aliquam congue viverra mauris quis porta. Donec maximus id libero non viverra.
+```
+
+
 Analysing data is much more than applying the right statistics at the right time. A lot of effort and time is spent on reading, filtering, reshaping, bending and twisting your data before you can actually use the data for visualization and analysis.
 
-In this chapter we learn many skills for working with data in R, all of these skills can be seen as mandatory skills before you learn new statistical techniques or fancy new visualizations. We first look at reading datasets into *dataframes*, filtering data when certain conditions are met, and learn in detail about the most important data types that can be stored in dataframes.
+In this chapter we learn many skills for working with data in R. All of these skills can be seen as mandatory skills before you learn new statistical techniques or fancy new visualizations. We first look at reading datasets into *dataframes*, filtering data when certain conditions are met, and learn in detail about the most important data types that can be stored in dataframes.
 
-We will also look at various ways to summarize data, from simple summaries of what is contained in the original data, to more complex tables of statistics by grouping variables. We will also treat other data skills that are frequently needed, including merging (joining) dataframes by one or more key-variables, and reshaping datasets (from long to wide, and back). 
+We will also look at various ways to summarize data, from simple summaries of what is contained in the original data, to more complex tables of statistics by grouping variables. Finally we will look at merging (joining) dataframes by one or more key-variables, and reshaping datasets (from long to wide, and back). 
+
 
 **Packages used in this chapter**
 
@@ -50,11 +76,7 @@ There are many ways to read data into R, but we are going to keep things simple 
 
 We first a few options to read text files into dataframes in R, and then provide the basics of working with dataframes in Section \@ref(dataframes).
 
-```{block2 type="rmdinfo"}
-If your data are stored in an SQL-like database, R provides new powerful methods to extract your data. The use of databases with R is outside the scope of this book, because this is a complex topic that depends very much on your exact situation. [Please consult this page by Rstudio](https://db.rstudio.com/getting-started/) for details to get you started.
-
-```
-
+In Section \@ref(otherdata), we summarize methods to read in data from other sources (SQL, JSON, proprietary formats).
 
 
 
@@ -115,17 +137,6 @@ mydata <- read.table("somedelimdata.txt", header=TRUE, sep=";")
 ```
 
 
-### Reading Excel spreadsheets
-
-Excel spreadsheets are *not* a recommended way to store data, but often you don't make that choice yourself. If you do need to read an XLS or XLSX file, the `readxl` package works very well. *Note*: avoid older implementations like the `xlsx` package and `read.xls` in the `gtools` package, which are less reliable.
-
-```{r eval=FALSE}
-library(readxl)
-mydata <- read_excel("mspreadsheet.xlsx", sheet = 2)
-```
-
-Here, `sheet` will specify the sheet by number, alternatively you can refer to the sheet by name (e.g., `sheet = 'rawdata'`).
-
 ### Reading typed data
 
 You can also write the dataset in a text file, and read it as in the following examples. This is useful if you have (found) a small dataset that you typed in by hand, or for making reproducible code snippets that include the dataset. 
@@ -139,9 +150,53 @@ a b
 ```
 
 
-### Reading other foreign formats
+### Other data formats
 
-Many statistical software packages store data in their own format, not just text files. For data from SPSS, SAS or Stata, we recommend the `haven` package for reading the data into dataframes, and the `foreign` package provides further support for Minitab, Systat, and Weka. 
+
+#### Excel spreadsheets {-}
+
+Excel spreadsheets are *not* a recommended way to store data, but often you don't make that choice yourself. If you do need to read an XLS or XLSX file, the `readxl` package works very well. *Note*: avoid older implementations like the `xlsx` package and `read.xls` in the `gtools` package, which are less reliable.
+
+```{r eval=FALSE}
+library(readxl)
+mydata <- read_excel("mspreadsheet.xlsx", sheet = 2)
+```
+
+Here, `sheet` will specify the sheet by number, alternatively you can refer to the sheet by name (e.g., `sheet = 'rawdata'`).
+
+
+#### SQL {-}
+
+If your data are stored in an SQL-like database, R provides new powerful methods to extract your data. The use of databases with R is outside the scope of this book, because this is a complex topic that depends very much on your exact situation. [Please consult this page by Rstudio](https://db.rstudio.com/getting-started/) for details to get you started.
+
+
+#### JSON {-}
+
+A very popular format for data, especially on the web, is JSON - a text-based format that can represent not just rectangular data (dataframes), but any complex nested data structure.
+
+We can use the `jsonlite` package to read JSON data, and convert it to a dataframe if the data allows it, as in the following example.
+
+```{r}
+# Fake data can be read fro this site.
+# Visit the link to see what the original data looks like.
+url <- "https://jsonplaceholder.typicode.com/posts/1/comments"
+
+# Package to read JSON; it is very fast.
+library(jsonlite)
+
+# fromJSON reads and simplifies the data into a dataframe (if possible)
+comment_data <- fromJSON(url)
+
+# We end up with a dataframe.
+Hmisc::contents(comment_data)
+```
+
+
+#### Proprietary formats {-}
+
+Many statistical software packages store data in their own format, not just text files. For data from **SPSS**, **SAS** or **Stata**, we recommend the `haven` package for reading the data into dataframes, and the `foreign` package provides further support for Minitab, **Systat**, and **Weka.** 
+
+
 
 
 
@@ -149,9 +204,8 @@ Many statistical software packages store data in their own format, not just text
 
 As mentioned, this book focuses heavily on dataframes, because this is the object you will use most of the time in data analysis. The following sections provide a brief introduction, but we will see many examples using dataframes throughout this manual. 
 
-Like matrices, dataframes have two dimensions: they contain both columns and rows. Unlike matrices, each column can hold a different type of data. This is very useful for keeping track of different types of information about data points. For example, you might use one column to hold height measurements, and another to hold the matching species IDs. When you read in a file using `read.csv`, the data is automatically stored in a dataframe. Dataframes can also be created using the function `data.frame` (see Section \@ref(vecstodfr)).
+Like matrices, dataframes have two dimensions: they contain both columns and rows. Unlike matrices, each column can hold a different type of data. This is very useful for keeping track of different types of information about data points. For example, you might use one column to hold height measurements, and another to hold the matching species IDs. When you read in a file using `read.csv`, the data is automatically stored in a dataframe. Dataframes can also be created from scratch using the function `data.frame` (see Section \@ref(vecstodfr)), but usually we start with data read from a file.
 
-Once the dataframe is read into memory, you can inspect the data in RStudio in the `Environment` tab. If you click on it, you can inspect the dataframe with a built-in viewer (opens up in a separate window).
 
 
 ```{block2 type="rmdinfo"}
@@ -170,21 +224,22 @@ Suppose you have two or more vectors (of the same length), and you want to inclu
 vec1 <- c(9,10,1,2,45)
 vec2 <- 1:5
 
-data.frame(x=vec1, y=vec2)
+data.frame(x = vec1, y = vec2)
 ```
 
 Here, we made a dataframe with  columns named `x` and `y`. *Note*: take care to ensure that the vectors have the same length, otherwise it won't work!
 
 ```{block2 type="rmdtry"}
-Modify the previous example so that the two vectors are \emph{not} the same length. Then, attempt to combine them in a dataframe and inspect the resulting error message.
+Modify the previous example so that the two vectors are *not* the same length. Then, attempt to combine them in a dataframe and inspect the resulting error message.
 ```
 
 
 ### Variables in the dataframe
 
-Let's first read the `allom` data, if you have not done so already. 
+We read the `allometry` data (make sure the `lgrdata` package is loaded) to practice basic dataframe skills.
 
 ```{r }
+library(lgrdata)
 data(allometry)
 ```
 
@@ -208,21 +263,15 @@ It is also straightforward to add new variables to a dataframe. Let's convert th
 allometry$diameterInch <- allometry$diameter / 2.54
 ```
 
-Instead of using the \$-notation every time (which can result in lengthy, messy code, especially when your variable names are long) you can use `with` to indicate where the variables are stored. Let's add a new variable called `volindex`, a volume index defined as the square of tree diameter times height:
+Instead of using the `$`-notation every time (which can result in lengthy, messy code, especially when your variable names are long) you can use `with` to indicate where the variables are stored. Let's add a new variable called `volindex`, a volume index defined as the square of tree diameter times height:
 
 ```{r }
 allometry$volindex <- with(allometry, diameter^2 * height)
 ```
 
-For comparison, here is the same code using the $-notation. Note that the previous example is probably easier to read.
-
-```{r }
-allometry$volindex <- allometry$diameter^2 * allometry$height
-```
-
 The `with` function allows for more readable code, while at the same time making sure that the variables `diameter` and `height` are read from the dataframe `allometry`. 
 
-Another, even more readable approach is to use `mutate` from the `dplyr` package (similar to base R's `transform`, but with a useful advantage).
+An even better approach is to use `mutate` from the `dplyr` package (similar to base R's `transform`, but with a useful advantage).
 
 ```{r}
 library(dplyr)
@@ -231,20 +280,21 @@ allometry <- mutate(allometry,
                 volindex = diameterInch^2 * height)
 ```
 
-Where `mutate` adds new variables to the dataframe, and it is able to use variables used just before in the same call (note `diameterInch` was created in the same call).
+Where `mutate` adds new variables to the dataframe, and (unlike `transform`) it is able to use variables used just before in the same call (note `diameterInch` was created in the same call).
 
 ```{block2, type="rmdtry"}
-The above examples are important -- many times throughout this book you will be required to perform similar operations. As an exercise, also add the ratio of height to diameter to the dataframe.
+The above examples are important - many times throughout this book you will be required to perform similar operations. As an exercise, also add the ratio of height to diameter to the dataframe.
 ```
 
-A simple summary of the dataframe can be printed with the `summary` function; where we use `pander` (from the `pander` package) to give readable output in rmarkdown (which we assume you use anyway), and indexing (`[,1:3]`) to use the first three columns of `allometry` only.
+A simple summary of the dataframe can be printed with the `summary` function; where we use indexing (`[,1:3]`) to use the first three columns of `allometry` only to save space.
 
 ```{r }
-library(pander)
-summary(allometry[,1:3]) %>% pander
+summary(allometry[,1:3])
 ```
 
 For the numeric variables, the minimum, 1st quantile, median, mean, 3rd quantile, and maximum values are printed. For so-called 'factor' variables (i.e., categorical variables), a simple table is printed (in this case, for the `species` variable). We will come back to factors in Section sec:workingfactors. If the variables have missing values, the number of missing values is printed as well (see Section \@ref(workingmissing)).
+
+If you are using an `rmarkdown` document - see Section \@ref(XXX) on how to make R output pretty when the document is converted to HTML.
 
 To see how many rows and columns your dataframe contains (handy for double-checking you read the data correctly), use `nrow` and `ncol`. Alternatively, `dim` gives the 'dimension' of the dataframe (rows x columns).
 
@@ -282,7 +332,8 @@ Better yet is to use `rename` from the `dplyr` package, which makes sure you cha
 library(dplyr)
 
 # The names on the right are the original names, on the left are the new ones.
-allometry <- rename(allometry, spec = species,
+allometry <- rename(allometry, 
+                       spec = species,
                        diam = diameter)
 ```
 
@@ -492,7 +543,7 @@ filter(pupae, Frass > 2.6) %>%
 
 ### Deleting columns
 
-It is rarely necessary to delete columns from a dataframe, unless you want to save a copy of the dataframe to disk (see Section \@ref(writecsv)). Instead of deleting columns, you can take a subset and make a new dataframe to continue with. Also, it should not be necessary to delete columns from the dataframe that you have accidentally created in a reproducible script: when things go wrong, simply clear the workspace and run the entire script again.
+It is rarely necessary to delete columns from a dataframe, unless you want to save a copy of the dataframe to disk (see Section \@ref(exportingdata)). Instead of deleting columns, you can take a subset and make a new dataframe to continue with. Also, it should not be necessary to delete columns from the dataframe that you have accidentally created in a reproducible script: when things go wrong, simply clear the workspace and run the entire script again.
 
 That aside, you have the following options to delete a column from a dataframe. 
 
@@ -564,7 +615,7 @@ knitr::kable(dfr)
 ```
 
 
-Also, R has a very useful built-in data type to represent **missing values**. This is represented by `NA` (Not Available) (see Section \@ref(:workingmissing)).
+Also, R has a very useful built-in data type to represent **missing values**. This is represented by `NA` (Not Available) (see Section \@ref(workingmissing)).
 
 We will show how to convert between data types at the end of this chapter (Section \@ref(converttype)).
 
@@ -666,7 +717,7 @@ pupae_amb2 <- droplevels(pupae_amb)
 ```
 
 ```{block2 type="rmdtry"}
-Compare the `summary` of `pupae\_amb` and `pupae\_amb2`, and note the differences.
+Compare the `summary` of `pupae_amb` and `pupae_amb2`, and note the differences.
 ```
 
 
@@ -681,6 +732,7 @@ levels(pupae$T_treatment) <- c("Ambient","Ambient + 3C")
 # Or only change the first level, using subscripting.
 levels(pupae$T_treatment)[1] <- "Control"
 ```
+
 
 ```{block2 type="rmdtry"}
 Using the method above, you can also merge levels of a factor, simply by assigning the same new level to both old levels. Try this on a dataset of your choice (for example, in the `allom` data, you can assign new species levels, 'Douglas-fir' for PSME, and 'Pine' for both PIMO and PIPO). Then check the results with `levels()`.

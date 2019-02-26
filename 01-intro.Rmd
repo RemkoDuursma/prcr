@@ -7,13 +7,6 @@ suppressPackageStartupMessages(library(magrittr))
 ```
 
 
-
-
-
-
-
-
-
 ## Installing R and Rstudio {#installingr}
 
 We assume you have installed R and Rstudio. We occasionally give some tips on how to use Rstudio effectively, but since Rstudio is likely to change more quickly than R - we instead suggest you keep an eye on their documentation (link).
@@ -24,13 +17,13 @@ We assume that you have installed both R, and Rstudio. Please visit both website
 
 We strongly recommend you change the following default settings in Rstudio. The default behaviour is to save all your objects to an 'RData' file when you exit, and loads the same objects when you open RStudio. This is very dangerous behaviour, and you must turn it off. See Section \@ref(savewd) for more information on 'RData' files. For now, make sure you go to `Tools > Global Options...` and on the `General` tab, make sure the settings are like the figure below.
 
-```{r echo=FALSE, out.width='33%'}
+```{r echo=FALSE, out.width='40%'}
 knitr::include_graphics("screenshots/neverloadrdata.png")
 ```
 
 Another feature you may want to turn off is the automatic code completion, which is now a standard feature in RStudio. This is a matter of taste, but we find it handier to use code completion only when requested. If you change the settings as shown in the screenshot below, you can engage code completion by typing part of a function and then pressing `Tab`.
 
-```{r echo=FALSE, out.width='33%'}
+```{r echo=FALSE, out.width='40%'}
 knitr::include_graphics("screenshots/rstudionocodecomplete.png")
 ```
 

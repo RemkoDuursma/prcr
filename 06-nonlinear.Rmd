@@ -755,7 +755,7 @@ ci_x90
 
 ```
   
-```{block2 type="rmdwarning"}  
+```{block2 type="rmdcaution"}  
 When an error occurred during the execution of `car::Boot`, the function has a very annoying side-effect to switch off all error messages (and everything else, it seems). If, after using `Boot`, nothing is printed to your screen, check your code because an error has occurred. To switch error messages back on, use the command `options(show.error.messages = TRUE)`.
 ```
   

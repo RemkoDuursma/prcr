@@ -347,7 +347,7 @@ Here we see various useful statistics including the R squared (goodness of fit),
 
 The ANOVA, as used in the previous section, gives us a single p-value for the overall 'species effect'. The summary statement further shows whether individual species are different from the first level in the model, which is not always useful. If we want to know whether the four species were all different from each other, we can use a multiple comparison test.
 
-```{block2 type="rmdwarning"}
+```{block2 type="rmdcaution"}
 Multiple comparisons on linear models where you have more than one factor variable are tricky, and probably best left alone. Read the help page ?`glht` for more information.
 ```
 
