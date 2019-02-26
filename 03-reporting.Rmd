@@ -240,13 +240,126 @@ But, scripts are not the best way to share your results with others. Instead, we
 
 Markdown is a simple set of rules for formatting text files so that they are both human-readable and processable by software, and is used not just by `rmarkdown` but in many applications (like Github and Stackoverflow). R Markdown simply adds R, by allowing code chunks with various options.
 
-RStudio offers a handy editor for markdown files, and starts with an example file that shows many of the features. Start a new markdown file by choosing `File > New File > R Markdown...`. For now, leave the default settings. The new R markdown document (which is just a text file with the extension `.Rmd`) already contains some example code. Run this example by clicking the button just above the markdown document (Knit HTML). The example code will generate a new document (an HTML page), which opens in your browser You can see that the output contains text, R code, and even a plot.
+RStudio offers a handy editor for markdown files, and starts with an example file that shows many of the features. Start a new markdown file by choosing `File > New 
+File > R Markdown...`. For now, leave the default settings. The new R markdown document (which is just a text file with the extension `.Rmd`) already contains some example code. Run this example by clicking the button just above the markdown document (Knit HTML). The example code will generate a new document (an HTML page), which opens in your browser You can see that the output contains text, R code, and even a plot.
 
 Throughout this book we assume that you use `rmarkdown` for all your reporting needs. It is by far the best option available at the moment, and provides many options for customization.
 
 
+### Tips
 
-### Resources
+
+#### Start with an example document {-}
+
+When you open a new rmarkdown file (see previous section), the first step is to delete everything in the example document, *except the top section and the first code chunk*. Your rmarkdown document will now look like this:
+
+```
+---
+title: "Untitled"
+output: html_document
+---
+
+```
+
+```{r setup, include=FALSE}`r ''`
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+You can write all of that from scratch, but why would you?
+
+#### Modify the output style {-}
+
+You can add lots of options to the header (the bit between `--`), that affect how the conversion to HTML works (including style, settings for the table of contents, author, date, etc.). See the Rstudio help page for the HTML version of `rmarkdown` [by following this link](https://bookdown.org/yihui/rmarkdown/html-document.html). 
+
+We list a few useful options; to see how these can be used search for them on the link above.
+
+- `code_folding: hide`, hides the code in the document, but adds a button to reveal the code.
+- `toc_float: true`, a very nice floating table of contents (the contents are always visible in a menu to the left)
+- `theme: cosmo`, or lots of other choices to be [picked from this gallery](https://bootswatch.com/3/), changes the colors, fonts, and general appearance of the document.
+
+#### Set options for all code chunks {-}
+
+The section shown above that contains  `knitr::opts_chunk$set(echo = TRUE)` sets *chunk options for the entire document*. An often used feature here is to hide all code from the eventual document by setting `echo=FALSE`, or set the figure size for all chunks with `fig.width = 5, fig.height = 5`, or use a particular graphics device (`dev = 'svg'`).
+
+
+#### Learn markdown syntax for text formatting {-}
+
+As mentioned, the rest of the document contains two types of input: text with markup, and code chunks. Open a new rmarkdown document to see what the text with input looks like, and note the use of sections, formatting (bold, italic, etc.), weblinks, and so on. [Follow the Rstudio `rmarkdown` lessons to learn more](https://rmarkdown.rstudio.com/lesson-2.html).
+
+
+#### Set options for code chunks {-}
+
+The code chunks contain R code, which will be executed, and the results will be visible in the eventual document (in our case, an HTML page). An R code chunk may look like this,
+
+```{r titanicglm, echo = TRUE, eval = TRUE}`r ''`
+fit <- glm(Survived ~ Age, data = titanic)
+```
+
+Here, `titanicglm` is a label for the chunk (you don't need to set it), and `echo = TRUE` make the code visible in the document, and `eval=TRUE` actually runs the code in the chunk. Both these options are used a lot. You use `echo=FALSE` to not show code, for example when there is too much messy code to share for this particular block. You use `eval = FALSE` to disable execution of a single code chunk. This is very useful when you have some code that simply does not work yet, but you hate using comments (`#`) to disable it, instead you can place the code in its own chunk and set `echo=FALSE, eval=FALSE`.
+
+#### Set options for figure output {-}
+
+An important step is to control the output of figures. The documentation (see \@Section(rmarkdownresources)) is a bit overwhelming, but here is an example with some useful settings:
+
+```{r titanicplot1, fig.cap="Number of passengers by Sex and PClass", fig.width=4, fig.height=4, dev="svg", echo = -1}`r''`
+par(bg="azure")
+with(titanic, spineplot(Sex, PClass))
+```
+
+Here, `fig.cap` makes a figure caption (but figures will not be automatically numbered, see below for an alternative), `fig.width` and `fig.height` set the figure size in inches, `dev="svg"` sets the graphic device to SVG (an outstanding format for the web) - you need to install `svglite` for this to work. Finally `echo=-1` hides the first row of the code in the output (in this case, we don't want the reader to be bothered by graphical settings in `par()`).
+
+
+#### Auto-numbering of figures and tables {-}
+
+In the example above, we set a caption for a figure, but the figures are not automatically numbered in `rmarkdown`. To enable this, all you have to do is install the `bookdown` package, and replace the header with this example:
+
+```
+---
+title: "Untitled"
+output: bookdown::html_document2
+---
+
+```
+
+Everything else should work as expected, but now figures that contain a `fig.cap` setting will be automatically numbered! 
+
+
+#### Make R output pretty {-}
+
+One thing you notice quickly is that R output that is usually printed to the screen, will look exactly the same in an rmarkdown document - ugly. For example, try this code chunk:
+
+```{r}`r''`
+summary(titanic) 
+```
+
+The output in the HTML is not attractive, to say the least.
+
+A number of packages will convert raw R output to markdown or HTML output, which can be used effectively in rmarkdown documents. Here we recommend using the `pander` package to convert many R objects to readable output for use in rmarkdown documents, and the `kable` function from the `knitr` package to convert things that look like dataframes. Both packages are very easy to use.
+
+```{r}`r''`
+library(pander)    # for pander()
+library(knitr)     # for kable()
+library(magrittr)  # for %>%
+
+summary(titanic) %>% pander
+summary(titanic) %>% kable
+```
+
+Try the `pander` function on many outputs from statistical analyses as well, for example:
+
+```{r}`r''`
+test_output <- t.test(Age ~ Sex, data = titanic)
+pander(test_output)
+```
+
+
+#### Make pretty tables
+
+(to be added)
+
+
+
+### Resources {#rmarkdownresources}
 
 The documentation for `rmarkdown` based documents is a little scattered across various sources. The reason for this is that multiple packages are involved in making an HTML page from an `.Rmd` file. 
 
