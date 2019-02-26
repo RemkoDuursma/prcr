@@ -118,11 +118,28 @@ summary(fit12)
 #plot(allEffects(fit12))
 ```
 
+### Goodness of fit
+
+```{r}
+library(rms)
+
+# redo fit11
+fit11b <- lrm(Survived ~ Age + Sex + PClass, data=titanic)
+
+# lots of goodies
+# nagelkerke R2
+# c-index (area under ROC)
+# Brier score
+fit11b
+
+# calibration curve
+fit11b_cal <- calibrate(fit11b)
+plot(fit11b_cal)
+```
 
 
 
-
-### Poisson regression
+## Poisson regression
 
 For this example we return to the Age and Memory dataset. In this dataset, the response variable is a count of the number of words recalled by subjects using one of four different methods for memorization. When the response variable represents a count, a Poisson regression is often appropriate. 
 
