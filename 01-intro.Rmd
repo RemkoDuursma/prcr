@@ -310,15 +310,16 @@ dir(pattern="[.]csv", ignore.case=TRUE)
 
 ## Packages {#packages}
 
-Throughout this tutorial, we will focus on the basic functionality of R, but we will also call on a number of add-on 'packages' that include additional functions. These packages need to be installed (downloaded) before first use.
+Throughout this tutorial, we will focus on the basic functionality of R, but we will also call on a number of add-on 'packages' that include additional functions. These packages need to be *installed* (downloaded) before first use, and *loaded* every time you start a new R session.
 
-### Install from CRAN
+### Install packages from CRAN
 
-You can find a full list of packages available for R on the CRAN site (<http://cran.r-project.org/>, navigate to 'Packages'), but be warned -- it's a very long list! A more palatable index of packages is provided at <http://r-pkg.org/>. 
+You can find a full list of packages available for R on the CRAN site (<http://cran.r-project.org/>, navigate to 'Packages'), but be warned -- it's a very long list, with over 10000 packages. If you really want to browse a long list of packages, you should prefer the website <http://r-pkg.org/>, which provides a nice interface.
 
 In RStudio, click on the `Packages` tab in the lower-right hand panel. There you can see which packages are already installed, and you can install more by clicking on the `Install` button.
 
 Alternatively, to install a particular package, simply type:
+
 ```{r eval=FALSE}
 install.packages("gplots")
 ```
@@ -327,15 +328,15 @@ install.packages("gplots")
 Never use `install.packages` in an rmarkdown file (it simply does not work), and it is generally bad practice to add it to a script, since you don't want the packages to be installed every time the script is run. Instead, make it clear what the dependencies are in a README file, or use the approach outlined in "Loading many packages" further below, or in "Install missing packages". 
 ```
 
-The package needs to be installed only once. To use the package in your current R session, type:
+The package needs to be installed only once (except when you need to update it, see Section \@ref(updatingpackages)). To use the package in your current R session, type:
 
 ```{r eval=FALSE}
 library(gplots)
 ```
 
-This loads the gplots package from your library into working memory. You can now use the functions available in the `gplots` package. If you close and reopen R, you will need to load the package again (but you don't have to install it again).
+This loads the `gplots` package from your library into working memory. You can now use the functions available in the `gplots` package. If you close and reopen R, you will need to load the package again (but you don't have to install it again).
 
-To quickly learn about the functions included in a package, type:
+To quickly learn which functions are included in a package, type:
 ```{r eval=FALSE}
 library(help=gplots)
 ```
@@ -380,7 +381,7 @@ You may see more than one path listed - packages will be installed to the first 
 To do this, you have to add an environment variable `R_LIBS`, that points to your custom directory. If you don't know how to do this, simply do a web search for 'add environment variable windows/mac'. The next time you open Rstudio, `.libPaths()` should show the custom directory.
 
 
-### Updating packages
+### Updating packages {#updatingpackages}
 
 Besides updating R and Rstudio itself (which is recommended at least every couple of months or so), it is also a very good idea to keep all packages up to date. If your workflow ends up depending on an older version of the package, your code may not work on a different system. To update all *installed* packages, you can run the following command - make sure to do this right after opening Rstudio:
 
@@ -466,9 +467,22 @@ Sometimes it is useful to search all help files (including all *installed* packa
 
 The best advice, though, is simply to **just use Google**. As a search, simply type the question like you would ask someone else, for example "How to place legend outside plot with ggplot2?", "(Is there an) R package for 3D plots?".
 
-## Why you should write reports with rmarkdown
 
-**explain why rmarkdown instead of scripts - it should be your default way to write messy, "trying things out" code, not only the way you report.
+
+## Writing lots of code: rmarkdown or scripts?
+
+In this chapter you have written a little code directly to the Console, but for any more serious work you will use scripts or "rmarkdown" documents. In Chapter \@ref(reporting), we will give more information on `rmarkdown` documents: an outstanding format to collect code, output, and text in a single, well formatted document. Scripts on the other hand only include code (and comments), and can be executed completely, or piece-by-piece by selecting code manually.
+
+For both options, a brief summary is provided below. Overall, you want to use **scripts** if you:
+
+- Want to be able to run all R code at once, producing some sort of output in files, or some other side-effect (perhaps figures as PDF, new datasets written to disk, objects produced and saved, data downloaded or uploaded, etc.).
+
+On the other hand, you should use an **rmarkdown document** if you:
+
+- Want to produce a document that includes all output from your analyses, including tables, figures, output from statistical analyses, and so on. The document can be well formatted and directly shared (hiding code, for example), and published on the web or simply emailed to your co-workers.
+
+
+### Reproducible documents with rmarkdown
 
 - Documents are mix of normal text, with markup (headers, captions, images, tables, formatting), and blocks of code, **code chunks**. 
 - The document can be quickly converted to html, pdf, or an MS Word document, and includes output from code chunks (text output, figures), well formatted.
@@ -476,9 +490,11 @@ The best advice, though, is simply to **just use Google**. As a search, simply t
 - Output formats include HTML, PDF (if LaTeX is installed) and MS Word. 
 - Make not just simple documents, but also HTML presentations (in many formats), blogs (with `blogdown`), books (with `bookdown`), auto-generated websites documenting R packages (with `pkgdown`), and many more templates provided by add-on packages.
 
-## Writing scripts {#scripts}
+We give more information in Section \@ref(rmarkdown).
 
-Clearly, R markdown is the right solution if you are interested in writing fully reproducable reports or presentations. For everything else, we use R scripts - simply text files that include R code. A script is meant to be fully executable, so that you can run the entire script, producting the desired results or effects. In Rstudio, you can open a new R script with `File/New File/R script`, simply a text file that is saved with extension `.R`.
+### Writing scripts {#scripts}
+
+Clearly, R markdown is the right solution if you are interested in writing fully reproducable reports or presentations. For everything else, we use R scripts - simply text files that include R code. A script is meant to be fully executable, so that you can run the entire script, producing the desired results, files, objects, or side-effects. In Rstudio, you can open a new R script with `File/New File/R script`, simply a text file that is saved with extension `.R`.
 
 To run your script, you can either click 'Source' on the topright corner of the document, or execute it from R with:
 
@@ -493,14 +509,5 @@ From outside R, you can run your script from the *command line* with `Rscript`, 
 ```
 Rscript myscript.R
 ```
-
-You can even run bits of R code directly,
-
-```
-Rscript -e "sqrt(225)"
-```
-
-Finally, we can turn our R scripts into more versatile programs by reading and parsing command line options. Although base R provides some functionality for this, we suggest the `optparse` package instead. 
-
 
 
