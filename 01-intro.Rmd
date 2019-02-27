@@ -102,6 +102,19 @@ Try typing `?Math` for description of more mathematical functions.
 
 Also note the use of `#` for comments: anything after this symbol on the same line is *not* read by R. Throughout this book, comments are shown in green.
 
+
+```{block2 type="rmdtry"}
+When typing code directly into the console (other than a script, which is what you usually will do when developing more serious code), consider these tips:
+
+- Press **UP** on your keyboard to repeat the previous command (and keep pressing UP to find all previous commands).
+- Press **TAB** to auto-complete the name of a function (even those from loaded packages); very handy if you don't remember the name of the function, or you can't be bothered typing it in.
+- Press **CTRL-L** (CMD-L on Mac) to 'clear' the console. This does not remove the history or any objects, just starts a fresh screen.
+- Press **ESC** to cancel an operation (if R is taking long, and you don't want to wait).
+```
+
+
+
+
 ## Working with vectors {#vectorintro}
 
 A very useful type of object is the `vector`, which is basically a string of numbers or bits of text (but not a combination of both). The power of R is that most functions can use a vector directly as input, which greatly simplifies coding in many applications.

@@ -2102,3 +2102,83 @@ We have another possibility here, to instead place the values for the individual
 dcast(gas, Date ~ Plot + treatment, value.var="Photo")
 ```
 
+
+
+## More complex `dplyr` examples
+
+In this chapter, we have learned many new tools to work with data - filtering, summarizing, reshaping, and so on. One advantage of the `dplyr` package over functions in base R is that the various operations can be efficiently combined with the `%>%` operator, combining all your data converting and shaping steps into one. 
+
+This will become clear with some examples. 
+
+The first example uses the `hfeifbytree` data from the `lgrdata` package. This dataset contains measurements of height and stem diameter on nearly 1200 Eucalyptus trees in Sydney, repeated 17 times. The trees grow in plots subjected to different treatments (control, fertilization, irrigation, or both).
+
+On some of the dates, all trees were measured, while on other dates a small subsample was taken (ca. 10% of all trees). We want to make a plot of average tree height by treatment over time, but use only the dates were all trees were measured. The following code makes Fig. \@ref(fig:hfeifmeanplot).
+
+```{r hfeifmeanplot, fig.cap="Average tree height by treatment over time, for the hfeifbytree data"}
+data(hfeifbytree)
+
+library(dplyr)
+library(ggplot2)   
+library(ggthemes)
+
+hfeif_meanh <- 
+  mutate(hfeifbytree, Date = as.Date(Date)) %>%  # Convert to proper Date
+  group_by(Date) %>%                    # Set up the grouping variable
+  filter(n() > 500) %>%                 # Keep groups with more than 500 observations
+  group_by(Date, treat) %>%             # New grouping; to get average by Date and treatment
+  summarize(height = mean(height, na.rm=TRUE)) %>% # Average height, discard NA.
+  rename(treatment = treat)             # rename a variable
+  
+# It is possible to make the plot inside the data pipeline, but
+# we recommend separating them!
+ggplot(hfeif_meanh, aes(x = Date, y = height, col = treatment)) +
+  geom_point(size = 2) + 
+  geom_line() +
+  scale_colour_tableau() +
+  theme_minimal() +
+  ylim(c(0,20))
+```
+
+
+In the second example we will use the `oil` data, a dataset with annual crude oil production for the top 8 oil-producing countries since 1971. We want to find the top three countries for the period 1980-1985, sort them, and replace the country abbreviations with country names.
+
+```{r}
+data(oil)
+
+# First we make a dataframe with the abbreviations.
+# Very handy here is tribble from tibble; making it easier to write
+# small dataframes directly into your script.
+library(tibble)
+abb_key <- tribble(~country, ~country_full,
+                      "MEX",    "Mexico",
+                      "USA",    "USA",
+                      "CHN",    "China",
+                      "IRN",    "Iran",
+                      "SAU",    "Saudi-Arabia",
+                      "IRQ",    "Iraq",
+                      "KWT",    "Kuwait",
+                      "VEN",    "Venezuela")
+
+# To avoid a warning, we first convert country to character
+# (not strictly necessary)
+oil_top <-
+  mutate(oil, 
+         country = as.character(country),
+         production_M = production / 1000) %>%  # Convert to million tonnes.
+  full_join(abb_key, by="country") %>%          # Add full country name
+  filter(year %in% 1980:1985) %>%               # Subset for years between 1980-1985
+  group_by(country_full) %>%
+  summarize(production_M = mean(production_M)) %>%
+  arrange(desc(production_M)) %>%               # Sort by production; in descending order
+  as.data.frame %>%                             # To be consistent, output a dataframe
+  head(., 3)                                    # Only show the top 32
+
+# Finally make a table that looks nice in an rmarkdown document
+library(pander)
+oil_top %>% pander(., 
+                   caption = "Top three oil producing countries, 1980-1985.",
+                   col.names = c("Country", "Annual production (MTOE)"))
+
+```
+
+

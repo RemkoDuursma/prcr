@@ -367,3 +367,9 @@ The documentation for `rmarkdown` based documents is a little scattered across v
 - The `rmarkdown` package (from Rstudio) handles the *conversion* to the desired output format, for example HTML or PDF. To do so, it uses Pandoc (see below), which is installed automatically with Rstudio. The `rmarkdown` package provides all options at the top of the `Rmd` document (the so-called YAML header), including the desired output format, and to control many options like the table of contents, format style, custom CSS, and so on. All options for `rmarkdown` [are described on Rstudio's website](https://rmarkdown.rstudio.com/). (Make sure to scroll down and select an output format to read about available options).
 - Finally, Pandoc is the actual engine to convert our raw text file (including R output formatted by `knitr`) to an HTML page, or some other format. Normally you don't have to learn much about Pandoc's options, since many settings are already provided by `rmarkdown`, but [the various formatting rules and conversion options are described here](https://pandoc.org/MANUAL.html).
 
+
+
+```{block2 type="rmdreading"}
+A comprehensive list of useful and more advanced features in rmarkdown can be read here: https://holtzy.github.io/Pimp-my-rmd/ 
+```
+
