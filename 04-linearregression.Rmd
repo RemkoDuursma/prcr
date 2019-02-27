@@ -21,6 +21,8 @@ palette("default")
 ```{block2 type="rmdreading"}
 An excellent book on linear modelling, including many tools that we did not cover in this chapter is:
 Fox, John, and Sanford Weisberg. *An R companion to applied regression*. Sage, 2010. This book describes the `car` package.
+
+
 ```
 
 
@@ -390,7 +392,7 @@ plot(tukey_Spec)
 
 
 
-## Two-way ANOVA {#twoway}
+## Comparing means by two variables (two-way ANOVA) {#twoway}
 
 Sometimes there are two (or more) *treatment* factors. The 'age and memory' dataset (see `?memory`)  includes the number of words remembered from a list for two age groups and five memory techniques. 
 
@@ -425,7 +427,7 @@ If we want to see whether `Age` and/or `Process` have an effect, we need F-stati
 ```{r }
 # Perform an ANOVA on a fitted model, giving F-statistics
 library(car)
-Anova(fit2) %>% pander
+Anova(fit2)
 ```
 
 In this form, the $F$-statistic is formed by comparing models that do not include the term, but include all others. For example, `Age` is tested by comparing the full model against a model that includes all other terms (in this case, just `Process`).
@@ -442,7 +444,7 @@ fit3 <- lm(Words ~ Age + Process + Age:Process, data=memory)
 
 # Is the same as:
 fit3.2 <- lm(Words ~ Age * Process, data=memory)
-Anova(fit3.2) %>% pander
+Anova(fit3.2)
 ```
 
 The `Anova` table shows that the interaction is significant. When an interaction is significant, this tells you nothing about the direction or magnitude of the interaction term. You can inspect the estimated coefficients in the `summary` output, but we recommend to first visualize the interaction with simple plots, as the coefficients can be easily misinterpreted. One way to visualize the interaction is to use the `interaction.plot` function, as in the following example. 
@@ -743,7 +745,7 @@ You can ignore the warning in this case, since we have used both the predictors 
 ### Logarithmic transformation {#logtransform}
 
 - stabilize variance
-- but also: now we have a multiplicative model!
+- but also: now we have a multiplicative model - consequences for interactions
 
 See Fig. \@ref(fig:cowtransform).
 
@@ -790,7 +792,7 @@ As Fig. \@ref(cowdiagnostics) shows, the log-transformation results in much bett
 
 
 
-### Quadratic and polynomial terms {#quadlm}
+### Adding quadratic and polynomial terms {#quadlm}
 
 So far we have seen models with just linear terms, but it is straightforward and often necessary to add quadratic ($x^2$) or higher-order terms (e.g. $x^3$) when the response variable is far from linear in the predictors. You can add any transformation of the predictors in an `lm` model by nesting the transformation inside the `I()` function, like so:
 
@@ -835,6 +837,56 @@ allomquadfit <- lm(height ~ poly(diameter, 2)*species, data=allometry)
 # But plotting the predictions is much easier to understand:
 visreg(allomquadfit, "diameter", by="species", overlay=TRUE)
 ```
+
+
+
+### Which predictors are more important?
+
+Frequently we are interested in knowing which of the predictor variables explain more variation in the response variable, in other words are more strongly correlated with the response.
+
+One often-seen approach is to compute all correlations between the response and each of the predictors, and conclude that those with higher correlation coefficients will be most important. The flaw in this approach is that predictor variables are very often correlated with each other, making the approach potentially misleading. Cross-correlations between variables can easily hide important predictor variables. Nonetheless it can be a useful start, as we do here with the `automobiles` data. The following code makes Fig. \@ref(fig:mobilecorplot).
+
+```{r mobilecorplot, fig.cap="Correlation plot for the automobiles data."}
+data(automobiles)
+
+# A modern implementation of a correlation plot in the corrplot package.
+library(corrplot)
+auto_cor <- cor(automobiles[,4:9], use = "complete.obs")
+corrplot(auto_cor, method = "ellipse")
+```
+
+As we can see in Fig. \@ref(fig:mobilecorplot), the response variable (fuel_efficiency) seems well correlated with four of the response variables, but weaker with `acceleration`.
+
+Sometimes we see the use of the absolute value of the t-statistic to rank variables by 'importance' in the regression model. Within a single model, the t-statistic will be exactly related to the p-value (low p-values mean large t-statistic). Both t-statistics and p-values are very poor measures of importance. A large t-statistic may also arise when the sample size is large, the measurements are accurate, or there is low variability overall. 
+
+Instead what we are interested in is how much variation is explained by each variable in the model. This calculation is complicated by the fact that predictor variables tend to be correlated with each other, so you cannot simply add up the R^2^ due to each predictor separately.
+
+The `relaimpo` package includes a number of importance measures - the recommended version can be interpreted as the % variation explained by each predictor variable:
+
+
+```{r}
+library(relaimpo)
+
+# recommended method lmg in relaimpo
+imp_fitfuel <- calc.relimp(fit_fuel1, type="lmg")
+
+# The resulting object is a bit complicated.
+# If you print the object (simply type imp_fitfuel), lots of information is given.
+# Instead we just need this:
+sort(imp_fitfuel$lmg, TRUE)
+```
+
+The values mean that `weight` explains 21% of the variation, but acceleration only 4%. Note that the sum of these values adds up (nearly precisely) to the R^2^ of the model (check `summary(fit_fuel1)`).
+
+
+```{block2 type="rmdtry"}
+A more common approach is to test how mucb the R^2^ decreases if a predictor is dropped from the model. When important variables are removed, the model fits a lot worse overall. This can be achieved via:
+  
+`drop1(fit_fuel1)`
+
+Where RSS is the 'residual sum of squares' after dropping the term; higher means the variable is 'more important'.
+```
+
 
 
 

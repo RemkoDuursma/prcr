@@ -1,4 +1,4 @@
-# Visualizing data and making reports
+# Visualizing data and making reports {#reporting}
 
 
 ```{r echo=FALSE, message=FALSE}
@@ -230,9 +230,8 @@ The `ggplot2` package has many extensions, packages that offer additional option
 
 
 
-## Making reports
+## Making reports {#rmarkdown}
 
-### rmarkdown {#rmarkdown}
 
 Script files are good for simple analyses, and they are great for storing small amounts of code that you would like to use in lots of different projects. They are also the right solution if you want to produce R scripts that are executed as part of a larger project, for example from the command line, or executed on a schedule (e.g. daily data quality checking). In Section \@ref(scripts) we give a few more tips.
 
