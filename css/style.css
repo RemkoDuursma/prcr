@@ -11,7 +11,7 @@ then added lots of styles */
 }
 
 .book .book-body .page-wrapper .page-inner section.normal {
-  line-height: 1.2em;
+  line-height: 1.3em;
 }
 
 .rmdcaution, .rmdimportant, .rmdnote, .rmdtip, .rmdwarning, .rmdtry, .rmdreading {
@@ -105,8 +105,8 @@ blockquote > p:first-child {
 }
 .level1 h1 {
   /*border-bottom: 3px solid;*/
-  border-left: 1px solid;
-  padding-left: 20px;
+  /*border-left: 1px solid;
+  padding-left: 20px;*/
   font-weight: 450;
 }
 h1, h2, h3, h4, h5, h6 {

@@ -496,7 +496,7 @@ On the other hand, you should use an **rmarkdown document** if you:
 
 We give more information in Section \@ref(rmarkdown).
 
-### Writing scripts {#scripts}
+### Using R scripts {#scripts}
 
 Clearly, R markdown is the right solution if you are interested in writing fully reproducable reports or presentations. For everything else, we use R scripts - simply text files that include R code. A script is meant to be fully executable, so that you can run the entire script, producing the desired results, files, objects, or side-effects. In Rstudio, you can open a new R script with `File/New File/R script`, simply a text file that is saved with extension `.R`.
 
@@ -506,12 +506,46 @@ To run your script, you can either click 'Source' on the topright corner of the 
 source("myscript.R")
 ```
 
-This is *not useful* when you are interested in the output that you normally see in the console, it is only useful for side effects, for example the creation of new datasets (that are saved to disk), production of figures as PDF files, up- or downloading of files, or even converting an rmarkdown file to HTML with various settings. 
+This is *not useful* when you are interested in the output that you normally see in the console. If you are *printing* things to the screen in your script, the call to `source` will not show any of it. You can make these results visible by including `print` directly in your script, for example:
 
-From outside R, you can run your script from the *command line* with `Rscript`, for example:
+```{r eval=FALSE}
+# The output of this will not show up if you 
+# do source("somescript.R")
+summary(mtcars)
+
+# Here, the output will be printed to the screen,
+# also with source()
+print(summary(cars))
+```
+
+Although the trick with `print` works, usually you want to switch to `rmarkdown` if you are interested in viewing the outputs. Scripts are more useful for side effects, for example the creation of new datasets (that are saved to disk), production of figures as PDF files, up- or downloading of files, or even converting an rmarkdown file to HTML with various settings. 
+
+
+#### Running R from the command line
+
+From outside R or Rstudio, you can run your script from the *command line* with `Rscript`, for example:
 
 ```
 Rscript myscript.R
 ```
+
+(Note that this only works on Windows if R is added to the search path).
+
+You can also run bits of R code directly via,
+
+```
+Rscript -e "sqrt(9)"
+```
+
+#### Running scripts in the background
+
+Suppose you have a script that takes a long time to complete. You want to run this script in a background process, so it does not tie up Rstudio for a long time. A nice feature in Rstudio (since late 2018) can be found on the <kbd>Jobs</kbd> tab, in the Console pane.
+
+There, click 'Start Job', and select an R script you would like to run, and the working directory that should be used. The script will be run in the background, and the results will be shown in the Jobs tab. This way you can run an R script for every core you have available to you.
+
+
+
+
+
 
 
