@@ -12,7 +12,7 @@ palette("default")
 ## Introduction
 
 - what do we cover here
-- methods for very few variables. that's what we prefer, since it is real nice to be able to visualize what is going on. that does not work for many variables
+- mostly about methods for very few variables. that's what we prefer, since it is real nice to be able to visualize what is going on. that does not work for many variables
 - methods for many variables: select subset of predictors, make model 'stable', hopefully end up with few variables that we can visualize
 - testing for effects (as often in science), versus making a model for prediction (as often in data science). 
 - cross validation comes later though, because overfitting is best illustrated with a non-linear model
@@ -647,7 +647,9 @@ fit6 <- lm(height ~ species * DBH, data=coweeta)
 
 ### Visualizing fitted regression models {#predictedeffects}
 
-The coefficients in a linear model are usually contrasts (i.e. differences between factor levels), slopes or intercepts. While this is useful for comparisons of treatments, it is often more instructive to visualize the predictions at various combinations of factor levels. 
+The coefficients associated with a factor predictor in a linear model are given as contrasts (i.e. differences between factor levels). 
+
+While this is useful for comparisons of treatments, it is often more instructive to visualize the predictions at various combinations of factor levels. 
 
 A number of options exist to extract and visualize fitted regression models - to make sense of differences between groups, the effects of covariates, and the impact of interactions. We prefer the `visreg` package, which can be used to make attractive plots of the predictions of a linear model.
 
@@ -859,12 +861,18 @@ As we can see in Fig. \@ref(fig:mobilecorplot), the response variable (fuel_effi
 
 Sometimes we see the use of the absolute value of the t-statistic to rank variables by 'importance' in the regression model. Within a single model, the t-statistic will be exactly related to the p-value (low p-values mean large t-statistic). Both t-statistics and p-values are very poor measures of importance. A large t-statistic may also arise when the sample size is large, the measurements are accurate, or there is low variability overall. 
 
-Instead what we are interested in is how much variation is explained by each variable in the model. This calculation is complicated by the fact that predictor variables tend to be correlated with each other, so you cannot simply add up the R^2^ due to each predictor separately.
+Instead what we are often interested in is how much variation is explained by each variable in the model. This calculation is complicated by the fact that predictor variables tend to be correlated with each other, so you cannot simply add up the R^2^ due to each predictor separately.
 
 The `relaimpo` package includes a number of importance measures - the recommended version can be interpreted as the % variation explained by each predictor variable:
 
 
 ```{r}
+# A model with five predictors
+fit_fuel1 <- lm(fuel_efficiency ~ cylinders + engine_volume +
+                                  horsepower + weight + acceleration,
+                data = automobiles)
+
+# For importance measures
 library(relaimpo)
 
 # recommended method lmg in relaimpo
@@ -876,7 +884,7 @@ imp_fitfuel <- calc.relimp(fit_fuel1, type="lmg")
 sort(imp_fitfuel$lmg, TRUE)
 ```
 
-The values mean that `weight` explains 21% of the variation, but acceleration only 4%. Note that the sum of these values adds up (nearly precisely) to the R^2^ of the model (check `summary(fit_fuel1)`).
+The values mean that `weight` explains 21% of the variation, but acceleration only 4%. Note that the sum of these values adds up (nearly precisely) to the R^2^ of the model (look at `summary(fit_fuel1)`).
 
 
 ```{block2 type="rmdtry"}

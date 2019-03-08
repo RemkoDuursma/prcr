@@ -99,11 +99,13 @@ plot(allometry[,2:4], main="numeric dataframe")
 plot(as.factor(Survived) ~ PClass, data=titanic, ylab="Survived", main="factor vs. factor")
 ```
 
+The way that `plot` gives different results depending on data types is both a good thing (for basic plots, you need very little code), and a bad thing because reading the code often does not tell you what sort of plot will be produced, and where to read the documentation (`?plot`, `?plot.default`, `?plot.factor`?). 
+
 
 
 #### Resources
 
-- appendix
+
 
 
 
