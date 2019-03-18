@@ -70,7 +70,7 @@ You can use functions that you defined yourself just like any other function, fo
 ```
 
 
-#### Functions with multiple arguments
+### Functions with many arguments
 
 Functions can also have multiple arguments. The following very simple function takes two numbers, and finds the absolute difference between them, using `abs`.
 ```{r }
@@ -88,11 +88,12 @@ absDiff(c(1,5,9), c(3,6,0))
 ```
 
 
-#### Functions can return many results
+### Functions can return many results
 
 What if a function should return not just one result, as in the examples above, but many results? 
 
 For example, this function computes the standard deviation and standard error of a vector, and returns both stored in a vector. Note that we also use the `SEmean` function, which we defined above.  
+
 ```{r }
 # An function that computes the SE and SD of a vector
 seandsd <- function(x){
@@ -112,9 +113,10 @@ x <- rnorm(100, mean=20, sd=4)
 seandsd(x)
 ```
 
-#### Functions without arguments
+### Functions without arguments
 
 Sometimes, a function takes no arguments (input) at all. Consider this very helpful example. 
+
 ```{r }
 sayhello <- function()message("Hello!")
 
@@ -122,6 +124,112 @@ sayhello()
 ```
 
 We will return to defining our own functions when we look at applying functions many times to sections of a dataframe (Section \@ref(lapply)).
+
+
+### Wrapper functions {#wrapfunctions}
+
+We often need to write simple functions that adjust one or two arguments to other functions. For example, suppose we often do the following:
+
+```{r eval=FALSE}
+library(lgrdata)
+data(howell)
+plot(age, height, data=howell, pch=19, col="dimgrey")
+```
+
+That is, we prefer filled grey circles over the default black open circles in `plot`. We could of course *always* specify these arguments, or we can write a function that sets those defaults. It would look like the following, except this function is incomplete, since we have *hardcoded* the other plotting arguments (the dataset, and the x and y variables):
+
+```{r}
+# This function is not how we want it yet!
+plot_filled_grey <- function(){
+  plot(age, height, data=howell, pch=19, col="dimgrey")
+}
+```
+
+We would like to be able to call the function via `plot_filled_grey(age, height, data=howell)`, in other words all arguments to our *wrapper function* should be passed to the underlying function. We have a very handy utility in R to do this, the three dots (`...`) :
+
+```{r}
+plot_filled_grey <- function(...){
+  plot(..., pch=19, col="dimgrey")
+}
+```
+
+The function now works as intended. It can be further improved if we realize that the plotting color cannot be changed - it is always "dimgrey". We want the *default* value to be "dimgrey", but with an option to change it. This can be achieved like so,
+
+```{r}
+plot_filled_grey <- function(..., col="dimgrey"){
+  plot(..., pch=19, col=col)
+}
+```
+
+Here, `col=col` sets the color in the call to `plot` with the default value specified in the wrapper function ("dimgrey"), but the user can also change it as usual.
+
+```{block2 type="rmdtry"}
+Take the `plot_filled_grey` function above, test it on some data, and modify it so that the plotting symbol can also be changed, but has a default value of 19.
+```
+
+
+
+### Wrapper functions to `ggplot2` or `dplyr`
+
+In the previous section we saw how to write wrapper functions, functions that change a few arguments to some other function. These sort of functions are very helpful because we can save a lot of space by reusing a certain template. Suppose we want to make a plot with `ggplot2`, a scatter plot with a loess smoother line. We can achieve this via (result not shown),
+
+
+```{r eval=FALSE}
+data(howell)
+library(ggplot2)
+
+ggplot(howell, aes(x = weight, y = height)) +
+  geom_point(size = 0.8, col = "dimgrey") +
+  stat_smooth(method = "loess", span = 0.7, col="black")
+```
+
+We already used quite a bit of code for this simple plot, but imagine you have set various other options, formatting changes, axis limits and so on - you end up with a lot of code for one plot. If we want to reuse the code for another plot, for two other variables from the same dataframe, copy-pasting the code and modifying leads to even more code. Writing wrapper functions for `ggplot2` (or `dplyr`, see below, or many other cases) is more difficult because the arguments in the `ggplot2` code we want to change (height and weight) *are not quoted* - they are variables inside a dataframe (`howell` in our case). We avoid a more technical explanation of this problem, but simply present a solution with the `wrapr` package.
+
+Using `let` from `wrapr`, we can turn our unquoted variables into quoted ones, like so:
+
+```{r eval=FALSE}
+library(wrapr)
+
+let(c(xvar = "weight", yvar = "height"), {
+  ggplot(howell, aes(x = xvar, y = yvar)) +
+  geom_point(size = 0.8, col = "dimgrey")
+})
+
+```
+
+The point of placing our plotting code inside `let` is that we can now write our simple wrapper function like before:
+
+```{r}
+plot_scatter_loess <- function(xcol, ycol){
+  let(c(xvar = xcol, yvar = ycol), {
+    ggplot(howell, aes(x = xvar, y = yvar)) +
+    geom_point(size = 0.8, col = "dimgrey")
+  })
+}
+
+# The function can be used as
+plot_scatter_loess("height", "weight")
+```
+
+It is important to understand that `let` is used *only to turn character arguments into unquoted names*, in this case "height" turns into `height` for use in `ggplot`, and so on.
+To also pass the dataset, we do not have to use `let`, but can immediately set it as an argument:
+
+```{r}
+# Our function now also takes a dataset as an argument
+plot_scatter_loess <- function(xcol, ycol, dataset){
+  let(c(xvar = xcol, yvar = ycol), {
+    ggplot(dataset, aes(x = xvar, y = yvar)) +
+    geom_point(size = 0.8, col = "dimgrey")
+  })
+}
+
+# We can use it as,
+plot_scatter_loess("height", "weight", howell)
+```
+
+The advantage here of course is that we can make many plots with `plot_scatter_loess`, each with just one line of code. If we want to adjust some settings that should apply to all plots, these have to be made only in one part of the code - the function definition.
+
+
 
 
 

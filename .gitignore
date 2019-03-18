@@ -8,3 +8,5 @@ rsconnect
 *.log
 *.tex
 *.rds
+*.md
+*.html
