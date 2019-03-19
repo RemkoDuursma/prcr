@@ -1,0 +1,921 @@
+# Data visualization with base graphics {-}
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+suppressPackageStartupMessages(library(plotrix))
+suppressPackageStartupMessages(library(RColorBrewer))
+suppressPackageStartupMessages(library(scales))
+suppressPackageStartupMessages(library(lgrdata))
+suppressPackageStartupMessages(library(tibble))
+suppressPackageStartupMessages(library(sciplot))
+suppressPackageStartupMessages(library(magicaxis))
+```
+
+## The R graphics system
+
+The graphics system in R is very flexible: just about every aspect of your plot can be  precisely controlled. However, this brings with it a serious learning curve - especially when you want to produce high quality polished figures for publication. In this chapter, you will learn to make simple plots, and also to control different aspects of formatting plots. The following focus on the basic built-in graphics system in R, known as the `base` graphics system. 
+
+
+## Choosing a plot type
+
+The following table summarizes a few important plot types. More specialized plot types, as well as very brief introductions to alternative plotting packages, are given in Section~\ref{sec:specialplots}.
+
+\begin{tabular}{l | l}
+Function & Graph type \\ \hline
+`plot` & Scatter plots and various others (Section~\ref{sec:plotfunction}) \\
+`barplot` & Bar plot (including stacked and grouped bar plots) (Section~\ref{sec:barplot}) \\
+`hist` & Histograms and (relative) frequency diagrams (Section~\ref{sec:hist}) \\
+`curve` & Curves of mathematical expressions (Section~\ref{sec:hist}) \\
+`pie` & Pie charts (for less scientific uses) (Section~\ref{sec:piesbox}) \\
+`boxplot` & Box-and-whisker plots (Section~\ref{sec:boxplot})\\
+`symbols` & Like scatter plot, but symbols are sized by another variable (Section~\ref{sec:symbolplot}) \\
+\end{tabular}
+
+### Using the `plot` function {#plotfunction}
+
+
+There are two alternative ways to make a plot of two variables `X` and `Y` that are contained in a dataframe called `dfr` (both are used interchangeably):
+
+```{r eval=FALSE}
+# Option 1: plot of X and Y
+with(dfr, plot(X,Y))
+
+# Option 2: formula interface (Y 'as a function of' X)
+plot(Y ~ X, data=dfr)
+```
+
+The type of plot produced by this basic command, using the generic `plot` function, depends on the variable type of `X` and `Y`. If both are numeric, a simple scatter plot is produced (see Section~\ref{sec:finetuning}). If `Y` is numeric but `X` is a factor, a boxplot is produced (see Section~\ref{sec:boxplot}). If only one argument is provided and it is a data frame with only numeric columns, all possible scatter plots are produced (not further described but see `?plot.data.frame`). And finally, if both `X` and `Y` are factor variables, a mosaic plot is produced (not further described in detail but see Section~\ref{sec:logistic} and `plot.factor`).
+
+Each of these four options is shown in Fig.~\ref{fig:plotdefault} (code not included).
+
+```{r plotdefault, fig.width=3.5, fig.height=3.5, echo=FALSE, fig.cap="Four possible outcomes of a basic call to \`plot`, depending on whether the Y and X variables are numeric or factor variables. The term 'numeric dataframe' means a dataframe where all columns are numeric.", fig.show='hold'}
+par(cex=0.9, cex.lab=0.9, cex.axis=0.8, cex.main=0.9, font.main=3)
+data(allometry)
+data(titanic)
+
+plot(height ~ diameter, data=allom, main="numeric vs. numeric")
+plot(diameter ~ species, data=allom, main="numeric vs. factor")
+plot(allom[,2:4], main="numeric dataframe")
+plot(as.factor(Survived) ~ PClass, data=titanic, ylab="Survived", main="factor vs. factor")
+```
+
+
+
+
+### Bar plots {#barplot}
+
+
+While simple barplots are easy in R, advanced ones (multiple panels, groups of bars, error bars) are more difficult. For those of you who are skilled at making complex barplots in some other software package, you may not want to switch to R immediately. Ultimately, though, R has greater flexibility, and it is easier to make sure plots are consistent. 
+
+The following code makes a simple bar plot, using the default settings (Fig. \@ref(fig:simplebarplot)):
+```{r simplebarplot, opts.label="smallsquare", fig.cap='Simple bar plot with default settings'}
+nums <- c(2.1,3.4,3.8,3.9,2.9,5)
+barplot(nums)
+```
+
+Very often, we like standard errors on our bar plots. Unfortunately, this is slightly awkward in basic R. 
+
+The easiest option is to use `barplot2` in the `gplots` package, but it provides limited customization of the error bars. Another, more flexible, solution is given in the example below. Here, we use `barplot` for the bars, and `plotCI`  for the error bars (from the `plotrix` package). This example also introduces the `tapply` function to make simple tables, we will return to this in Section \@ref(tapply).
+
+If you want the means and error bars to be computed by the function itself, rather than provide them as in the example below, refer to Section \@ref(sciplot).
+
+The following code produces Fig.~\ref{fig:barplot2}.
+
+```{r barplot2, opts.label="smallsquare", fig.cap='Simple bar plot with error bars (shown are means +/- one standard deviation).'}
+
+# Read data, if you haven't already
+data(cereals)
+
+# Gets means and standard deviation of rating by cereal manufacturer:
+ratingManufacturer <- with(cereal, tapply(rating, Manufacturer, FUN=mean))
+ratingManufacturerSD <- with(cereal, tapply(rating, Manufacturer, FUN=sd))
+
+# Make bar plot with error bars. Note that we show means +/- one standard deviation.
+# Read the help function ?plotCI to see what the additional arguments mean (pch, add).
+library(plotrix)
+b <- barplot(ratingManufacturer, col="white", width=0.5, space=0.5, ylim=c(0,80))
+plotCI(b, ratingManufacturer, uiw=ratingManufacturerSD, add=TRUE, pch=NA)
+```
+
+Finally, to make 'stacked' bar plots, see the example in Section \@ref(piesbox).
+
+### Histograms and curves {#hist}
+
+The `hist` function by default plots a frequency diagram, and computes the breaks automatically. It is also possible to plot a density function, so that the total area under the bars sums to unity, as in a probability distribution. The latter is useful if you want to add a curve representing a univariate distribution. 
+
+Consider the following example, which plots both a frequency diagram and a density plot for a sample of random numbers from a normal distribution. (See Chapter \@ref(basic) for background on the functions `dnorm` and `rnorm`.)
+
+This example uses the `par` function to change the layout of the plot. We'll return to this in Section \@ref(changelayout).
+
+This code produces Fig. \@ref(fig:histplot1).
+
+```{r histplot1, opts.label="wide", fig.cap='Two histogram examples for some normally distributed data.'}
+# Some random numbers:
+rannorm <- rnorm(500)
+
+# Sets up two plots side-by-side.
+# The mfrow argument makes one row of plots, and two columns, see ?par.
+par(mfrow=c(1,2))
+
+# A frequency diagram
+hist(rannorm, freq=TRUE, main="")
+
+# A density plot with a normal curve
+hist(rannorm, freq=FALSE, main="", ylim=c(0,0.4))
+curve(dnorm(x), add=TRUE, col="blue")
+```
+
+```{block2 type="rmdtry"}
+We also introduced the `curve` function here. It can plot a curve that represents a function of `x`. For example, try this code yourself : `curve(sin(x), from=0, to=2*pi)`
+```
+
+
+### Pie charts {#piesbox}
+
+
+The final two basic plotting types are pie charts and box plots. It is recommended you don't use pie charts for scientific publications, because the human eye is bad at judging relative area, but much better at judging relative lengths. So, barplots are preferred in just about any situation. Take the following example, showing the polls for 12 political parties in the Netherlands.
+
+Most people will say that the fraction of voters for the smaller parties is exaggerated in the pie chart.
+
+This code produces Fig. \ref@(electionplot).
+
+```{r electionplot, opts.label="wide", fig.cap='A stacked bar and pie chart for the election poll data.'}
+# Election poll data
+data(dutchelection)
+
+# A subset for one date only (Note: unlist makes this into a vector)
+percentages <- unlist(dutchelection[6, 2:ncol(dutchelection)])
+
+# Set up two plots side-by-side
+par(mfrow=c(1,2))
+
+# A 'stacked' bar plot. 
+# the matrix() bit is necessary here (see ?barplot)
+# Beside=FALSE makes this a stacked barplot.
+barplot(matrix(percentages), beside=FALSE, col=rainbow(12), ylim=c(0,100))
+
+# And a pie chart
+pie(percentages, col=rainbow(12))
+```
+
+
+```{block2 type="rmdtry"}
+Run the (barplot) code above to generate a stacked barplot. Now, set `beside=TRUE` and compare the result.
+
+```
+
+
+What if we want to compare different timepoints to see whether the support for each political party is changing? To produce multiple stacked barplots using the `barplot` function, we need to convert the way that the data are stored from a dataframe to a matrix. Then, because the `barplot` function creates each stack in the barplot from the columns of the matrix, we need to transpose the matrix so that the data for different dates are in separate columns and the data for different parties are in separate rows.
+
+```{r electionplotbydate, opts.label="smallsquare", fig.cap='A stacked bar chart for the election poll data at two timepoints.'}
+
+# A subset for the first and last dates
+percentages2 <- dutchelection[c(1, nrow(dutchelection)), -1]
+
+# Convert the resulting dataframe to a matrix
+percentages2 <- as.matrix(percentages2)
+
+# change the rownames to represent the dates at those two timepoints
+rownames(percentages2) <- dutchelection[c(1, nrow(dutchelection)), 'Date']
+
+# A 'stacked' bar plot for two timepoints. 
+# the t() bit transposes the party data from columns to rows
+# beside=FALSE makes this a stacked barplot.
+# the xlim argument creates extra space on the right of the plot for the legend
+barplot(t(percentages2), beside=FALSE, col=rainbow(12), ylim=c(0,100), 
+        xlim=c(0, 4), legend=colnames(percentages2))
+
+```
+
+
+### Box plots {#boxplot}
+
+
+Box plots are convenient for a quick inspection of your data. Consider this example, where we use formula notation to quickly plot means and ranges for the sodium content of cereals by manufacturer. 
+
+This code produces Fig. \@ref(fig:simpleboxplot).
+
+```{r simpleboxplot, opts.label="smallsquare", fig.cap='A simple box plot for the cereal data.'}
+data(cereals)
+boxplot(sodium ~ Manufacturer, data=cereals, ylab="Sodium content", xlab="Manufacturer")
+```
+
+
+## Fine-tuning the formatting of plots {#finetuning}
+
+### A quick example
+
+We'll start with an example using the `allom` data. First, we use the default formatting, and then we change a few aspects of the plot, one at a time. We will explain the settings introduced here in more detail as we go along. This code produces Fig. \@ref(fig:allomplot1), a simple scatter plot:
+
+```{r allomplot1, opts.label="smallsquare", fig.cap='Simple scatter plot with default settings'}
+# Read data
+data(allometry)
+
+# Default scatter plot
+with(allometry, plot(diameter, height, col=species))
+```
+
+Now let's make sure the axis ranges start at zero, use a more friendly set of colours, and a different plotting symbol.
+
+This code produces Fig. \@ref(fig:allomplot2). Here, we introduce `palette`, a handy way of storing colours to be used in a plot. We return to this in the next section.
+
+```{r allomplot2, opts.label="smallsquare", fig.cap='Simple scatter plot : changed plotting symbol and X and Y axis ranges.'}
+palette(c("blue","red","forestgreen"))
+with(allometry, plot(diameter, height, col=species,
+                 pch=15, xlim=c(0,80), ylim=c(0,50)))
+```
+
+Notice that we use `species` (a factor variable) to code the colour of the plotting symbols. More about this later in this section.
+
+For this figure it is useful to have the zero start exactly in the corner (compare the origin to previous figure.) To do this we use `xaxs` and `yaxs`. Let's also make the X-axis and Y-axis labels larger (with `cex.lab`) and print nicer labels (with `xlab` and `ylab`).
+
+Finally, we also add a legend (with the `legend` function.)
+
+This code produces Fig. \@ref(fig:allomplota).
+
+```{r allomplota, opts.label="smallsquare", fig.cap='Simple scatter plot : many settings customized.'}
+par(xaxs="i", yaxs="i",  cex.lab=1.4)          
+palette(c("blue","red","forestgreen"))
+plot(height ~ diameter, col=species, data=allometry, 
+                 pch=15, xlim=c(0,80), ylim=c(0,50),
+                 xlab="Diameter (cm)",
+                 ylab="Height (m)")
+# Add a legend
+legend("topleft", levels(allometry$species), pch=15, col=palette(), title="Species")
+```
+
+
+
+### Customizing and choosing colours {#colours}
+
+You can change the colour of any part of your figure, including the symbols, axes, labels, and background. R has many built-in colours, as well as a number of ways to generate your own set of colours.
+
+As we saw in the example above, it is quite handy to store a set of nice colours in the `palette` function. Once you have stored these colours they are automatically used when you colour a plot by a factor. As the default set of colours in R is very ugly, do choose your own set of colours before plotting. You can also choose specific colors from your palette. The following example would plot symbols using the 3rd colour in your palette (resulting graph not shown).
+
+```{r eval=FALSE}
+plot(x,y, col=3)
+```
+
+To pick one or more of the 657 built-in colours in R, this website is very useful : <http://research.stowers-institute.org/efg/R/colour/Chart/>, *especially* the link to a PDF at the top, which lists the colours by name. You can also use the built-in `demo` function to show the colours,
+
+```{r eval=FALSE}
+# Follow instructions in the console when running this command.
+demo(colors)
+```
+
+The following is an example `palette`, with some hand-picked colours. It also shows one way to plot your current palette.
+
+```{r fig.height=2.3, out.width='0.8\\linewidth'}
+palette(c("blue2","goldenrod1","firebrick2","chartreuse4",
+"deepskyblue1","darkorange1","darkorchid3","darkgrey",
+"mediumpurple1","orangered2","chocolate","burlywood3",     
+"goldenrod4","darkolivegreen2","palevioletred3", 
+"darkseagreen3","sandybrown","tan",            
+"gold","violetred4","darkgreen"))
+
+# A simple graph showing the colours.
+par(cex.axis=0.8, las=3)
+n <- length(palette())
+barplot(rep(1,n),
+        col=1:n,
+        names.arg=1:n,axes=FALSE)
+```
+
+```{r echo=FALSE}
+palette("default")
+```
+
+#### Ranges of colours
+
+R also has a few built-in options to set a range of colours, for example from light-grey to dark-grey, or colours of the rainbow.
+
+A very useful function is `colorRampPalette`, see its help page and the following examples:
+
+```{r redbluefunviz}
+# Generate a palette function, with colours in between red and blue:
+redbluefun <- colorRampPalette(c("red","blue"))
+
+# The result is a function that returns any number of colours interpolated
+# between red and blue.
+# For example, set the palette to 10 colouts ranging from red to blue:
+palette(redbluefun(10))
+```
+
+Other functions that are useful are `rainbow`, `heat.colors`, `grey`, and so on (see help page for `rainbow` for a few more). The `RColorBrewer` package also contains the `brewer.pal` function, which helps to generate palettes that are suitable for different types of graphics requiring scales of light and dark colours or highly contrasting colours. It even has functionality for selecting colour schemes that are 'colour-blind friendly', for example:
+
+```{r echo=FALSE, opts.label="smallsquare"}
+library(RColorBrewer)
+display.brewer.all(type="div", colorblindFriendly = TRUE)
+```
+
+```{block2 type="rmdtry"}
+Look at `?grey` and figure out how to generate a palette of 50 shades of grey.
+```
+
+
+
+Here is an example where it might be handy to use a range of colours. We use the `hfemet2008` data, which includes weather data for a weather station near Sydney. What is the relationship between air temperature (`Tair`), vapour pressure deficit (`VPD`) and relative humidity? Here is a nice way to visualize this relationship between three variables.
+
+This code produces Fig. \@ref(fig:tairvpdplot). Here we use also the `cut` function, which was introduced in Section \@ref(workingfactors).
+
+```{r tairvpdplot, opts.label="smallsquare", fig.cap='Relationship between air temperature, vapour pressure deficit and relative humidity at the HFE.'}
+# Read data.
+data(hfemet2008)
+
+# Make a factor variable with 10 levels of relative humidity.
+hfemet2008$RHbin <- cut(hfemet2008$RH, breaks=10)
+
+# Look at the levels: they are from low RH to high RH
+levels(hfemet2008$RHbin)
+
+# Set colours correspondingly, from red to blue.
+blueredfun <- colorRampPalette(c("red","blue"))
+palette(blueredfun(10))
+
+# Plot VPD and Tair, with the colour of the symbol varying by RH.
+# Also set small plotting symbols.
+par(cex.lab=1.3)
+with(hfemet2008, plot(Tair, VPD, pch=19, cex=0.5, col=RHbin))
+
+# Finally, add a legend:
+legend("topleft", levels(hfemet2008$RHbin), fill=palette(), title="RH")
+```
+
+#### Semi-transparent colours
+
+If your plot contains a lot of data points, a semi-transparent colour can be useful, so you can see points that would otherwise be obscured. 
+
+This example makes Fig. \@ref(fig:alphafig), using the `scales` package.
+
+```{r echo=FALSE}
+set.seed(101)
+```
+
+```{r alphafig, fig.cap='A plot of some random numbers, using a semi-transparent colour.', opts.label="smallsquare"}
+# Load the scales package for the 'alpha' function.
+library(scales)
+
+# Make a large dataset with random numbers
+x <- rnorm(1000)
+y1 <- x + rnorm(1000, sd=0.5)
+y2 <- -x + rnorm(1000, sd=0.6)
+
+# Use alpha() like this to make a colour transparent,
+# the numeric value indicates how transparent the result should be 
+# (lower values = more transparent)
+plot(x,y1,pch=19,col=alpha("blue",0.3))
+points(x,y2, pch=19, col=alpha("red",0.3))
+```
+
+
+
+### Customizing symbols and lines
+
+Using the `plot` function, you can make both scatter plots and line plots, and combinations of both. Line types (solid, dashed, thickness, etc.) and symbols (circles, squares, etc.) can be customized. 
+
+Consider these options when plotting a vector of observations (makes Fig. \@ref(fig:typeexamples)).
+
+```{r typeexamples, opts.label="largesquare", fig.cap='Four options for the plotting type (with type=).'}
+X <- 1:8
+Y <- c(4,5.5,6.1,5.2,3.1,4,2.1,0)
+par(mfrow=c(3,2))
+plot(X,Y, type='p', main="type='p'")
+plot(X,Y, type='o', main="type='o'")
+plot(X,Y, type='b', main="type='b'")
+plot(X,Y, type='l', main="type='l'")
+plot(X,Y, type='h', main="type='h'")
+plot(X,Y, type='s', main="type='s'")
+```
+
+For symbols, use the `pch` argument in `plot`. These are most quickly set with a number, see the table on the help page `?points`.
+
+A few examples with the `pch` argument are shown here. This code produces Fig. \@ref(fig:pchexamples).
+
+```{r pchexamples, opts.label="largesquare", fig.cap='Four options for the plotting symbols (with pch).', echo=-1}
+# set up a 2 by 2 grid of figures
+par(mfrow=c(2,2))
+
+# Open triangles:
+with(allometry, plot(diameter, height, pch=2, col="red"))
+
+# Red solid squares:
+with(allometry, plot(diameter, height, pch=15, col="red"))
+
+# Filled circles, with a black edge, and a grey fill colour:
+with(allometry, plot(diameter, height, pch=21, bg="grey", col="black"))
+
+# Custom plotting symbol (any text works - but only one character)
+with(allometry, plot(diameter, height, pch="W"))
+```
+
+
+#### Setting symbol type by a factor level
+
+Finally, it gets more interesting if we vary the plotting symbol by a factor, like we did with colours in the previous section. Look at this simple example that extends Fig. \@ref(fig:allomplot2).
+
+This code produces Fig.~\@ref(allomplot4). Note how we set up a vector of plotting symbols (1,2 and 15), and use the factor `species` to index it. To recall indexing, read Section \@ref(vectorindexing).
+
+```{r allomplot4, opts.label="smallsquare", fig.cap='Scatter plot : vary colour and symbol by species'}
+palette(c("blue","red","forestgreen"))
+with(allom, plot(diameter, height, 
+                 col=species,
+                 pch=c(1,2,15)[species], 
+                 xlim=c(0,80), ylim=c(0,50)))
+
+```
+
+```{block2 type="rmdtry"}
+Modify the code above so that the three species are plotted in three different shades of `grey`, with filled circles. Also add a `legend`, and increase the size of the axis labels.
+```
+
+
+
+### Formatting units, equations and special symbols {#expressions}
+
+In scientific publications we frequently need sub- and superscripts in our axis labels (as in $m^{-2}$). Luckily, R has a flexible way of specifying all sorts of expressions in axis labels, titles, and legend texts. We have included a few examples here, and a full reference is given in the help page `?plotmath`. It is especially helpful to run `demo(plotmath)`. Recall that in RStudio, you can look at all your previous plots using the arrows near the top-left of the figures.
+
+```{r echo=FALSE}
+plotexpr <- function(x,cex=1.2,...){
+  op <- par(mar=c(0,0,0,0))
+  plot(1, xlim=c(0,1), ylim=c(0,1),ann=FALSE, axes=FALSE, type='n')  
+  text(0,0.5,x,pos=4,cex=cex,...)
+  par(op)
+}
+```
+
+```{r eval=FALSE}
+expression(Infected~area~(cm^2))
+```
+
+```{r fig.height=0.5, fig.width=6, fig.show='asis',echo=FALSE}
+plotexpr(expression(Infected~area~(cm^2)))
+```
+
+
+
+```{r eval=FALSE}
+expression(Photosynthesis~~(mu*mol~m^-2~s^-1))
+```
+
+```{r fig.height=0.5, fig.width=6, fig.show='asis',echo=FALSE}
+plotexpr(expression(Photosynthesis~~(mu*mol~m^-2~s^-1)))
+```
+
+
+```{r eval=FALSE}
+expression(Temperature~~(degree*C))
+```
+
+```{r fig.height=0.5, fig.width=6, fig.show='asis',echo=FALSE}
+plotexpr(expression(Temperature~~(degree*C)))
+```
+
+
+
+#### Special text symbols
+
+If you need a very special character -- one that is not a Greek letter or a subscript, or is otherwise covered by `plotmath` -- anything can be plotted if you know the Unicode number (<http://en.wikipedia.org/wiki/Unicode_symbols>). You can plot those with this short example (results not shown):
+
+```
+expression(Permille~"\u2030")
+```
+
+The four digit (or letter) Unicode follows 'u'.
+
+### Resetting the graphical parameters
+
+Every time you use `par` to set some graphical parameter, it keeps this setting for all subsequent plots. In RStudio, the following command can be used to reset `par` to the default values. *Warning:* this will delete all the plots you have saved in the plot history.
+
+```{r eval=FALSE}
+dev.off()
+```
+
+
+
+
+### Changing the font {#changefont}
+
+There are (only) three basic built-in fonts in R, but you can load many more with the help of `windowsFonts` (on Windows only). The fonts can be accessed with the `family` argument. You can set this argument in `plot` (for axis titles), `text` (for adding text to plots), as well as `par` (to change the font permanently for all text).
+
+Note that in `?par`, the `font` argument refers to "italic", "bold", and so on (see below). 
+
+```{r eval=FALSE}
+# A font with a serif (looks a bit like Times New Roman)
+plot(x,y, xlab="some label", family="serif")
+```
+
+Using `windowsFonts`, you can use *any* font that is loaded in Windows (that is, all the fonts you can see in MS Word). *Note*: this does not work when making a PDF. For more flexibility, consider using the `showtext` package. 
+
+```{r eval=FALSE}
+# Define font(s)
+windowsFonts(courier=windowsFont("Courier New"),
+             verdana=windowsFont("Verdana"))
+
+# Then you can use,
+plot(x,y, xlab="some label", family="courier")
+```
+
+
+```{block2 type="rmdreading"}
+If you are interested in using a wider range of fonts, the `showtext` package can help you out. There is a description of what `showtext` does from its creator, Yixuan Qiu, at <https://www.r-project.org/nosvn/pandoc/showtext.html>. Yixuan has also posted a helpful guide to using `showtext` in markdown documents on his blog: <http://statr.me/2014/07/showtext-with-knitr/>.
+```
+
+
+
+#### Italic and bold
+
+The `font` argument can be used to set text to normal face (1), bold (2), italic (3) or bold italic (4). Simply use the following code, changing the number as appropriate:
+
+```{r eval=FALSE}
+# A plot with a title in italics
+plot(x,y, main="Italic text", font=3)
+```
+
+
+
+### Adding elements to a current plot {#addingtoplot}
+
+Suppose you have made a plot, and want to add points or lines to the current plot, without opening a new window. For this, we can use the `points` function (*Note:* this can also be used to add lines, using the `type='l'` setting).
+
+Consider the following example. Instead of plotting all the data at once, we plot the data for one group, and then add the data for each following group using `points`.
+
+The following code produces Fig. \@ref(fig:addpoints).
+
+```{r addpoints, opts.label="smallsquare", fig.cap='Adding lines to an existing plot.'}
+# Read the Dutch election poll data
+data(dutchelection)
+dutchelection$Date <- as.Date(dutchelection$Date)
+
+# Plot the first variable (make sure to set the Y axis range 
+# wide enough for all the other data!)
+plot(VVD ~ Date, data=dutchelection, type='l', col="blue", ylim=c(0,40),
+     ylab="Poll result (%)")
+
+# Then add the rest of the results, one at a time.
+points(PvdA ~ Date, data=dutchelection, type='l', col="red")
+points(SP ~ Date, data=dutchelection, type='l', col="red", lty=5)
+points(GL ~ Date, data=dutchelection, type='l', col="forestgreen")
+
+```
+
+
+
+#### Straight lines and text
+
+To place straight lines on a plot, use the following examples (results not shown). For the `abline` function, you may use settings like `lwd` for the thickness of the line, `lty` for line type (dashed, etc.), and `col` for colour.
+
+Using `abline`, it is also straightforward to add regression lines to a plot, as we will see in Section \@ref(simpleregression).
+
+```{r eval=FALSE}
+# Add a vertical line at x=0
+abline(v=0)
+
+# Add a horizontal line at y=50
+abline(h=50)
+
+# Add a line with an intercept of 0 and a slope of 1 
+# (known as a 1:1 line)
+abline(0,1)
+```
+
+Adding text to a plot is achieved with the `text` function. Text can also be added to the margin of a plot with `mtext`. You may also use `expression` as the text to be added (see Section \@ref(expressions)). The drawback of using `text` is that you need to specify the X,Y coordinates manually. What if you just want a quick label on the top left of your figure?
+
+Try this:
+```{r eval=FALSE}
+# Add a bold label 'A' to an existing plot:
+legend("topleft", expression(bold(A)), bty='n', inset=0.01)
+```
+
+
+### Changing the layout {#changelayout}
+
+We have already seen several examples that combine multiple figures in one plot, using `par(mfrow = c(*rows*, *columns*))`. Here is another example, which generates the plot in Fig. \@ref(fig:mfrowplot). See `?par` for more details.
+
+```{r mfrowplot, opts.label="largesquare", fig.cap='Multiple plots within a single plot window.'}
+# Set up 2 rows of plots, and 2 columns using 'mfrow':
+par(mfrow=c(2,2), mar=c(4.1,4.1,0.1,0.1))
+plot(leafarea~height, data=allometry, col=species, xlab='', pch=15)
+plot(leafarea~diameter, data=allometry, col=species, xlab='',ylab='',pch=15)
+plot(branchmass~height, data=allometry, col=species, pch=15)
+plot(branchmass~diameter, data=allometry, col=species, ylab='',pch=15)
+```
+
+This is a relatively simple way to change the layout of plots. We can generate more complex layouts using the `layout` function. The main argument is a matrix indicating the locations of individual plots in space. Using the code below (resulting plot not shown), the first plot will fill the the left side of the plot window, while the next three calls to plot will fill each section on the right side of the window in the order that they are labelled. Further arguments allow for varying the heights and widths of boxes within the layout.
+
+```{r eval=FALSE, tidy=FALSE}
+l <- layout(matrix(c(1,1,1,2,3,4),nrow=3,ncol=2,byrow=F))
+layout.show(l)
+```
+
+```{block2 type="rmdtry"}
+Run the code from the above example. Then, run only the first bit to set up a fresh layout. Then make a series of plots, and see how they fill the layout (*Hint:* you can just run `plot(1)` several times in a row to see what happens).
+```
+
+
+
+### Finding out about more options {#paroptions}
+
+To get the most out of plotting in R, you need a working knowledge of `par` options, which are used to set graphical parameters. We've used some of these already. Here is a summary of a few of the most useful settings, including a few new ones:
+
+
+```{r}
+library(tibble)
+tab <- tribble(~`Graphical parameter`, ~Description,
+               "`pch`", "Sets the type of symbols used in the plot; see `points()` for a list of options.",
+               "`type`", "Sets whether to plot points, lines, both, or something else (see `?plot`.) ",
+               "`col`", "Sets the colour of plotting symbols and lines.",
+               "`lty`", "Sets the line type (1=solid, 2=dashed, etc.)",
+               "`lwd`", "Sets the line width",
+               "`cex`", "Controls the size of text and points in the plot area. Short for 'character expansion', it acts as a multiplier of the default value.",
+               "`cex.axis, cex.lab`", "Character expansion of axes and the labels.",
+               "`cex.main`", "Character expansion of the title of the plot.",
+               "`family`", "Sets the font for labels and titles. Varies by system, but 'serif','sans' and 'mono' should always work.",
+               "`bty`", "Sets the type of box, if any, to be drawn around the plot. Use `bty='n'` for none. ",
+               "`las`", "Sets the orientation of the text labels relative to the axis",
+               "`mar`", "Sets the number of lines in each margin, in the order bottom, left, top, right.",
+               "`xaxs, yaxs`", "Preset functions for calculating axis intervals.",
+               "`xaxp, yaxp`", "Sets the coordinates for tick marks on each axis.",
+               "`xaxt, yaxt`", "Sets axis type, but can also suppress plotting axes by specifying 'n'.")
+               
+knitr::kable(tab)
+```
+
+
+You can choose to set an option with the `par` function, which will apply that setting to any new plots (until you change it again). Alternatively, you can use any of these settings when calling `plot` or `points` to change only the current plot. See this example (output not shown try this yourself).
+
+```{r eval=FALSE}
+# Two ways of setting the size of the X and Y axis labels:
+# 1.
+plot(1:10, 1:10, cex.lab=1.2)
+
+# 2.
+par(cex.lab=2)
+plot(1:10,1:10)
+
+# For the latter, the setting is maintained for the next plot as well.
+plot(1:3, 1:3)
+```
+
+```{block2 type="rmdreading"}
+Keeping on top of all the options associated with `par` can be difficult. The `?par` help page has been dramatically improved in recent years, but can still be a bit too much information. It's very helpful to have some quick references at your fingertips. Take a look <http://www.statmethods.net/advgraphs/parameters.html> from the Quick-R website, and Gaston Sanchez's handy cheat sheet at <http://gastonsanchez.com/resources/2015/09/22/R-cheat-sheet-graphical-parameters/>.
+```
+
+
+## Formatting examples
+
+### Vessel data {#vesselexample}
+
+This example will use a lot of what we learned in this section to fine-tune the formatting of a plot. We will use the `vessel` data. In this dataset, the expectation was that xylem vessel diameters are smaller in the top of the tree than at the bottom. Rather than going straight to statistical analyses (ANOVAs and so on) it is wise to visualize the data first.
+
+The normal workflow for optimizing your plots is to first use the default settings to make sure you are plotting the correct data, and then fine-tuning one aspect of the plot at a time. This can take a while, but the end result should be worth it. Here we show a default histogram, and the fine-tuned version after some work.
+
+The following code produces Fig. \@ref(vesselhist1).
+
+```{r vesselhist1, opts.label="wide", fig.cap='Two simple default histograms'}
+# Read vessel data, and make two datasets (one for 'base' data, one for 'apex' data).
+data(vessel)
+vesselBase <- subset(vessel, position=="base")
+vesselApex <- subset(vessel, position=="apex")
+
+# Set up two figures next to each other:
+par(mfrow=c(1,2))
+
+# Simple histograms, default settings.
+hist(vesselBase$vesseldiam)
+hist(vesselApex$vesseldiam)
+```
+
+Next, we make the two histograms again, but customize the settings to produce a high quality plot. Try to figure out yourself what the options mean by inspecting the help files `?hist`, and `?par`.
+
+This code produces Fig. \@ref(fig:vesselhist2). (To run this code, make sure to read the vessel data first, as shown in the previous example).
+
+```{r vesselhist2, opts.label="wide", fig.cap='Two customized histograms'}
+
+# Fine tune formatting with par()
+par(mfrow=c(1,2), mar=c(5,5,4,1), cex.lab=1.3, xaxs="i", yaxs="i")
+
+# First panel
+hist(vesselBase$vesseldiam, 
+     main="Base",
+     col="darkgrey",
+     xlim=c(0,160), breaks=seq(0,160,by=10),
+     xlab=expression(Vessel~diameter~~(mu*m)),
+     ylab="Number of vessels")
+
+# Second panel
+hist(vesselApex$vesseldiam, 
+     main="Apex",
+     col="lightgrey",
+     xlim=c(0,160), breaks=seq(0,160,by=10),
+     xlab=expression(Vessel~diameter~~(mu*m)),
+     ylab="Number of vessels")
+```
+
+
+### Weather data
+
+Suppose you want to plot more than one variable in a plot, but the units (or ranges)
+are very different. So, you decide to use two axes. Let's look at an example. For more information on how to deal with the date-time class, see Section \@ref(datetime).
+
+This code produces Fig. \@ref(fig:multaxes).
+
+```{r multaxes, opts.label="smallsquare", fig.cap='A default plot with two axes'}
+# Read the hfemet data. Avoid conversion to factors.
+data(hfemet2008)
+
+# Convert to a proper DateTime class:
+library(lubridate)
+hfemet2008$DateTime <- mdy_hm(hfemet2008$DateTime)
+
+# Add the Date :
+hfemet2008$Date <- as.Date(hfemet2008$DateTime)
+
+# Select one day (a cloudy day in June).
+hfemetsubs <- subset(hfemet2008, Date==as.Date("2008-6-1"))
+
+# Plot Air temperature and PAR (radiation) in one plot. 
+# First we make a 'vanilla' plot with the default formatting.
+with(hfemetsubs, plot(DateTime, Tair, type='l'))
+par(new=TRUE)
+with(hfemetsubs, plot(DateTime, PAR, type='l', col="red",
+                      axes=FALSE, ann=FALSE))
+# The key here is to use par(new=TRUE), it produces the next 
+# plot right on top of the old one.
+
+```
+
+Next, we make the same plot again but with better formatting. Try to figure out what everything means by inspecting the help pages `?par`, `?legend`, and `?mtext`, or by changing the parameters yourself, one at a time.
+
+This code produces Fig. \@ref(fig:multaxesbetter).
+  
+```{r multaxesbetter, opts.label="smallsquare", fig.cap='A prettified plot with two axes'}
+
+par(mar=c(5,5,2,5), cex.lab=1.2, cex.axis=0.9)
+with(hfemetsubs, plot(DateTime, Tair, type='l',
+                      ylim=c(0,20), lwd=2, col="blue",
+                      xlab="Time",
+                      ylab=expression(T[air]~~(""^"o"*C))))
+par(new=TRUE)
+with(hfemetsubs, plot(DateTime, PAR, type='l', col="red",
+                      lwd=2,
+                      ylim=c(0,1000),
+                      axes=FALSE, ann=FALSE))
+axis(4)
+mtext(expression(PAR~~(mu*mol~m^-2~s^-1)), side=4, line=3, cex=1.2)
+legend("topleft", c(expression(T[air]),"PAR"), lwd=2, col=c("blue","red"),
+       bty='n')
+
+```
+
+
+
+## Special plots {#specialplots}
+
+In this section, we show some examples of special plots that might be useful. There are also a large number of packages that specialize in special plot types, take a look at the `plotrix` and `gplots` packages, for example.
+
+
+### Scatter plot with varying symbol sizes {#symbolplot}
+
+The `symbols` function is an easy way to pack more information in to a scatter plot, by providing a way to scale the size of the plotting symbols to another variable in the dataframe. Consider the following example:
+
+This code produces Fig. \@ref(fig:symplot).
+
+```{r symplot, opts.label="smallsquare", fig.cap='Cereal data with symbols size as a function of fat content and colour as function of whether the cereal is served hot (red) or cold (blue).'}
+# Read data
+data(cereals)
+
+# Choose colours
+# Find the order of factor levels, so that we can assign colours in the same order
+levels(cereals$Cold.or.Hot)
+
+# We choose blue for cold, red for hot
+palette(c("blue","red"))
+
+# Make the plot
+with(cereals, symbols(fiber, potass, circles=fat, inches=0.2, bg=as.factor(Cold.or.Hot),
+                     xlab="Fiber content", ylab="Potassium content"))
+```
+
+
+### Bar plots of means with confidence intervals {#sciplot}
+
+A very common figure in publications is to show group means with confidence intervals, an ideal companion to the output of an ANOVA analysis. Unfortunately, it is somewhat of a pain to produce these in R, but the `sciplot` package has made this very easy to do, with the `bargraph.CI` function.
+
+Let's look at an example using the pupae data.
+
+This code produces Fig. \@ref(fig:pupaebars).
+
+```{r pupaebars, opts.label="smallsquare", fig.cap='Mean frass by temperature and CO2 treatment made with bargraph.CI()'}
+# Make sure to first install the sciplot package.
+library(sciplot)
+
+# Read the data, if you haven't already
+data(pupae)
+
+# A fairly standard plot. See ?bargraph.CI to customize many settings.
+with(pupae, 
+     bargraph.CI(T_treatment, Frass, CO2_treatment, legend=TRUE, ylim=c(0,2.5)))
+```
+
+
+### Log-log axes
+
+When you make a plot on a logarithmic scale, R does not produce nice axis labels. One option is to use the `magicaxis` package, which magically makes pretty axes for log-log plots. Consider this example, which makes Fig. \@ref(fig:magicaxis).
+
+```{r magicaxis, opts.label="smallsquare", fig.cap='Branch mass versus tree diameter on a log-log scale. The axes were produced with the magicaxis package.'}
+# Allometry data
+data(allometry)
+
+# Magic axis package
+library(magicaxis)
+
+# Set up some graphical parameters, like axis label size.
+par(cex.lab=1.2)
+
+# Log-log plot of branch mass versus diameter
+# Here, we set axes=FALSE to suppress the axes
+with(allometry, plot(log10(diameter), log10(branchmass),
+                 xlim=log10(c(1,100)),
+                 ylim=log10(c(1,1100)),
+                 pch=21, bg="lightgrey",
+                 xlab="Diameter (cm)", ylab="Branch mass (kg)",
+                 axes=FALSE))
+
+# And then we add axes.
+# unlog='xy' will make sure the labels are shown in the original scale,
+# and we want axes on sides 1 (X) and 2 (Y)
+magaxis(unlog='xy', side=c(1,2))
+
+# To be complete, we will add a regression line,
+# but only to cover the range of the data.
+library(plotrix)
+ablineclip(lm(log10(branchmass) ~ log10(diameter), data=allometry),
+           x1=min(log10(allometry$diameter)),
+           x2=max(log10(allometry$diameter)))
+
+# And add a box
+box()
+```
+
+
+
+
+
+## Exporting figures {#exportfigures}
+
+There is a confusing number of ways to export figures to other formats, to include them in Word documents, print them, or finalize formatting for submission to a journal. Unfortunately, there is no one perfect format for every application. One convenient workflow is to use R markdown, as discussed in Chapter \@ref(reporting). This allows you to embed figures directly into Word documents or PDF files. It also allows you to re-create the figures as needed when you update your analysis or data.
+
+### Saving figures
+
+You can save figures using the 'Export' button (as pointed out in Section \@ref(rstudioplot)). A better way, though, is to make exporting your figures part of your script. For this purpose, you can use the `dev.copy2` type functions.
+
+In this example, we make both a PDF and EPS of a figure. Here, we open up a plotting window (of a specified size, in this case 4 by 4 inches), make the plot, and save the output to an EPS and a PDF file.  
+
+```{r eval=FALSE}
+windows(4,4)
+par(mar=c(5,5,2,2))
+plot(x,y)
+dev.copy2pdf(file="Figure1.pdf")
+dev.copy2eps(file="Figure1.eps")
+```
+
+
+### Inserting figures in Word or Powerpoint
+
+Copy and pasting figures into Word tends to result in a loss of quality. A better approach is to save files as PDFs and submit those with your manuscript. (And better yet, use markdown to incorporate your text, code and figures into a single PDF!)
+
+If you do need to insert figures into Powerpoint, the easiest and safest way to do this is to copy-paste the figure straight into Powerpoint. In RStudio, follow these steps:
+
+\begin{enumerate}
+\item In the plotting window in RStudio, click 'Export'
+\item Select 'Copy plot to clipboard...'
+\item Select 'Metafile' just below the figure
+\item Then click 'Copy plot'.
+\end{enumerate}
+
+Then, in Powerpoint, paste (Ctrl-V).
+
+
+
+### Sharing figures
+
+When sharing a figure with someone by email or another electronic method, PDF format is always preferred, because the quality of the figure in PDF is optimal. This is the case for viewing the plot on screen, as well as printed. See the previous section on how to generate a PDF of a figure.
+
+### Plots with many points or lines
+
+When the above two options give you excessively large file sizes (for example, maps, or figures with tens of thousands of symbols or line pieces), consider converting the figure to a 'bitmap' type, such as `jpeg`, `png` or `tiff`. Care must be taken that you use a high enough resolution to allow a decent print quality.
+
+To make a fairly large `.png`, do:
+
+```{r eval=FALSE}
+# First make a plot..
+plot(1)
+
+# Example from ?dev.print
+# Make a large PNG file of the current plot.
+dev.print(png, file = "myplot.png", width = 1024, height = 768)
+```
+
+The main drawback of this type of plot is that the character sizes, symbol sizes and so on do not necessarily look like those on your screen. You will have to experiment, usually by making the figure a few different times, to find the right `par` settings for each type of output.
+
+In practice, it may be quicker and safer to make a PDF first, and then convert the PDF to a tiff file with another software package (for instance, Adobe Illustrator).
+
