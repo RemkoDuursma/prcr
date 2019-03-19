@@ -10,34 +10,18 @@ suppressPackageStartupMessages(library(scales))
 
 ## Introduction
 
-NOT a manual of either, and less detail on both since resources elsewhere are perfect.
-But see appendix for base plotting.
+Data visualization is an integral part of any data analytical project. We use data viz to spot patterns in data, check model assumptions, communicate findings, and to convince the audience that our analysis and conclusions make sense. Data viz is not something you only do at the end, but we switch cycle between analysis and visualization. It is therefore not only an important skill to make beautiful visualizations in the final communication of your results, but also to be able to make quick & dirty graphs at any step in the analysis.
 
-We do have a list of DO's and DONT's, one for visualizing data, and one for making reports with rmarkdown.
+We do not only communicate with visualizations, but like to combine text, tables, figures, images, and well-formatted text in reports. We now have a powerful tool available in R, the `rmarkdown` document - a flexible toolkit to generate documents containing all results from R (with or without the code). These reports ensure that the results you see are made from the code in the document, we never have to ask: which version of my code produced those results? We already used `rmarkdown` in Chapter \@ref(intro), but go a few steps further here and provide useful tips & tricks.
 
-We also have a list of resources.
+This chapter is different from the rest: we do not provide a complete beginners guide to either data visualization with `ggplot2`, or reporting with `rmarkdown`. We point to online resources for getting started, including comprehensive manuals, and galleries of examples. Instead, we focus on pointing out typical difficulties when getting started with these tools.
 
-
-### Should you use R for graphics?
-
-- yes because flexible, **reproducible code**
-- yes because even if you don't end up using R for publication, report, or fancy presentation - you still need visualization skills when doing analysis
-- R graphs were not originally designed for interactivity, but there are many recent inventions (shiny, ggiraph) and ports to Javascript-based graphing tools (plotly, highchartr, d3) 
-- R not great at 3D graphs, but as a data analyst you probably should not use many of those (but see rgl!)
-- No when you prefer to modify your figure by hand, dragging items, clicking on things to change color etc. Perhaps you have your favorite tool to make figures already.
+For data visualization, also be aware that the entire book in front of you includes many figures produced with `ggplot2` or base graphics. As always, learning from example is the best way.
 
 
 ## Visualizing data {#visualizing}
 
-### Tips
-
-- do a lot of visualizing, all the time, make it a habit rather than what you do at the end. you understand your data this way (and mostly this way)
-- most people won't believe your cool results unless it is shown in a figure, **clearly**. I don't care about your tables or your dense statistical results (those you put at the end).
-- spend time formatting the figures so they don't look like anyone else's. This gives personal flavor to your visualizations. In ggplot2, you can also just pick a theme you like and stick with it (`ggthemes` link especially), and please do not use the default color scheme or background (also because it is hideous).
-- when stuck, quickly google what to do. I do this all the time. Do not read the help files except `?par` for base graphics, otherwise quickly do a web search. Everything can be found (this was a different affair in 2001).
-
-
-### base or ggplot2? Why not both?
+### Base graphics or `ggplot2`?
 
 R comes with two graphics systems, that cannot be used together. The `base` graphics system has been part of R from the start, and continues to be used today. The second system is the `grid` system, and the most popular package that uses this system is `ggplot2`, a package in development for over 10 years that now sees very wide application, and numerous add-ons and extensions. 
 
@@ -45,18 +29,19 @@ Personally, I have used base graphics since 2001, and resisted switching to `ggp
 
 You can read around the web for many opinionated accounts on why we should use `ggplot2` or the other ([for example here](http://varianceexplained.org/r/why-I-use-ggplot2/)). 
 
-- use ggplot2 if you are a newcomer, easiest to make more complex graphs, reasons include:
-  - much easier to make multi-panel, multi-line, multi-everything figures than with base graphics. Very notable examples include multi-panel figures with grouped bar plots, adding regression and smoothed lines *with* confidence bands to plots, overlapping area plots,  histograms and ribbons. 
-  - easier to achieve consistent figure formatting with the use of themes
-  - lots of graph types are easier to plot than with base (where you often have to find additional packages)
-- Many packages include some built-in plotting function, usually in base graphics. It is usually much easier to use those functions directly than to implement the figure from scratch in `ggplot2`. Examples include `car::residualPlot`, `visreg::visreg`, and many others.
-- Sometimes base is easier, especially when you are experimenting. To plot a mathematical function, we can do `curve(x^3, from=-1, to=1)` - not so easy in `ggplot2`. Also `ggplot2` has no support for 3D graphs (but we don't use those much anyway), base has quite a lot.
-- Use base when you are making a simple plot, and wish to avoid *dependencies*. Keeping dependencies to a minimum will make it more likely your code works in the future, and on someone else's machine.
+A few points to consider:
+
+- Use `ggplot2` if you are a newcomer, because it is easier to make more complex graphs. For example, it is much easier to make multi-panel, multi-line, multi-everything figures than with base graphics. Notable examples include multi-panel figures with grouped bar plots, adding regression and smoothed lines *with* confidence bands to plots, overlapping area plots, histograms and ribbons. All of these plots are possible with base, but usually require more code and more programming.
+- It is generally easier to achieve consistent figure formatting with `ggplot2`, through the use of themes.
+- Many packages include some built-in plotting function, more often than not these use base graphics. It is usually much easier to use those functions directly than to implement the figure from scratch in `ggplot2`. A basic understanding of base graphics is therefore useful in practice.
+- Sometimes, base graphics are easier, especially when you are experimenting and want to make quick and dirty plots. To plot a mathematical function, we can do `curve(x^3, from=-1, to=1)` - this is not so easy in `ggplot2`. 
+- There is no support for 3D graphics in `ggplot2`, base has a number of possibilities. That said, you probably do not want to make many 3D plots.
+- Use base graphics when you are making a simple plot, and wish to avoid *dependencies*. Keeping dependencies to a minimum will make it more likely your code works in the future, and on someone else's machine. The `ggplot2` package is rather stable these days, but has changed dramatically in the past - often breaking old code.
 
 For the reasons mentioned above, in this book we mostly use ggplot2, except when base graphics are a lot easier (that is, use less code).
 
 
-### base graphics
+### Base graphics
 
 In base graphics, we can choose from the following main plotting functions (this list is not complete, especially if you consider add-on packages):
 
@@ -106,9 +91,6 @@ The way that `plot` gives different results depending on data types is both a go
 #### Resources
 
 
-
-
-
 ### ggplot2 {#ggplot2}
 
 The `ggplot2` package is an incredibly rich and powerful toolkit to construct plots. It is far beyond the scope of this book to provide a complete overview of the package, but luckily lots of free online resources are available (see Section \@ref(ggplotresources)).
@@ -125,7 +107,7 @@ data(dutchelection)
 head(dutchelection, 3)
 ```
 
-We cannot really use `ggplot2` when the data are formatted like this. Instead we want to have a dataframe with columns 'Date', 'party', and 'vote_percent', so that we can label the graph by political party. As we will see in Section \@ref(), quite magically we can use `melt` from `reshape2` :
+We cannot really use `ggplot2` when the data are formatted like this. Instead we want to have a dataframe with columns 'Date', 'party', and 'vote_percent', so that we can label the graph by political party. As we will see in Section \@ref(reshaping), quite magically we can use `melt` from `reshape2` :
 
 ```{r message=FALSE}
 library(reshape2)
@@ -136,6 +118,43 @@ head(dutchlong, 3)
 
 
 #### Scatterplot example
+
+
+
+```{r}
+# Minimal
+data(automobiles)
+
+ggplot(automobiles, aes(x = horsepower, y = fuel_efficiency)) +
+  geom_point()
+```
+
+
+
+```{r}
+# Extended
+data(automobiles)
+
+library(ggrepel)
+
+automobiles2 <- mutate(automobiles, 
+       resid = residuals(lm(fuel_efficiency ~ horsepower, 
+                            na.action=na.exclude)))
+
+ggplot(automobiles2, aes(x = horsepower, y = fuel_efficiency,
+                        col = origin, 
+                        label = car_name)) +
+  geom_point(pch = ifelse(abs(automobiles2$resid) > 6, 19, 1)) +
+  geom_text_repel(data = subset(automobiles2, abs(resid) > 6),
+                  show.legend=FALSE) +
+  lims(x = c(0,300), y = c(0,40)) +
+  stat_smooth(method = "lm", se = FALSE) + 
+  scale_colour_tableau() +
+  labs(x = "Horse power (hp)", y = "Fuel use (liters / 100km)") +
+  theme_tufte()
+
+```
+
 
 
 

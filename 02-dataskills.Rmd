@@ -2028,7 +2028,7 @@ dplyr::bind_rows(mydata1, mydata2)
 *Note:* an equivalent function to bind dataframes side-by-side is `cbind`, which can be used instead of `merge` when no index variables are present. However, in this book, the use of `cbind` is discouraged for dataframes as it can lead to problems that are difficult to fix, and in all practical applications a merge is preferable.
 
 
-## Reshaping data
+## Reshaping data {#reshaping}
 
 ### From wide to long
 
