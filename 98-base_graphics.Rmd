@@ -17,18 +17,26 @@ The graphics system in R is very flexible: just about every aspect of your plot 
 
 ## Choosing a plot type
 
-The following table summarizes a few important plot types. More specialized plot types, as well as very brief introductions to alternative plotting packages, are given in Section~\ref{sec:specialplots}.
+The following table summarizes a few important plot types. More specialized plot types, as well as very brief introductions to alternative plotting packages, are given in Section \@ref(specialplots).
 
-\begin{tabular}{l | l}
-Function & Graph type \\ \hline
-`plot` & Scatter plots and various others (Section~\ref{sec:plotfunction}) \\
-`barplot` & Bar plot (including stacked and grouped bar plots) (Section~\ref{sec:barplot}) \\
-`hist` & Histograms and (relative) frequency diagrams (Section~\ref{sec:hist}) \\
-`curve` & Curves of mathematical expressions (Section~\ref{sec:hist}) \\
-`pie` & Pie charts (for less scientific uses) (Section~\ref{sec:piesbox}) \\
-`boxplot` & Box-and-whisker plots (Section~\ref{sec:boxplot})\\
-`symbols` & Like scatter plot, but symbols are sized by another variable (Section~\ref{sec:symbolplot}) \\
-\end{tabular}
+
+```{r echo=FALSE}
+library(tibble)
+
+
+tab <- tribble(~Function, ~`Graph type`,
+               "`plot`", "Scatter plots and various others (Section \\@ref(plotfunction))",
+               "`barplot`", "Bar plot (including stacked and grouped bar plots) (Section \\@ref(barplot))",
+               "`hist`", "Histograms and (relative) frequency diagrams (Section \\@ref(hist))",
+               "`curve`", " & Curves of mathematical expressions (Section \\@ref(hist))",
+               "`pie`", "Pie charts (for less scientific uses) (Section \\@ref(piesbox))",
+               "`boxplot`", "Box-and-whisker plots (Section \\@ref(boxplot))",
+               "`symbols`", "Like scatter plot, but symbols are sized by another variable (Section \\@ref(symbolplot))"
+               )
+
+
+```
+
 
 ### Using the `plot` function {#plotfunction}
 
@@ -43,7 +51,7 @@ with(dfr, plot(X,Y))
 plot(Y ~ X, data=dfr)
 ```
 
-The type of plot produced by this basic command, using the generic `plot` function, depends on the variable type of `X` and `Y`. If both are numeric, a simple scatter plot is produced (see Section~\ref{sec:finetuning}). If `Y` is numeric but `X` is a factor, a boxplot is produced (see Section~\ref{sec:boxplot}). If only one argument is provided and it is a data frame with only numeric columns, all possible scatter plots are produced (not further described but see `?plot.data.frame`). And finally, if both `X` and `Y` are factor variables, a mosaic plot is produced (not further described in detail but see Section~\ref{sec:logistic} and `plot.factor`).
+The type of plot produced by this basic command, using the generic `plot` function, depends on the variable type of `X` and `Y`. If both are numeric, a simple scatter plot is produced (see Section \@ref(finetuning). If `Y` is numeric but `X` is a factor, a boxplot is produced (see Section~\ref{sec:boxplot}). If only one argument is provided and it is a data frame with only numeric columns, all possible scatter plots are produced (not further described but see `?plot.data.frame`). And finally, if both `X` and `Y` are factor variables, a mosaic plot is produced (not further described in detail but see Section~\ref{sec:logistic} and `plot.factor`).
 
 Each of these four options is shown in Fig.~\ref{fig:plotdefault} (code not included).
 
@@ -52,9 +60,9 @@ par(cex=0.9, cex.lab=0.9, cex.axis=0.8, cex.main=0.9, font.main=3)
 data(allometry)
 data(titanic)
 
-plot(height ~ diameter, data=allom, main="numeric vs. numeric")
-plot(diameter ~ species, data=allom, main="numeric vs. factor")
-plot(allom[,2:4], main="numeric dataframe")
+plot(height ~ diameter, data=allometry, main="numeric vs. numeric")
+plot(diameter ~ species, data=allometry, main="numeric vs. factor")
+plot(allometry[,2:4], main="numeric dataframe")
 plot(as.factor(Survived) ~ PClass, data=titanic, ylab="Survived", main="factor vs. factor")
 ```
 
@@ -86,8 +94,8 @@ The following code produces Fig.~\ref{fig:barplot2}.
 data(cereals)
 
 # Gets means and standard deviation of rating by cereal manufacturer:
-ratingManufacturer <- with(cereal, tapply(rating, Manufacturer, FUN=mean))
-ratingManufacturerSD <- with(cereal, tapply(rating, Manufacturer, FUN=sd))
+ratingManufacturer <- with(cereals, tapply(rating, Manufacturer, FUN=mean))
+ratingManufacturerSD <- with(cereals, tapply(rating, Manufacturer, FUN=sd))
 
 # Make bar plot with error bars. Note that we show means +/- one standard deviation.
 # Read the help function ?plotCI to see what the additional arguments mean (pch, add).
@@ -160,7 +168,6 @@ pie(percentages, col=rainbow(12))
 
 ```{block2 type="rmdtry"}
 Run the (barplot) code above to generate a stacked barplot. Now, set `beside=TRUE` and compare the result.
-
 ```
 
 
@@ -416,7 +423,7 @@ This code produces Fig.~\@ref(allomplot4). Note how we set up a vector of plotti
 
 ```{r allomplot4, opts.label="smallsquare", fig.cap='Scatter plot : vary colour and symbol by species'}
 palette(c("blue","red","forestgreen"))
-with(allom, plot(diameter, height, 
+with(allometry, plot(diameter, height, 
                  col=species,
                  pch=c(1,2,15)[species], 
                  xlim=c(0,80), ylim=c(0,50)))

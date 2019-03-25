@@ -6,6 +6,7 @@ suppressPackageStartupMessages(library(lgrdata))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(ggthemes))
 suppressPackageStartupMessages(library(scales))
+suppressPackageStartupMessages(library(dplyr))
 ```
 
 ## Introduction
@@ -45,23 +46,23 @@ For the reasons mentioned above, in this book we mostly use ggplot2, except when
 
 In base graphics, we can choose from the following main plotting functions (this list is not complete, especially if you consider add-on packages):
 
-+------------------+------------------------------------------------+
-| Function         | Key functions                                   |
-+==================+================================================+
-| `plot`           |       Scatter plots, line plots, various others.        |
-+------------------+------------------------------------------------+
-| `barplot`        |    Bar plot (including stacked and grouped bar plots)                  |
-+------------------+------------------------------------------------+
-| `hist`           |      Histograms and (relative) frequency diagrams                |
-+------------------+------------------------------------------------+
-| `curve`          |       Curves of mathematical expressions               |
-+------------------+------------------------------------------------+
-| `pie`            |       Pie charts (for less scientific uses)               |
-+------------------+------------------------------------------------+
-| `boxplot`        |    Box-and-whisker plots                  |
-+------------------+------------------------------------------------+
-| `symbols`        |   Like scatter plot, but symbols are sized by another variable                   |
-+------------------+------------------------------------------------+
++------------------+------------------------------------------------------------------+
+| Function         | Key functions                                                    |
++==================+==================================================================+
+| `plot`           | Scatter plots, line plots, various others.                       |
++------------------+------------------------------------------------------------------+
+| `barplot`        | Bar plot (including stacked and grouped bar plots)               |
++------------------+------------------------------------------------------------------+
+| `hist`           | Histograms and (relative) frequency diagrams                     |
++------------------+------------------------------------------------------------------+
+| `curve`          | Curves of mathematical expressions                               |
++------------------+------------------------------------------------------------------+
+| `pie`            | Pie charts (for less scientific uses)                            |
++------------------+------------------------------------------------------------------+
+| `boxplot`        | Box-and-whisker plots                                            |
++------------------+------------------------------------------------------------------+
+| `symbols`        | Like scatter plot, but symbols are sized by another variable     |
++------------------+------------------------------------------------------------------+
 
 Here it is useful to know that `plot` is a so-called *generic function*, which has *methods* for many special objects in R. For example, if we fit a linear regression:
 
@@ -131,11 +132,12 @@ ggplot(automobiles, aes(x = horsepower, y = fuel_efficiency)) +
 
 
 
-```{r}
+```{r warning=FALSE}
 # Extended
 data(automobiles)
 
 library(ggrepel)
+library(dplyr)
 
 automobiles2 <- mutate(automobiles, 
        resid = residuals(lm(fuel_efficiency ~ horsepower, 

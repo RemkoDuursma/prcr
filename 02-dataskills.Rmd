@@ -28,6 +28,7 @@ Otherwise:
 - `reshape2` (for reshaping dataframes)
 - `data.table` (for `fread`, fast reading of dataframes)
 - `readxl` (for reading Excel files)
+- `stringr` (for working with text)
 
 ```{r include=FALSE, message=FALSE, warning=FALSE}
 suppressPackageStartupMessages(library(doBy))
@@ -40,6 +41,7 @@ suppressPackageStartupMessages(library(ggthemes))
 suppressPackageStartupMessages(library(padr))
 suppressPackageStartupMessages(library(gplots))
 suppressPackageStartupMessages(library(reshape2))
+suppressPackageStartupMessages(library(stringr))
 ```
 
 
@@ -1064,6 +1066,8 @@ A clear explanation of regular expressions is on the Wikipedia page <http://en.w
 In the previous section we used `grep` and `grepl` to find text in strings, which we can use to subset dataframes, or simply to find data. We can do a lot more with strings, but things get a bit difficult quickly when we stick to base R. Instead, the `stringr` package provides an easy-to-use interface to many common text operations. The following examples give a few very handy tips, but the package provides much more (see `library(help=stringr)`).
 
 ```{r}
+library(stringr)
+
 # Extract all numbers from a string
 # Note that the result is a character!
 str_extract("I have 5 apples", "[0-9]")

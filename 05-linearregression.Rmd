@@ -70,6 +70,9 @@ suppressPackageStartupMessages(library(car))
 suppressPackageStartupMessages(library(scales))
 suppressPackageStartupMessages(library(ggpubr))
 suppressPackageStartupMessages(library(emmeans))
+suppressPackageStartupMessages(library(gridExtra))
+suppressPackageStartupMessages(library(relaimpo))
+suppressPackageStartupMessages(library(corrplot))
 ```
 
 
@@ -522,7 +525,7 @@ We use this method to study the relationship between two continuous variables: a
 We are going to use the Cereals data to inspect the "health rating" (`rating`), and two predictors: fibre content (`fiber`) and sugar content (`sugar`). To start with, let's make two scatter plots, side by side.
 
 
-```{r allomdiamheight, fig.cap='Leaf area as a function of height and diameter (note the log-log scale).', opts.label="wide"}
+```{r allomdiamheight, fig.cap='Leaf area as a function of height and diameter (note the log-log scale).', opts.label="wide", warning=FALSE}
 # Read the data, if you haven't already
 data(cereals)
 

@@ -86,7 +86,7 @@ legend("topleft", c("Standard normal","t-distribution, df=3"), lty=1, col=c("blu
 ```
 
 ```{block2 type="rmdtry"}
-Make a histogram (recall Section~\ref{sec:hist}) of a sample of random numbers from a distribution of your choice.
+Make a histogram (recall Section \@ref(hist) of a sample of random numbers from a distribution of your choice.
 ```
 
 
@@ -95,7 +95,7 @@ Make a histogram (recall Section~\ref{sec:hist}) of a sample of random numbers f
 
 Descriptive statistics summarise some of the properties of a given data set. Generally, we are interested in measures of location (central tendency, such as mean and median) and scale (variance or standard deviation). Other descriptions can include the sample size, the range, and so on. We already encountered a number of functions that can be used to summarize a vector. 
 
-Let's look at some examples for the Pupae dataset (described in Section~\ref{sec:pupaedata}).
+Let's look at some examples for the Pupae dataset.
   
 ```{r }
 # Read data
@@ -350,7 +350,7 @@ Let's look at an example using the allometry data (see Fig. \@ref(fig:allomquick
 ```{r allomquickplot, fig.cap='Quick inspection of the allometry data, before we perform a linear regression.', opts.label="smallsquare"}
 # Read data
 data(allometry)
-plot(leafarea~diameter, data=allom)
+plot(leafarea~diameter, data=allometry)
 ```
 
 We can see from this plot that leaf area generally increases with tree diameter. So we can use `lm`
@@ -381,7 +381,7 @@ In addition, we have a `Residual standard error` of `r round(summary(model)$sigm
 It is straightforward to add the regression line to an existing plot (Fig. \@ref(fig:allomquickplot2)). Simply use `abline` and the `model` object we created previously, if you are using base graphics.
 
 ```{r allomquickplot2, fig.cap='The allometry data, with an added regression line.', opts.label="smallsquare"}
-plot(leafarea~diameter, data=allom)
+plot(leafarea~diameter, data=allometry)
 abline(model)
 ```
 
@@ -407,7 +407,7 @@ The two simplest and most useful diagnostic plots are the scale-location plot an
 ```{r diagnos1, fig.cap='Two standard diagnostic plots for a fitted lm object.', opts.label='wide', echo=-c(1:2)}
 palette("default")
 par(mfrow=c(1,2))
-model <- lm(leafarea ~ diameter, data=allom)
+model <- lm(leafarea ~ diameter, data=allometry)
 
 library(car)
 residualPlot(model)
@@ -418,37 +418,39 @@ The scale-location plot shows  the square root of the *standardized* residuals a
 
 Some departure from the straight line is to be expected though, even when the underlying distribution is really normal. The `qqPlot` function from the `car` package enhances the standard QQ-plot, by including a confidence interval (Fig~\ref{fig:qqplotcar}). In this case, there is some evidence of heteroscedasticity, and possibly curvature. 
 
-The following code makes the QQ-plot and a plot of the data on a log-log scale (Fig.~\ref{fig:qqplotcar}).
+The following code makes the QQ-plot and a plot of the data on a log-log scale (Fig. \@ref(fig:qqplotcar)).
 
 ```{r qqplotcar, fig.cap='A plot of the Allometry data on a log-log scale.', opts.label="smallsquare", echo=-c(1:2)}
 palette("default")
 par(mfrow=c(1,2))
 library(car)
 qqPlot(model)
-plot(leafarea ~ diameter, data=allom, log="xy")
+plot(leafarea ~ diameter, data=allometry, log="xy")
 ```
 
 
 On a log-log scale, it looks like the variance is much more constant, and the relationship is more linear. So, we go ahead and refit the model to log-transformed variables. 
 
-As we can see in Fig.~\ref{fig:qqplotcar}, the diagnostic plots look much better, except for a couple of points at the lower left corner of the QQ-plot. Notice that these outliers have been marked with their row number from the dataframe.
+As we can see in Fig. \@ref(fig:qqplotcar), the diagnostic plots look much better, except for a couple of points at the lower left corner of the QQ-plot. Notice that these outliers have been marked with their row number from the dataframe.
 
-The following code produces Fig.~\ref{fig:diagnos2}, including diagnostic plots and a plot of the data with a regression line added. Note that the `abline` function will only work as intended (shown before) on the log-log plot if we use log to the base 10 (`log10`), in the model fit.
+The following code produces Fig. \@ref(fig:diagnos2), including diagnostic plots and a plot of the data with a regression line added. Note that the `abline` function will only work as intended (shown before) on the log-log plot if we use log to the base 10 (`log10`), in the model fit.
 
 ```{r diagnos2, fig.cap='Diagnostic plots for the allometry data, refitted on a log-log scale (left panels). The allometry data fitted on a log-log scale, with the regression line (right panel).', opts.label="extrawide", echo=-1}
 par(mfrow=c(1,3))
-model_log <- lm(log10(leafarea)~log10(diameter), data=allom)
+model_log <- lm(log10(leafarea)~log10(diameter), data=allometry)
 summary(model_log)
 
 residualPlot(model_log)
 qqPlot(model_log)
 
-plot(leafarea~diameter, data=allom, log="xy")
+plot(leafarea~diameter, data=allometry, log="xy")
 abline(model_log)
 ```
 
 
-> **Try this yourself**
+```{block2 type="rmdtry"}
 The residuals of a linear model fit can be extracted with the `residuals` function. For one of the linear models from the above examples, extract the residuals, and make a histogram to help inspect normality of the residuals.
+```
+
 
 

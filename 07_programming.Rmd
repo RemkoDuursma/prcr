@@ -15,6 +15,8 @@ suppressPackageStartupMessages(library(lgrdata))
 suppressPackageStartupMessages(library(MASS))
 suppressPackageStartupMessages(library(lubridate))
 suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(wrapr))
+suppressPackageStartupMessages(library(ggplot2))
 ```
 
 
@@ -35,6 +37,7 @@ poundsToKg <- function(weight){
 We can use this `function` just like any other in R, for example, let's convert 'weight' to kilograms in the weightloss data (Section \@ref(weightlossdata)).
 ```{r }
 # Read data
+library(lgrdata)
 data(weightloss)
 
 # Convert weight to kg.
@@ -128,7 +131,7 @@ We will return to defining our own functions when we look at applying functions 
 
 ### Wrapper functions {#wrapfunctions}
 
-We often need to write simple functions that adjust one or two arguments to other functions. For example, suppose we often do the following:
+We often need to write simple functions that adjust one or two arguments to other functions. For example, suppose we often make plots with filled circles, with our favorit color ("dimgrey") :
 
 ```{r eval=FALSE}
 library(lgrdata)
@@ -136,9 +139,9 @@ data(howell)
 plot(age, height, data=howell, pch=19, col="dimgrey")
 ```
 
-That is, we prefer filled grey circles over the default black open circles in `plot`. We could of course *always* specify these arguments, or we can write a function that sets those defaults. It would look like the following, except this function is incomplete, since we have *hardcoded* the other plotting arguments (the dataset, and the x and y variables):
+We could of course *always* specify these arguments, or we can write a function that sets those defaults. It would look like the following, except this function is incomplete, since we have *hardcoded* the other plotting arguments (the dataset, and the x and y variables):
 
-```{r}
+```{r eval=FALSE}
 # This function is not how we want it yet!
 plot_filled_grey <- function(){
   plot(age, height, data=howell, pch=19, col="dimgrey")
@@ -147,7 +150,7 @@ plot_filled_grey <- function(){
 
 We would like to be able to call the function via `plot_filled_grey(age, height, data=howell)`, in other words all arguments to our *wrapper function* should be passed to the underlying function. We have a very handy utility in R to do this, the three dots (`...`) :
 
-```{r}
+```{r eval=FALSE}
 plot_filled_grey <- function(...){
   plot(..., pch=19, col="dimgrey")
 }
@@ -155,7 +158,7 @@ plot_filled_grey <- function(...){
 
 The function now works as intended. It can be further improved if we realize that the plotting color cannot be changed - it is always "dimgrey". We want the *default* value to be "dimgrey", but with an option to change it. This can be achieved like so,
 
-```{r}
+```{r eval=FALSE}
 plot_filled_grey <- function(..., col="dimgrey"){
   plot(..., pch=19, col=col)
 }
@@ -172,7 +175,6 @@ Take the `plot_filled_grey` function above, test it on some data, and modify it 
 ### Wrapper functions to `ggplot2` or `dplyr`
 
 In the previous section we saw how to write wrapper functions, functions that change a few arguments to some other function. These sort of functions are very helpful because we can save a lot of space by reusing a certain template. Suppose we want to make a plot with `ggplot2`, a scatter plot with a loess smoother line. We can achieve this via (result not shown),
-
 
 ```{r eval=FALSE}
 data(howell)
@@ -199,8 +201,8 @@ let(c(xvar = "weight", yvar = "height"), {
 
 The point of placing our plotting code inside `let` is that we can now write our simple wrapper function like before:
 
-```{r}
-plot_scatter_loess <- function(xcol, ycol){
+```{r eval=FALSE}
+plot_scatter <- function(xcol, ycol){
   let(c(xvar = xcol, yvar = ycol), {
     ggplot(howell, aes(x = xvar, y = yvar)) +
     geom_point(size = 0.8, col = "dimgrey")
@@ -208,15 +210,15 @@ plot_scatter_loess <- function(xcol, ycol){
 }
 
 # The function can be used as
-plot_scatter_loess("height", "weight")
+plot_scatter("height", "weight")
 ```
 
 It is important to understand that `let` is used *only to turn character arguments into unquoted names*, in this case "height" turns into `height` for use in `ggplot`, and so on.
 To also pass the dataset, we do not have to use `let`, but can immediately set it as an argument:
 
-```{r}
+```{r eval=FALSE}
 # Our function now also takes a dataset as an argument
-plot_scatter_loess <- function(xcol, ycol, dataset){
+plot_scatter <- function(xcol, ycol, dataset){
   let(c(xvar = xcol, yvar = ycol), {
     ggplot(dataset, aes(x = xvar, y = yvar)) +
     geom_point(size = 0.8, col = "dimgrey")
@@ -224,7 +226,7 @@ plot_scatter_loess <- function(xcol, ycol, dataset){
 }
 
 # We can use it as,
-plot_scatter_loess("height", "weight", howell)
+plot_scatter("height", "weight", howell)
 ```
 
 The advantage here of course is that we can make many plots with `plot_scatter_loess`, each with just one line of code. If we want to adjust some settings that should apply to all plots, these have to be made only in one part of the code - the function definition.
