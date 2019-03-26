@@ -8,6 +8,7 @@
 - loops
 - why?
 
+
 **Packages used in this chapter**
 
 ```{r include=FALSE, message=FALSE, warning=FALSE}
@@ -17,6 +18,12 @@ suppressPackageStartupMessages(library(lubridate))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(wrapr))
 suppressPackageStartupMessages(library(ggplot2))
+
+source("R/theme_datapelikaan.R")
+library(showtext)
+font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
+theme_set(theme_datapelikaan(base_family = "Lato"))
+knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
 ```
 
 

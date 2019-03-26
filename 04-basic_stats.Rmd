@@ -7,6 +7,12 @@ suppressPackageStartupMessages(library(lgrdata))
 suppressPackageStartupMessages(library(moments))
 suppressPackageStartupMessages(library(pastecs))
 
+source("R/theme_datapelikaan.R")
+library(showtext)
+font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
+library(ggplot2)
+theme_set(theme_datapelikaan(base_family = "Lato"))
+knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
 ```
 
 

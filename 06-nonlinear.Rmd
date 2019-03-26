@@ -46,6 +46,11 @@ suppressPackageStartupMessages(library(ggthemes))
 suppressPackageStartupMessages(library(lgrdata))
 suppressPackageStartupMessages(library(viridis))
 
+source("R/theme_datapelikaan.R")
+library(showtext)
+font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
+theme_set(theme_datapelikaan(base_family = "Lato"))
+knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
 ```
 
 
@@ -489,8 +494,7 @@ ggplot(sydney_hobart_times, aes(x = Year, y = Time)) +
   geom_line(data = loes1_pred, aes(x = Year, y = fit)) +
   geom_line(data = loes1_pred, aes(x = Year, y = lci), lty = 5) +
   geom_line(data = loes1_pred, aes(x = Year, y = uci), lty = 5) +
-  lims(y = c(0, max(sydney_hobart_times$Time))) +
-  theme_tufte(base_family = "sans")
+  lims(y = c(0, max(sydney_hobart_times$Time)))
 
 ```
      
@@ -499,8 +503,7 @@ Alternatively, and much more practically appealling, is to use `stat_smooth` fro
 ```{r}
 ggplot(sydney_hobart_times, aes(x = Year, y = Time)) +
   geom_point(col = "dimgrey") + 
-  stat_smooth(method = "loess", span = 0.6, se = TRUE) +
-  theme_tufte()
+  stat_smooth(method = "loess", span = 0.6, se = TRUE)
 ```
 
 In general, we use a loess model to visualize patterns in the data. However, it is rarely a good idea to use loess models for any formal conclusions regarding your data, and numerous examples exist where loess models may give misleading conclusions. 
@@ -527,8 +530,7 @@ library(viridis)
 
 ggplot(out, aes(x = Sepal.Width, y = Sepal.Length, fill = pred)) +
   geom_tile() +
-  scale_fill_viridis(option = "inferno") +
-  theme_tufte(base_family = "sans")
+  scale_fill_viridis(option = "inferno")
 
 ```
 
@@ -574,8 +576,7 @@ p <- coef(choat_rq_2)
 # Make base ggplot (points only)
 g <- ggplot(choat_precipp50, aes(x = annualprecip, y = drought_tolerance)) +
   geom_point(col = "dimgrey") +
-  labs(x = "Annual rainfall (mm)", y = "Plant drought tolerance") +
-  theme_tufte(base_family = "sans")
+  labs(x = "Annual rainfall (mm)", y = "Plant drought tolerance")
 
 #- Now loop, and add fitted lines for each quantile.
 lwds <- seq(0.5, 1.8, length=ncol(p))
@@ -615,8 +616,7 @@ ggplot(choat_precipp50, aes(x = annualprecip)) +
   geom_ribbon(data = preddfr, aes(ymin = lower,
                                   ymax = higher),
               fill=scales::alpha("lightgrey", 0.7)) +
-  geom_line(data = preddfr, aes(y = fit), col = "cornflowerblue", lwd = 1.2) +
-  theme_tufte(base_family="sans")
+  geom_line(data = preddfr, aes(y = fit), col = "cornflowerblue", lwd = 1.2)
 
 ```
 
@@ -658,8 +658,7 @@ The following code makes Fig. \@ref(fig:footexample3).
 ```{r footexample3, opts.label="smallsquare", fig.cap="Growth chart for foot length (mm) against childrens' age (years)"}
 # Setup a base plot with the data.
 g <- ggplot(foot_male, aes(x = age, y = foot_length)) +
-  geom_point(pch=16, size=0.7, col="grey") +
-  theme_tufte(base_family = "sans")
+  geom_point(pch=16, size=0.7, col="grey")
   
 # Loop through desired quantiles, and add fitted lines to the plot.
 for(TAU in c(0.1, 0.5, 0.9)){
@@ -709,8 +708,7 @@ data(howell)
 # Plot the data. 
 ggplot(howell, aes(x = age, y = height)) +
   geom_point(pch=21, bg="white") +
-  lims(y=c(0, max(howell$height))) +
-  theme_tufte()
+  lims(y=c(0, max(howell$height)))
 ```
   
 It seems reasonable to fit a function with an asymptote to this relationship. An exponential regression model seems appropriate, and it should contain an 'offset', since height at zero age will not be zero!
@@ -771,7 +769,6 @@ cf <- coef(nls_howell)
 ggplot(howell, aes(x = age, y = height)) +
   geom_point(pch=21, bg="white") +
   lims(y=c(0, max(howell$height))) +
-  theme_tufte() +
   
   # Add any curve using stat_function()
   stat_function(fun = function(x){

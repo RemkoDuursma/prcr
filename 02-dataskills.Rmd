@@ -1,5 +1,27 @@
 # Data skills {#summarize}
 
+```{r include=FALSE, message=FALSE, warning=FALSE}
+suppressPackageStartupMessages(library(doBy))
+suppressPackageStartupMessages(library(Hmisc))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(lgrdata))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(ggthemes))
+suppressPackageStartupMessages(library(padr))
+suppressPackageStartupMessages(library(gplots))
+suppressPackageStartupMessages(library(reshape2))
+suppressPackageStartupMessages(library(stringr))
+
+
+source("R/theme_datapelikaan.R")
+library(showtext)
+font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
+library(ggplot2)
+theme_set(theme_datapelikaan(base_family = "Lato"))
+knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
+```
+
 
 ## Introduction
 
@@ -30,19 +52,6 @@ Otherwise:
 - `readxl` (for reading Excel files)
 - `stringr` (for working with text)
 
-```{r include=FALSE, message=FALSE, warning=FALSE}
-suppressPackageStartupMessages(library(doBy))
-suppressPackageStartupMessages(library(Hmisc))
-suppressPackageStartupMessages(library(dplyr))
-suppressPackageStartupMessages(library(lubridate))
-suppressPackageStartupMessages(library(lgrdata))
-suppressPackageStartupMessages(library(ggplot2))
-suppressPackageStartupMessages(library(ggthemes))
-suppressPackageStartupMessages(library(padr))
-suppressPackageStartupMessages(library(gplots))
-suppressPackageStartupMessages(library(reshape2))
-suppressPackageStartupMessages(library(stringr))
-```
 
 
 
@@ -1216,8 +1225,7 @@ Finally, the `Date` class is very handy when plotting. Let's make a simple graph
 
 ```{r hydroplot, opts.label="smallsquare", fig.cap='A simple plot of the hydro data.'}
 ggplot(hydro, aes(x = Date, y = storage)) +
-  geom_line() + 
-  theme_tufte(base_family="sans")
+  geom_line()
 ```
 
 
@@ -1291,7 +1299,7 @@ any(is.na(hfemet$DateTime))
 # Make a simple line plot for data from one month.
 filter(hfemet, month ==  6) %>%
   ggplot(aes(x = DateTime, y =  Tair)) +
-  geom_line() + theme_tufte()
+  geom_line()
 
 # We can also take a subset of just one day, using the Date variable we added:
 hfemet_oneday <- filter(hfemet, Date == as.Date("2008-11-1"))
@@ -1678,8 +1686,7 @@ hfemet_agg <- hfemet2008 %>%
 # A simple plot of daily rainfall.
 library(ggplot2)
 ggplot(hfemet_agg, aes(x = Date, y = Rain)) + 
-  geom_bar(stat="identity") +
-  theme_minimal()
+  geom_bar(stat="identity")
 
 ```
 
@@ -1801,7 +1808,6 @@ coweeta_table <- coweeta %>%
 
 ggplot(coweeta_table, aes(x = species, y = height_mean)) +
   geom_bar(stat="identity", fill="red") +
-  theme_minimal() +
   geom_errorbar(aes(ymin = height_mean - height_sd,
                     ymax = height_mean + height_sd), width=0.2) +
   labs(y = "Height (m)", x = "Species")
@@ -2203,7 +2209,6 @@ ggplot(hfeif_meanh, aes(x = Date, y = height, col = treatment)) +
   geom_point(size = 2) + 
   geom_line() +
   scale_colour_tableau() +
-  theme_minimal() +
   ylim(c(0,20))
 ```
 
@@ -2276,8 +2281,7 @@ weightloss2 <- mutate(weightloss,
                       Weight = na.approx(Weight))      # linear interpolation (zoo)
   
 ggplot(weightloss2, aes(x = Date, y = Weight)) +
-  geom_point(colour = ifelse(weightloss2$measured, "darkgrey", "red2")) +
-  theme_minimal()
+  geom_point(colour = ifelse(weightloss2$measured, "darkgrey", "red2"))
 
 ```
 

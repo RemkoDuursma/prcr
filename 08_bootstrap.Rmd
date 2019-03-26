@@ -1,11 +1,8 @@
 # The bootstrap {#bootstrap}
 
-
-```{r echo=FALSE,message=FALSE}
-set.seed(125)
-```
-
 ```{r include=FALSE, message=FALSE, warning=FALSE}
+set.seed(125)
+
 suppressPackageStartupMessages(library(resample))
 suppressPackageStartupMessages(library(car))
 suppressPackageStartupMessages(library(dplyr))
@@ -17,6 +14,12 @@ suppressPackageStartupMessages(library(lgrdata))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(ggthemes))
 
+
+source("R/theme_datapelikaan.R")
+library(showtext)
+font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
+theme_set(theme_datapelikaan(base_family = "Lato"))
+knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
 ```
 
 
@@ -320,7 +323,6 @@ ggplot(psme_mod, aes(x = diameter, y = height)) +
   geom_line(aes(x = diameter, y = .fitted), col="red2") +
   geom_vline(xintercept=mean(Xopt), col="blue", lwd=2) +
   geom_vline(xintercept=Xopt_CI, col="blue", lty=5) +
-  theme_tufte() +
   expand_limits(x = 0, y = 0)
 
 ```
@@ -445,7 +447,6 @@ augment(fit2, ChickWeight) %>%
   mutate(lci = apply(bb$t, 2, quantile, 0.025),
        uci = apply(bb$t, 2, quantile, 0.975)) %>%
   ggplot(aes(x = Time, y = weight, group = Diet)) +
-  theme_tufte() +
   geom_point(pch=19, col="grey") +
   geom_ribbon(aes(x = Time, ymin = lci, ymax=uci),
               fill = scales::alpha("grey", 0.7)) +

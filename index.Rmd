@@ -11,58 +11,9 @@ link-citations: yes
 description: "The HIERmanual has new clothes."
 ---
 
-# Preface
 
-why this book
-
-
-this book
-more focus on good R code, good practice in programming
-more practical approach, requiring no math/stat/computer science background
-not a dry repetition of R syntax, quickly focus on what you can do with R
-
-
-Read these other books for deeper into statistical theory.
-We only talk about *need to know* theory - which is sometimes not sufficient, but often it is
-- ISLR is better at machine learning intro, regression (though not non-linear, mixed-effects)
-- predictive modeling (Kuhn) better at predictive modeling with R (caret)
-- car better at regression methods (but no non-linear)
-
-
-
-This book is not a complete introduction to statistical theory. It should also not be the first statistics book you read. Instead, this book shows you how to implement many useful data analysis routines in R. Sometimes we explain a bit of theory behind the method, but this is an exception. We really assume that you have already learned statistics elsewhere and are here to learn how to actually do the analyses.
-
-We have learned from experience that data practictioners, that means scientists and everyone else who has an interest in learning from data, do not learn statistical analyses by studying the underlying theory. They learn from doing, and from using examples written by others who have learned by doing. For this reason the book in front of you is largely a compendium of examples. We have chosen the examples and the exercises in the hope that they resemble real-world problems. 
-
-We have designed this book so it can be used for self-study. The exercises at the end of each chapter aim to test important skills learned in the chapter. Before you start on the exercises, read through the text, try to run the examples, and play around with the code making small modifications. We have also placed many *Try it yourself* boxes throughout the text to give you some ideas on what to try, but try to be creative and modify the examples to see what happens.
-
-An index with the functions and packages used is provided at the end of this book.
-
-**How did I choose all the packages used here?**
-
-From experience and meeting criteria which include:
-- active user base (indicated by use in blogs, stackoverflow, publications)
-- easiest syntax: usually we can come up with many ways to solve a particular problem in R. I like to choose the easiest to learn syntax, but especially if **the code is understandable by reading it**. 
-- actively maintained (although this is not necessary)
-- I like to use base R when I can. Keeping dependencies to a minimum is one of the **R programmer's tips** (see Section)
-
-## What is data analysis?
-
-We take the view that *data analysis* includes every step from raw data to the outputs, where outputs include figures, tables and statistics. This view is summarized in the figure on the next page.
-
-Because every step from raw data to output affects the outcome, every step should be well documented, and reproducible. By 'reproducible', we mean it should be possible for some other person (even if this is the future you) to re-run the analysis and get the same results. We agree with many others that R is particularly good for reproducible research of this kind [^1] because it has utilities for all steps of data analysis. 
-
-[^1]Gandrud, C. Reproducible Research with R and R Studio. CRC Press, 2015. 2nd Edition.
-
-We stress that it is absolutely vital to a successful data analysis to visualize at every step of the analysis [^2]. When analyzing data, you should apply a continuous loop of statistical inference and visualizing the data (Find a significant effect you did not expect? Visualize it!; Visually find something interesting? Analyze it!).
-
-[^2] Anscombe 1973 "Graphs in Statistical analysis", The American Statistician 27:17-21. 
-
-
-
-
-```{r echo=FALSE}
-
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Preamble
 library(knitr)
 knit_theme$set("earendel")
 opts_chunk$set(background="grey94")
@@ -90,6 +41,69 @@ opts_template$set(smallsquare = list(fig.height = 5, fig.width = 5,
                                      fig.align="center", out.width=".8\\linewidth"),
                   extrawide = list(fig.height = 4, fig.width = 10,
                                      fig.align="center", out.width=".9\\linewidth"))
+
+# Fonts
+source("R/theme_datapelikaan.R")
+library(showtext)
+font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
+library(ggplot2)
+theme_set(theme_datapelikaan(base_family = "Lato"))
+knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
+
+
 ```
+
+
+# Preface
+
+Focus on 'good' R code, good practice in programming. Code snippets, how do I do X? Focus on *useful* tools, direct practical application. More practical approach than some other books, requiring no math/stat/computer science background. 
+
+Meant as a guide while learning R. You will also learn many new packages, tips and tricks from the internet (especially Stackoverflow). But you need a solid foundation, otherwise those examples and tricks make little sense, and you find yourself making mistakes a little too often. 
+
+This book is not an introduction to statistical theory, although sometimes we repeat a little theory to be able to make sense of R output. This book should not be the first statistics book you read. Instead, this book shows you how to implement many useful data analysis routines in R. We really assume that you have already learned statistics elsewhere and are here to learn how to actually do the analyses with R.
+
+We have learned from experience that data practictioners, that means scientists and everyone else who has an interest in learning from data, do not learn statistical analyses by studying the underlying theory. They learn from doing, and from using examples written by others who have learned by doing. For this reason the book in front of you is largely a compendium of examples. We have chosen the examples and the exercises in the hope that they resemble real-world problems. 
+
+We have designed this book so it can be used for self-study. The exercises at the end of each chapter aim to test important skills learned in the chapter. Before you start on the exercises, read through the text, try to run the examples, and play around with the code making small modifications. We have also placed many *Try it yourself* boxes throughout the text to give you some ideas on what to try, but try to be creative and modify the examples to see what happens.
+
+An index with the functions and packages used is provided at the end of this book.
+
+**How did I choose all the packages used here?**
+
+From experience and meeting criteria which include:
+- easiest syntax: usually we can come up with many ways to solve a particular problem in R. I like to choose the easiest to learn syntax, but especially if **the code is understandable by reading it**. 
+- actively maintained (although this is not necessary)
+- I like to use base R when I can, although end up using a lot of `tidyverse` packages, since they include so many nice inventions. Keeping dependencies to a minimum is one of the **R programmer's tips** (see Section)
+- Sometimes the presence of an active user base (indicated by use in blogs, stackoverflow, publications) is a positive indicator for a package. 
+
+
+```{block2 type="rmdreading"}
+Read these other books for deeper into statistical theory. 
+- ISLR great book for machine learning intro, regression (though not non-linear, mixed-effects)
+- predictive modeling (Kuhn) better at predictive modeling with R (caret)
+- car better at regression methods (but no non-linear)
+```
+
+
+**R Programming: Top Tips**
+
+
+Key indicators of 'good code':
+- reproducibility (code works later and on another machine)
+- maintainability (easy to modify and adapt existing code, keep code working)
+- robustness (harder to make mistakes when coding)
+- readability (others can read your code)
+
+
+What to do:
+1. Keep dependencies to a minimum (use less packages)
+1. Shorter code is better, but not even shorter
+1. Avoid code repetition. Write functions.
+1. Do not keep blocks of commented code, delete it!
+1. Write many comments
+1. Use git version control
+1. Use good names for variables, columns, datasets. Longer names are OK.
+
+
 
 

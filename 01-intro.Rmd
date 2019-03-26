@@ -1,9 +1,11 @@
 # Beginner skills {#intro}
 
 
-```{r echo=FALSE, message=FALSE}
+```{r echo=FALSE, message=FALSE, include=FALSE}
 suppressPackageStartupMessages(library(tibble))
 suppressPackageStartupMessages(library(magrittr))
+
+
 ```
 
 

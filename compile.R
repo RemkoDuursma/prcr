@@ -7,7 +7,7 @@
 # Output:
 #  _book/index.html (and link to PDF from there)
 bookdown::render_book('index.Rmd', 'bookdown::gitbook', new_session=TRUE, clean=TRUE)
-bookdown::render_book('index.Rmd', 'bookdown::pdf_book', new_session=TRUE, clean=TRUE)
+#bookdown::render_book('index.Rmd', 'bookdown::pdf_book', new_session=TRUE, clean=TRUE)
 
 
 # Quick command to re-render some of the document.

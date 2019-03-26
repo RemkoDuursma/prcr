@@ -7,6 +7,13 @@ suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(ggthemes))
 suppressPackageStartupMessages(library(scales))
 suppressPackageStartupMessages(library(dplyr))
+
+source("R/theme_datapelikaan.R")
+library(showtext)
+font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
+library(ggplot2)
+theme_set(theme_datapelikaan(base_family = "Lato"))
+knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
 ```
 
 ## Introduction
@@ -152,8 +159,7 @@ ggplot(automobiles2, aes(x = horsepower, y = fuel_efficiency,
   lims(x = c(0,300), y = c(0,40)) +
   stat_smooth(method = "lm", se = FALSE) + 
   scale_colour_tableau() +
-  labs(x = "Horse power (hp)", y = "Fuel use (liters / 100km)") +
-  theme_tufte()
+  labs(x = "Horse power (hp)", y = "Fuel use (liters / 100km)")
 
 ```
 
@@ -169,15 +175,14 @@ data(oil)
 ggplot(oil, aes(x=year, y=production/1000, fill=country)) + 
   geom_area() + 
   labs(x = "", y = "Crude Oil Production (MOE)") +
-  scale_fill_economist() + 
-  theme_tufte()
+  scale_fill_economist()
 ```
 
 
 
 #### Barplot example
 
-More complex barplots is one area where `ggplot2` is much, much easier to use than base graphics. If you want to represent count data as bars - a common application of barplots - `ggplot2` does the counting for you automatically, saving a step where such tables of counts have to be constructed (as in Section \@ref()). 
+More complex barplots is one area where `ggplot2` is much, much easier to use than base graphics. If you want to represent count data as bars - a common application of barplots - `ggplot2` does the counting for you automatically, saving a step where such tables of counts have to be constructed. 
 
 If instead you want to make a barplot of data *as they are* (that is, don't make tables first), use the setting `geom_bar(stat = "identity")`, instead of `stat = "count"`, as in the example below.
 
@@ -213,9 +218,7 @@ ggplot(titanic, aes(x=PClass, fill=Survived)) +        # bars by passenger class
                     values=c("red2","grey")) +         # colors for bars (and legend)
   geom_bar(stat="count", position=position_dodge()) +  # count data, bars side by side
   facet_wrap(~Sex) +                                   # panels by Sex
-  theme_tufte() +                                      # a very minimal theme
-  theme(legend.position = "right",                     # legend position (default)
-        legend.title=element_blank())                  # no legend title
+  theme(legend.title=element_blank())                  # no legend title
 ```
 
 
@@ -229,9 +232,7 @@ ggplot(titanic, aes(x=PClass, fill=as.factor(Survived))) +
   geom_bar(stat="count", position=position_fill()) +   # count the data, stack the bars
   scale_y_continuous(labels=scales::percent) +         # express y-axis as % 
   facet_wrap(~Sex) +                                   # two panels for each sex
-  theme_tufte() +                                      # a very minimal theme
-  theme(legend.position = "right",                     # legend position (default)
-        legend.title=element_blank())                  # no legend title
+  theme(legend.title=element_blank())                  # no legend title
 ```
 
 

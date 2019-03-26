@@ -1,8 +1,31 @@
 
-```{r echo=FALSE, cache=FALSE, results="hide"}
+```{r echo=FALSE, cache=FALSE, results="hide", include=FALSE}
 knitr::opts_chunk$set(echo=TRUE)
 set.seed(1234)
 palette("default")
+
+suppressPackageStartupMessages(library(lgrdata))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(ggthemes))
+suppressPackageStartupMessages(library(pander))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(broom))
+suppressPackageStartupMessages(library(multcomp))
+suppressPackageStartupMessages(library(visreg))
+suppressPackageStartupMessages(library(car))
+suppressPackageStartupMessages(library(scales))
+suppressPackageStartupMessages(library(ggpubr))
+suppressPackageStartupMessages(library(emmeans))
+suppressPackageStartupMessages(library(gridExtra))
+suppressPackageStartupMessages(library(relaimpo))
+suppressPackageStartupMessages(library(corrplot))
+
+source("R/theme_datapelikaan.R")
+library(showtext)
+font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
+theme_set(theme_datapelikaan(base_family = "Lato"))
+knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
+
 ```
 
 
@@ -57,23 +80,6 @@ Otherwise:
 - `emmeans` (for computing marginal effects from regression models)
 
 
-```{r include=FALSE, message=FALSE, warning=FALSE}
-suppressPackageStartupMessages(library(lgrdata))
-suppressPackageStartupMessages(library(ggplot2))
-suppressPackageStartupMessages(library(ggthemes))
-suppressPackageStartupMessages(library(pander))
-suppressPackageStartupMessages(library(dplyr))
-suppressPackageStartupMessages(library(broom))
-suppressPackageStartupMessages(library(multcomp))
-suppressPackageStartupMessages(library(visreg))
-suppressPackageStartupMessages(library(car))
-suppressPackageStartupMessages(library(scales))
-suppressPackageStartupMessages(library(ggpubr))
-suppressPackageStartupMessages(library(emmeans))
-suppressPackageStartupMessages(library(gridExtra))
-suppressPackageStartupMessages(library(relaimpo))
-suppressPackageStartupMessages(library(corrplot))
-```
 
 
 
@@ -91,23 +97,18 @@ library(ggthemes)
 ggplot(icecream, aes(x = location, y = sales, fill = location)) + 
   scale_fill_manual(values=c("white","grey")) + 
   geom_boxplot() +
-  theme_tufte() +
   theme(aspect.ratio = 2, legend.position="none") +
   lims(y=c(0,1200))
 ```
 
 Based on this simple boxplot, you would either conclude that there is no difference in sales, or that perhaps sales were slightly better in Oosterpark. We can also perform a *t*-test for two samples, which tests the hypothesis that the two means are not different (in other words, location has no effect on sales).
 
-```{r eval=FALSE}
+```{r}
 t.test(sales ~ location, data=icecream)
 ```
 
-```{r echo=FALSE}
-pander::pander(t.test(sales ~ location, data=icecream))
-```
-
 ```{block2, type='rmdnote'}
-If you run the code above yourself, you will see different output from what is shown here. To get this output in an rmarkdown document, use the `pander` package: `pander::pander(t.test(sales ~ location, data=icecream))`
+The example above - as all other examples in this chapter - shows the raw output produced by R. To produce attractive output for use in an rmarkdown document, use the `pander` package: `pander::pander(t.test(sales ~ location, data=icecream))`. The `pander` function also works for many other R objects.
 ```
 
 
@@ -123,7 +124,6 @@ We do not need to get into detail here to design a proper scientific ice cream s
 ggplot(icecream, aes(x = temperature, y = sales, fill = location)) +
   geom_point(shape = 21, size=3) +
   scale_fill_manual(values = c("white","dimgrey")) +
-  theme_tufte() +
   lims(y=c(0,1200), x=c(0,35))
 ```
 
@@ -534,11 +534,11 @@ library(gridExtra)
 
 # Two simple scatter plots on a log-log scale
 g1 <- ggplot(cereals, aes(y = rating, x = fiber)) +
-  geom_point(pch=15) + theme_tufte() + lims(y=c(0,100)) +
+  geom_point(pch=15) + lims(y=c(0,100)) +
   geom_smooth(method='lm')
 
 g2 <- ggplot(cereals, aes(y = rating, x = sugars)) +
-  geom_point(pch=19, col="dimgrey") + theme_tufte()  + lims(y=c(0,100)) +
+  geom_point(pch=19, col="dimgrey") + lims(y=c(0,100)) +
   geom_smooth(method='lm')
 
 grid.arrange(g1, g2, ncol = 2)
@@ -582,15 +582,10 @@ In this case, the command `visreg::visreg(fit4)` would show two plots very simil
 
 ```{r visregcereal}
 library(visreg)
-visreg(fit4, "sugars", by = "fiber", overlay = TRUE, 
-       ylim=c(0,100))
-
 
 visreg(fit4, "sugars", by = "fiber", overlay = TRUE, 
-       gg = TRUE) +
-  lims(y = c(0,100)) +
-  theme_tufte()
-
+       gg = TRUE) + 
+  lims(y = c(0,100))
 ```
 
 Here we clearly, and in one panel, visualize the negative effect of adding more sugar in a cereal, and the positive effect of adding more fiber. The `visreg` function plots the *predictions* from our model at an arbitrary selection of predictor values (here, 0, 1.5 and 5). 
@@ -630,11 +625,11 @@ data(coweeta)
 
 g1 <- ggplot(coweeta, aes(x = DBH, y = height)) +
   geom_point() + geom_smooth(method="loess", se=FALSE) +
-  theme_tufte() + scale_colour_tableau() + lims(x=c(0,60), y=c(0,30))
+  scale_colour_tableau() + lims(x=c(0,60), y=c(0,30))
 
 g2 <- ggplot(coweeta, aes(x = DBH, y=height, col=species)) +
   geom_point() + geom_smooth(method="lm", se=FALSE) +
-  theme_tufte() + scale_colour_tableau() + lims(x=c(0,60), y=c(0,30))
+  scale_colour_tableau() + lims(x=c(0,60), y=c(0,30))
 
 grid.arrange(g1, g2, ncol = 2)
 ```
@@ -756,14 +751,17 @@ See Fig. \@ref(fig:cowtransform).
 
 ```{r cowtransform, fig.cap="An example of a dataset that screams for a logarithmic transformation. Left panel: untransformed data, showing very non-constant variance, indicating larger variation in the response variable for larger individuals. Right panel: both variables have been log-transformed, giving a nice linear relationship with constant variance."}
 data(coweeta)
+library(scales)
 
 g1 <- ggplot(coweeta, aes(x = biomass, y = folmass)) + 
   geom_point() +
-  theme_tufte() + 
-  #stat_smooth(method = "loess", se = FALSE, col="red2") +
   labs(x = "Mass of tree (kg)", y = "Mass of leaves (kg)")
     
-g2 <- g1 + scale_x_log10() + scale_y_log10()
+g2 <- g1 + 
+  scale_x_log10() + 
+  scale_y_log10() +
+  annotation_logticks() +
+  expand_limits(x=c(1,10^4), y=100)
 
 grid.arrange(g1, g2, ncol = 2)
 ```
@@ -783,7 +781,6 @@ residPlot <- function(model){
   ggplot(model, aes(.fitted, .resid)) + 
     geom_hline(yintercept = 0) + 
     geom_point() +
-    theme_tufte() + 
     stat_smooth(method="loess", span=0.8)
 }
 
