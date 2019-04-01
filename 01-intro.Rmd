@@ -311,6 +311,15 @@ dir(pattern="[.]csv", ignore.case=TRUE)
 ```
 
 
+## Rstudio projects
+
+If you end up working primarily from Rstudio, we very strongly recommend the use of Projects in Rstudio to keep your work organized, and to help set the working directory.
+
+Rstudio projects are really just small files added to a certain folder, which "tags" that folder as containing a particular project. This idea works best if you have organized your work into smaller subsections, where you keep your different projects in separate folders. We come back to file & project organization in a later, more advanced chapter.
+
+
+
+
 
 ## Packages {#packages}
 
