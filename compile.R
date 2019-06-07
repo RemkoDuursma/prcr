@@ -6,8 +6,9 @@
 #   preamble.tex: required packages and settings for LaTeX (PDF only)
 # Output:
 #  _book/index.html (and link to PDF from there)
-bookdown::render_book('index.Rmd', 'bookdown::gitbook', new_session=TRUE, clean=TRUE)
-#bookdown::render_book('index.Rmd', 'bookdown::pdf_book', new_session=TRUE, clean=TRUE)
+bookdown::render_book(input="index.Rmd",
+                      'bookdown::gitbook', new_session=TRUE, clean=TRUE)
+#bookdown::render_book(input=chapters, 'bookdown::pdf_book', new_session=TRUE, clean=TRUE)
 
 
 # Quick command to re-render some of the document.

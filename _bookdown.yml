@@ -5,4 +5,4 @@ language:
 delete_merged_file: true
 
 #rmd_files: ["index.Rmd" ,"01-intro.Rmd", "02-dataskills.Rmd"]
-rmd_files: ["index.Rmd","01-intro.Rmd","02-dataskills.Rmd","03-reporting.Rmd","04-basic_stats.Rmd","05-linearregression.Rmd","06-nonlinear.Rmd","07_programming.Rmd","08_bootstrap.Rmd","98-base_graphics.Rmd"]
+rmd_files: ["index.Rmd","01-intro.Rmd","02-dataskills.Rmd","03-reporting.Rmd","04-basic_stats.Rmd","05-linearregression.Rmd","07_programming.Rmd"]

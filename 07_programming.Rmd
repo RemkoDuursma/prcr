@@ -9,11 +9,9 @@
 - why?
 
 
-**Packages used in this chapter**
 
 ```{r include=FALSE, message=FALSE, warning=FALSE}
 suppressPackageStartupMessages(library(lgrdata))
-suppressPackageStartupMessages(library(MASS))
 suppressPackageStartupMessages(library(lubridate))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(wrapr))
@@ -25,6 +23,11 @@ font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
 theme_set(theme_datapelikaan(base_family = "Lato"))
 knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
 ```
+
+
+**Packages used in this chapter**
+
+We use no new packages in this chapter except the `wrapr` package. All other functionality is included in base R, or commonly used packages `dplyr`, `ggplot2`, `lubridate`, and `lgrdata` for the example data.
 
 
 ## Writing simple functions {#writefunctions}
@@ -209,19 +212,21 @@ let(c(xvar = "weight", yvar = "height"), {
 The point of placing our plotting code inside `let` is that we can now write our simple wrapper function like before:
 
 ```{r eval=FALSE}
-plot_scatter <- function(xcol, ycol){
+# Make a scatter plot with the howell data.
+plot_scatter_howell <- function(xcol, ycol){
   let(c(xvar = xcol, yvar = ycol), {
     ggplot(howell, aes(x = xvar, y = yvar)) +
     geom_point(size = 0.8, col = "dimgrey")
   })
 }
 
-# The function can be used as
+# The function can be used with quoted names:
 plot_scatter("height", "weight")
 ```
 
-It is important to understand that `let` is used *only to turn character arguments into unquoted names*, in this case "height" turns into `height` for use in `ggplot`, and so on.
-To also pass the dataset, we do not have to use `let`, but can immediately set it as an argument:
+It is important to understand that, in this example, `let` is used *only to turn character arguments into unquoted names*, in this case "height" turns into `height` for use in `ggplot`, and so on. We cannot pass `height` and `weight` as unquoted names, because R would look for those objects directly (from the 'global environment'), rather than as variables in the `howell` dataset.
+
+To also pass the dataset as an argument (making the function more general), we do not have to use `let`, but can immediately set it as an argument (because it is available in the global environment).
 
 ```{r eval=FALSE}
 # Our function now also takes a dataset as an argument
@@ -235,8 +240,6 @@ plot_scatter <- function(xcol, ycol, dataset){
 # We can use it as,
 plot_scatter("height", "weight", howell)
 ```
-
-The advantage here of course is that we can make many plots with `plot_scatter_loess`, each with just one line of code. If we want to adjust some settings that should apply to all plots, these have to be made only in one part of the code - the function definition.
 
 
 
@@ -621,61 +624,6 @@ dev.off()
 ```
 
 
-
-
-## Advanced working example
-
-In this example, we use lists, `lapply`, `sapply` as well as loops. We also introduce `fitdistr` from the `MASS` package, and use `curve` to add curves to a histogram.
-
-Let's fit a weibull distribution to the vessel diameter data, separately for the base and apex positions (see Section \@ref(vesseldata)). We will also visualize the results, and print the coefficients of the fit.
-
-Note that in the following example, you could also simply make two subsets and repeat the analysis for both. But this way of working also applied to datasets where you have hundreds of species.
-
-```{r }
-# Read raw data
-data(vessel)
-
-# Split the dataframe
-vesselsp <- split(vessel, vessel$position)
-
-# Load MASS package
-library(MASS)
-
-# Fit the weibull (results are stored in a list 'weibfits' containing all outputs).
-weibfits <- lapply(vesselsp, function(x)fitdistr(x$vesseldiam, "weibull"))
-
-# To look at the standard print output for the first one:
-weibfits[[1]]
-
-# But if you look at str(weibfits), you will notice the output is a list with many
-# components. We will extract 'estimate' which gives the two parameters of the weibull:
-weibcoefs <- sapply(weibfits, function(x)x$estimate)
-
-# And look at the results:
-weibcoefs
-```
-
-Next, we will plot the two distributions again (as we did in Section \@ref(vesselexample), together with a curve of the fitted weibull.
-
-This code produces Fig. \@ref(fig:vesselweib).
-
-```{r vesselweib, opts.label="wide", fig.cap='Two histograms of the vessel diameter data, with fitted Weibull curves'}
-
-# First define a plotting function that makes a histogram of 'vesseldiam', 
-# and adds a curve with a weibull distribution, given the shape and scale parameters:
-plotHistWeib <- function(dfr, shape, scale){ 
-    hist(dfr$vesseldiam, freq=FALSE, main="", xlab="Vessel diameter")
-    curve(dweibull(x, shape, scale), add=TRUE)
-}
-
-# Setup a plotting region with two plots:
-par(mfrow=c(1,2))
-
-# Loop through the vesselsp list, plot histogram and weibull curve for each:
-for(i in 1:length(vesselsp)){
-  plotHistWeib(vesselsp[[i]], shape=weibcoefs[1,i], scale=weibcoefs[2,i])
-}
-```
 
 
 

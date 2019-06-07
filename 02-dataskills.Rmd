@@ -12,6 +12,7 @@ suppressPackageStartupMessages(library(padr))
 suppressPackageStartupMessages(library(gplots))
 suppressPackageStartupMessages(library(reshape2))
 suppressPackageStartupMessages(library(stringr))
+suppressPackageStartupMessages(library(glue))
 
 
 source("R/theme_datapelikaan.R")
@@ -58,31 +59,37 @@ Otherwise:
 
 ## Reading data {#readingdata}
 
-There are many ways to read data into R, but we are going to keep things simple and show only a couple of options to read data from text files. Throughout this book we focus on 'rectangular data', that is, data that can be organized in a table with columns and rows. A data table like this, with individual observations in rows, and various data fields in columns, is called a *data frame*. All example data in this book is provided as dataframes.
+There are many ways to read data into R, but we are going to keep things simple and show only a couple of options to read data from text files, and from databases (hosted online). 
 
-We first a few options to read text files into dataframes in R, and then provide the basics of working with dataframes in Section \@ref(dataframes).
+Throughout this book we focus on 'rectangular data', that is, data that can be organized in a table with columns and rows. A data table like this, with individual observations in rows, and various data fields in columns, is called a *data frame*.
 
-In Section \@ref(otherdata), we summarize methods to read in data from other sources (SQL, JSON, proprietary formats).
+We first show a few options to read text files into dataframes in R, and then provide the basics of working with dataframes in Section \@ref(dataframes).
+
+In Section \@ref(otherdata), we summarize methods to read in data from other sources (JSON, proprietary formats), and from databases (SQL, NoSQL - Mongodb).
 
 
 
 ### Reading CSV files {#readcsv}
 
-A very common text format for data is 'Comma-Separated Values', or CSV. You can use `read.csv` to read these files (or `read.csv2` if the fields are separated by `;` instead of `,`). Suppose you have the file `Allometry.csv' in your working directory, you can read in the file into a dataframe with, 
+A very common text format for data is 'Comma-Separated Values', or CSV. You can use `read.csv` to read these files. Suppose you have the file `Allometry.csv' in your working directory, you can read in the file into a dataframe with, 
 
 ```{r eval=FALSE}
 allometry <- read.csv("Allometry.csv")
 ```
 
+Here, `read.csv` assumes that your system uses a point ('.') to separate digits, but in many parts of the world the default is a comma - in which case values are separated by ';'. In this case, use `read.csv2` instead of `read.csv`.
+
 Make sure you fully understand the concept of a working directory (see Section \@ref(fileswd)) before continuing.
 
-If the file is stored elsewhere, you can specify the entire path (this is known as an *absolute* path). It is generally not recommended to ever use absolute paths, because the script will then depend on an exact location of a datafile. But as always, there are exceptions.
+If the file is stored elsewhere, you can specify the entire path (this is known as an *absolute* path).
 
 ```{r eval=FALSE}
 allometry <- read.csv("c:/projects/data/Allometry.csv")
 ```
 
-Or, if the file is stored in a sub-directory of your working directory, you can specify the *relative* path.
+It is generally *not recommended* to use absolute paths, because the script will then depend on an exact location of a datafile. But sometimes you want to refer to very large files or databases that are stored in a central location.
+
+If the file is stored in a sub-directory of your working directory, you can specify the *relative* path.
 
 ```{r eval=FALSE}
 allometry <- read.csv("data/Allometry.csv")
@@ -96,9 +103,10 @@ The function `read.csv` has many options, let's look at some of them. We can ski
 allomsmall <- read.csv("Allometry.csv", skip=10, nrows=5, header=FALSE)
 ```
 
+
 ### Reading large CSV files
 
-We used the built-in `read.csv` function above, but note that for large files, it is rather slow. The best alternative is to use `fread` from the `data.table` package. The `data.table` is an excellent resource if you need to do data manipulations on large files (though the syntax takes some getting used to).
+We used the built-in `read.csv` function above, but note that for large files, it is rather slow. The best alternative is to use `fread` from the `data.table` package. The `data.table` package is an excellent resource if you need to do data manipulations on large files (though the syntax takes some getting used to).
 
 ```{r eval = FALSE}
 library(data.table)
@@ -136,27 +144,8 @@ a b
 ```
 
 
-### Other data formats
 
-
-#### Excel spreadsheets {-}
-
-Excel spreadsheets are *not* a recommended way to store data, but often you don't make that choice yourself. If you do need to read an XLS or XLSX file, the `readxl` package works very well. *Note*: avoid older implementations like the `xlsx` package and `read.xls` in the `gtools` package, which are less reliable.
-
-```{r eval=FALSE}
-library(readxl)
-mydata <- read_excel("mspreadsheet.xlsx", sheet = 2)
-```
-
-Here, `sheet` will specify the sheet by number, alternatively you can refer to the sheet by name (e.g., `sheet = 'rawdata'`).
-
-
-#### SQL {-}
-
-If your data are stored in an SQL-like database, R provides new powerful methods to extract your data. The use of databases with R is outside the scope of this book, because this is a complex topic that depends very much on your exact situation. [Please consult this page by Rstudio](https://db.rstudio.com/getting-started/) for details to get you started.
-
-
-#### JSON {-}
+### JSON {-}
 
 A very popular format for data, especially on the web, is JSON - a text-based format that can represent not just rectangular data (dataframes), but any complex nested data structure.
 
@@ -178,9 +167,130 @@ Hmisc::contents(comment_data)
 ```
 
 
+### Reading data from databases
+
+#### NoSQL
+
+In this example we show how to read data from MongoDB - a popular NoSQL database. With the `mongolite` package it is very straightforward to read data that can be transformed to a dataframe. Here, every item in the database is a piece of JSON, but of equal length and with the same names, so that each item can become a row in a dataframe.
+
+For a remotely stored MongoDB database, you first have to construct the URL, which includes a username and password. The URL looks like,
+
+```
+"mongodb://username:password@hostingsite.com:portnr/databasename"
+```
+
+The next example is a working example of a database stored on mlab.com, and grabs data using the `mongolite` package.
+
+The database contains data on number of cars parked on 13 car parks in Almere, the Netherlands. The data are updated every 15 minutes.
+
+```{r, eval = FALSE}
+
+# A working URL (5/6/2019)
+parkingdata_url <- "mongodb://guest:123password123@ds229186.mlab.com:29186/almereparking"
+
+#
+library(mongolite)
+
+# Make a database connection. Here you don't download data yet, just
+# set up a connection.
+db <- mongo(collection = "almereparkingjson",
+            url = parkingdata_url)
+
+# We can now download the last 1000 rows of the data.
+parkingdata <- db$find(limit = 1000, sort = '{"updated": -1}')
+
+```
+
+The above example shows how to make a query with the `mongolite` package, you can read [more options in the documentation](https://jeroen.github.io/mongolite/query-data.html).
+
+If you simply want to download all data, just do `db$find()`, it takes less than a minute.
+
+
+#### SQL
+
+Here, we briefly show how to interact with SQL databases. There are many R packages available, partly because there are many implementations of SQL databases (including postgres, which we show here). A unified interface is provided by the `DBI` package ([link to documentation](https://db.rstudio.com/dbi/)), which allows us to use nearly the same code for very different databases.
+
+Here, we only show how to read rectangular data with the `DBI` package.
+
+With `dbConnect`, we setup a connection to the remotely available database (which does not download data yet). Using the connection we can list the tables available, download a table, and many other things.
+
+```{r eval = FALSE}
+# General database interface
+library(DBI)
+
+# Drivers for postgres.
+library(RPostgreSQL)
+
+# Set up connection.
+# !! This is a working connection (6/5/2019)
+con <- dbConnect(
+    drv = RPostgreSQL::PostgreSQL(),
+    dbname = "pfmegrnargs",
+    host = "hh-pgsql-public.ebi.ac.uk",
+    port = 5432, 
+    user = "reader",
+    password = "NWDMCE5xdipIjRrp"
+  )
+
+# Use dbListTables to see what's available.
+# Because this is a large database, store it in a vector and inspect the first few
+con_tables <- dbListTables(con)
+head(con_tables)
+
+# To download an entire table, use this command.
+# NOTE: not tested on this database as it is very large!
+# Here 'sometable' is one of the tables listed above.
+# mydata <- dbReadTable("sometable")
+
+# We can now send SQL queries, and download data.
+# Here we grab the last 10 items from the rfam_models table,
+# selecting only some columns.
+myquery1 <- dbSendQuery(con, "SELECT short_name, long_name, domain FROM rfam_models LIMIT 10")
+
+# This *still* does not download data, which we now do with:
+mydata1 <- dbFetch(myquery1)
+
+```
+
+
+
+```{block2, type="rmdtry"}
+You can run both examples above and download data from the remotely stored databases, both should be operational.
+```
+
+
+
+
+### Other data formats
+
+
+#### Excel spreadsheets {-}
+
+Excel spreadsheets are *not* a recommended way to store data, but often you don't make that choice yourself. If you do need to read an XLS or XLSX file, the `readxl` package works very well. *Note*: avoid older implementations like the `xlsx` package and `read.xls` in the `gtools` package, which are less reliable.
+
+```{r eval=FALSE}
+library(readxl)
+mydata <- read_excel("mspreadsheet.xlsx", sheet = 2)
+```
+
+Here, `sheet` will specify the sheet by number, alternatively you can refer to the sheet by name (e.g., `sheet = 'rawdata'`).
+
+
+
+
 #### Proprietary formats {-}
 
 Many statistical software packages store data in their own format, not just text files. For data from **SPSS**, **SAS** or **Stata**, we recommend the `haven` package for reading the data into dataframes, and the `foreign` package provides further support for Minitab, **Systat**, and **Weka.** 
+
+
+
+#### Web services
+
+Nowadays many data are available via a 'RESTful' API, which is now by far the most common way to download publicly available (open) data (and many other services as well). We discuss reading data from a REST service, as well as setting up our REST service in Chapter \@ref(webservices).
+
+
+
+
 
 
 
@@ -706,7 +816,7 @@ pupae_amb2 <- droplevels(pupae_amb)
 ```
 
 ```{block2 type="rmdtry"}
-Compare the `summary` of `pupae\_amb` and `pupae\_amb2`, and note the differences.
+Compare the `summary` of `pupae_amb` and `pupae_amb2`, and note the differences.
 ```
 
 
@@ -758,8 +868,7 @@ nums > 5
 The functions `which`, `any` and `all` are very useful to know when working with logical data:
 
 
-```{r
-
+```{r}
 # Find which of the numbers are larger than 5:
 which(nums > 5)
 
@@ -774,7 +883,7 @@ all(nums <= 10)
 You have already been using logical data when we filtered dataframes and vectors:
 
 
-```{r
+```{r}
 # Use & for AND, for example to take subsets where two conditions are met:
 subset(pupae, PupalWeight > 0.4 & Frass > 3)
 
@@ -988,7 +1097,7 @@ head(pupae$T_CO2)
 
 
 ```{block2 type="rmdtry"}
-Run the final example above, and inspect the variable `T\_CO2` (with `str`) that we added to the dataframe. Make it into a factor variable using `as.factor`, and inspect the variable again.
+Run the final example above, and inspect the variable `T_CO2` (with `str`) that we added to the dataframe. Make it into a factor variable using `as.factor`, and inspect the variable again.
 ```
 
 

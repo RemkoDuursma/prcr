@@ -1,0 +1,160 @@
+# R on the web {#webservices}
+
+
+## Introduction
+
+This short chapter will show how to interact with and construct APIs from R. An API ('Application Programming Interface') is a way to access data or services on a server, for example to download or upload data. The most common architecture for APIs is known as RESTful Web Services (or 'REST API' for short). 
+
+
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+suppressPackageStartupMessages(library(lgrdata))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(wrapr))
+suppressPackageStartupMessages(library(ggplot2))
+
+source("R/theme_datapelikaan.R")
+library(showtext)
+font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
+theme_set(theme_datapelikaan(base_family = "Lato"))
+knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
+```
+
+
+### Accessing an API
+
+A REST API is simply presented as a URL, to which a specific service can be accessed, and even parameters passed (when necessary). A URL may simply look like:
+
+```
+https://someserver.com/getdata
+```
+
+or may be more complicated, with queries, authentication, and so on. Let's look a simple example, using the `httr` package:
+
+```{r}
+library(httr)
+
+# The first step is to reach out to the server, and get a response.
+# Here, g is a complicated object that we do not inspect directly.
+g <- GET("https://opendata.cbs.nl/ODataApi/OData/37789ksz/TypedDataSet")
+
+# Important: if the server could be reached, you have permission, 
+# and the service is available, you should see 200 as the response.
+# Other HTML codes include 404 (service not found).
+status_code(g)
+
+# We can read the actual data with the `content` function:
+dat <- content(g)
+
+# In this case, dat has two components - the interesting one is 'value'
+uitkering_data_list <- dat$value
+```
+
+Unfortunately the result is a nested list, with NULL elements in some. To make this into a dataframe, we want to flatten each list, each of these will become a row in our dataframe, and bind all the rows together. This is such a common problem that I will show a robust solution:
+
+```{r}
+library(dplyr) # bind_rows
+library(purrr) # flatten_dfr
+
+uitkering_data <- bind_rows(lapply(uitkering_data, flatten_dfr))
+```
+
+We now have data from the Dutch government on social benefits, a dataset that gets updated frequently. The use of the API directly rather than downloading the data manually is clearly a much better option.
+
+As we saw in this example, the challenge is often not so much getting *something* from the web service, but often we have substantial work to shape it into a useful object in R (usually: a dataframe).
+
+
+```{block2, type="rmdtry"}
+Try downloading data from this URL:
+  
+https://opendata.cbs.nl/ODataApi/OData/37789ksz/TypedDataSet
+```
+
+
+```{r}
+
+GET("http://dummy.restapiexample.com", 
+    path = "/api/v1/employee/15808") %>%
+  content(as = "text") %>% 
+  fromJSON
+
+```
+
+
+
+
+### Deploying an API with `plumber`
+
+
+#### Deploying a simple API
+
+
+
+
+#### Dynamic routes
+
+I am not going to repeat any of the introductory stuff of [the excellent plumber documentation](), just highlight some key points. We first make a file with the API definitions, using some special formatting. Suppose the file 'item_predictor_api_definition.R' contains the following:
+
+
+```{r}
+#* Predict item lifetime
+#* @param id
+#* @get /prediction
+function(item){
+  
+  my_prediction_function(item)
+  
+}
+```
+
+Here we define a single API endpoint - but not quite in the format that we wish to have, because the request to this endpoint will have to look like this:
+
+```
+<server ip address>:8001/prediction?item="nr123"
+```
+
+I suppose this is OK too, but a common recommendation is to allow a URL like `/api/item/nr123/prediction`. The key `nr123` (referring to some item ID) is therefore the dynamic bit of the URL. We can easily tell `plumber` what to do:
+
+```{r}
+#* Predict item lifetime
+#* @param id
+#* @get /api/item/<item>/prediction
+function(item){
+  
+  my_prediction_function(item)
+
+}
+  
+```
+
+Note how the Roxygen field calls the parameter `id`, not `item` as you would expect. I found it necessary in plumber version 0.4.5 to **not** use the same name as the function argument there - otherwise the service crashes with a weird message ([see this issue I openened](https://github.com/trestletech/plumber/issues/267)).
+
+
+## Deploy time!
+
+With our API endpoint defined (of course we can add as many as we like), we can start the API via:
+
+```{r}
+library(plumber)
+
+# There are no other arguments besides a directory to find the file.
+p <- plumb('item_predictor_api_definition.R')
+
+# Deploy!
+p$run(port=8001)
+```
+
+Your R process will now be busy (until you close it), with a message like:
+
+```
+Starting server to listen on port 8001
+```
+
+And so our work is done. Next, it makes sense to save the API deployment code in a script, let's say it is called `item_predictor_deploy_api.R`. Then we can simply deploy our API from the command line with:
+
+```
+Rscript item_predictor_deploy_api.R
+```
+
+
