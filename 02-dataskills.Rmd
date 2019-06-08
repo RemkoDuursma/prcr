@@ -21,7 +21,7 @@ library(showtext)
 font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
 library(ggplot2)
 theme_set(theme_datapelikaan(base_family = "Lato"))
-knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
+knitr::opts_chunk$set(fig.showtext = TRUE) #, dev="svg")
 ```
 
 
@@ -125,7 +125,7 @@ numbers <- 1:15
 sample(numbers, size=20, replace=TRUE)
 ```
 
-This command samples 20 numbers from the \code{numbers} vector, with replacement.
+This command samples 20 numbers from the `numbers` vector, with replacement.
 
 
 
@@ -544,7 +544,7 @@ allometry[,4]
 allomhd <- allometry[,c("height", "diameter")]
 ```
 
-As we saw when working with vectors (see Section sec:vectorindexing), we can use expressions to extract data. Because each column in a dataframe is a vector, we can apply the same techniques to dataframes, as in the following examples. 
+As we saw when working with vectors (see Section \@ref(vectorindexing)), we can use expressions to extract data. Because each column in a dataframe is a vector, we can apply the same techniques to dataframes, as in the following examples. 
 
 We can also use one vector in a dataframe to find subsets of another. For example, what if we want to find the value of one vector, if another vector has a particular value?
 
@@ -691,7 +691,7 @@ We will show how to convert between data types at the end of this chapter (Secti
 
 
 
-## Working with factors {#workingfactors}
+### Working with factors {#workingfactors}
 
 The *factor* data type is used to represent qualitative, categorical data. 
 
@@ -737,7 +737,7 @@ Now revisit the commands above, and note that the results are the same, but the 
 the `factor` is different. You can also reorder the levels of a factor by the values of another variable, see the example in Section \@ref(reorder).
 
 
-### Turn numeric data into factors
+#### Turn numeric data into factors
 
 We can also generate new factors, and add them to the dataframe. This is a common application:
  
@@ -765,7 +765,7 @@ table(allometry$treeSizeClass)
 ```
 
 
-### Empty factor levels
+#### Empty factor levels
 
 It is important to understand how factors are used in R: they are not simply text variables, or 'character strings'. Each unique value of a factor variable is assigned a *level*, which is used every time you summarize your data by the factor variable.
 
@@ -794,7 +794,7 @@ Compare the `summary` of `pupae_amb` and `pupae_amb2`, and note the differences.
 ```
 
 
-### Changing the levels of a factor {#changelevels}
+#### Changing the levels of a factor {#changelevels}
 
 Sometimes you may want to change the levels of a factor, for example to replace abbreviations with more readable labels. To do this, we can assign new values with the `levels` function, as in the following example using the pupae data:
 
@@ -812,7 +812,7 @@ Using the method above, you can also merge levels of a factor, simply by assigni
 ```
 
 
-## Working with logical data {#workinglogic}
+### Working with logical data {#workinglogic}
 
 Some data can only take two values: true, or false. For data like these, R has the *logical* data type. 
 
@@ -882,7 +882,7 @@ mean(pupae$PupalWeight > 0.3)
 
 
 
-## Working with missing values {#workingmissing}
+### Working with missing values {#workingmissing}
 
 In R, missing values are represented  with `NA`, a special data type that indicates the data is simply *Not Available*.
 
@@ -920,7 +920,7 @@ which(is.na(myvec1))
 sum(is.na(myvec1))  
 ```
 
-### Making missing values
+#### Making missing values
 
 In many cases it is useful to change some bad data values to `NA`. We can use our indexing skills to do so,
 
@@ -948,7 +948,7 @@ The warning message **NAs introduced by coercion** means that missing values wer
 
 
 
-### Not A Number
+#### Not A Number
 
 Another type of missing value is the result of calculations that went wrong, for example:
 
@@ -968,7 +968,7 @@ Dividing by zero is not usually meaningful, but R does not produce a missing val
 It produces 'Infinity' instead. 
 
 
-### Missing values in dataframes {#naindataframe}
+#### Missing values in dataframes {#naindataframe}
 
 When working with dataframes, you often want to remove missing values for a particular analysis. We'll use the `pupae` dataset for the following examples. Note we use the `dplyr` package for `filter`.
 
@@ -999,7 +999,7 @@ pupae_nona <- pupae %>% filter(complete.cases(.))
 ```
 
 
-### Subsetting when there are missing values {#subsetmissing}
+#### Subsetting when there are missing values {#subsetmissing}
 
 When there are missing values in a vector, and you take a subset (for example all data larger than some value), should the missing values be included or dropped? There is no one answer to this, but it is important to know that `subset` drops them, but the square bracket method (`[]`) keeps them. 
 
@@ -1022,7 +1022,7 @@ dfr[which(dfr$b > 4),"b"]
 
 
 
-## Working with text {#workingtext}
+### Working with text {#workingtext}
 
 Many datasets include variables that are text only (think of comments, species names, locations, sample codes, and so on), it is useful to learn how to modify, extract, and analyse text-based ('character') variables.
 
@@ -1048,7 +1048,7 @@ nchar(c("hey","hi","how","ya","doin"))
 ```
 
 
-### Combining text {#paste}
+#### Combining text {#paste}
 
 To glue bits of text together, use the `paste` function, like so:
 
@@ -1075,7 +1075,7 @@ Run the final example above, and inspect the variable `T_CO2` (with `str`) that 
 ```
 
 
-### Text in dataframes and `grep` {#textgrep}
+#### Text in dataframes and `grep` {#textgrep}
 
 When you read in a dataset (with `read.csv`, `read.table` or similar), any variable that R cannot convert to numeric *is automatically converted to a factor*. This means that if a column has even just one value that is text (or some garble that does not represent a number), the column cannot be numeric. 
 
@@ -1153,7 +1153,7 @@ A clear explanation of regular expressions is on the Wikipedia page <http://en.w
 ```
 
 
-### More control with the `stringr` package
+#### More control with the `stringr` package
 
 In the previous section we used `grep` and `grepl` to find text in strings, which we can use to subset dataframes, or simply to find data. We can do a lot more with strings, but things get a bit difficult quickly when we stick to base R. Instead, the `stringr` package provides an easy-to-use interface to many common text operations. The following examples give a few very handy tips, but the package provides much more (see `library(help=stringr)`).
 
@@ -1173,7 +1173,7 @@ str_replace("Dantchoff, Mr Khristo", "Mr", "Mrs")
 ```
 
 
-### Combining text and R objects with `glue`
+#### Combining text and R objects with `glue`
 
 When controlling output, we often want to combine results stored in R objects, and text. As we saw in Section \@ref(paste), we can use `paste` to achieve this, but there's a better way:
 
@@ -1195,14 +1195,14 @@ With `glue`, we can include both R code directly within `{}` (as we did with `nr
 
 
 
-## Working with dates and times {#workingwithdates}
+### Working with dates and times {#workingwithdates}
 
 Admittedly, working with dates and times in R is somewhat annoying at first. The built-in help files on this subject describe all aspects of this special data type, but do not offer much for the beginning R user. This section covers basic operations that you may need when analysing and formatting datasets.
 
 For working with dates, we use the `lubridate` package, which simplifies it tremendously. 
 
 
-### Reading dates {#readingdates}
+#### Reading dates {#readingdates}
 
 The built-in `Date` class in R is encoded as an integer number representing the number of days since 1-1-1970 (but this actual origin does not matter for the user). Converting a character string to a date with `as.Date` is straightforward if you use the standard order of dates: `YYYY-MM-DD`. So, for example,
 
@@ -1312,7 +1312,7 @@ ggplot(hydro, aes(x = Date, y = storage)) +
 ```
 
 
-### Date-Time combinations {#datetime}
+#### Date-Time combinations {#datetime}
 
 For dates that include the time, R has a special class called `POSIXct`. The `lubridate` package makes it easy to work with this class. 
 
@@ -1530,9 +1530,9 @@ detach("package:Hmisc")
 Here, `storage` refers to the internal storage type of the variable: note that the factor variables are stored as 'integer', and other numbers as 'double' (this refers to the precision of the number).
 
 
-## Making summary tables {#tapplyaggregate}
+### Making summary tables {#tapplyaggregate}
 
-### Summarizing vectors with `tapply` {#tapply}
+#### Summarizing vectors with `tapply` {#tapply}
 
 If we have the following dataset called `plantdat`,
 
@@ -1615,7 +1615,7 @@ barplot(pupm, beside=TRUE, legend.text=TRUE, xlim=c(0,8),
 ```
   
 
-### Quick summary tables with `summaryBy` {#summaryby}
+#### Quick summary tables with `summaryBy` {#summaryby}
   
 
 If we have the following dataset called `plantdat`,
@@ -1715,7 +1715,7 @@ summaryBy(. ~ species, data=allometry, FUN=quantile, probs=c(0.05, 0.95))
 ```
 
 
-### Summarizing dataframes with `dplyr` {#dplyr}
+#### Summarizing dataframes with `dplyr` {#dplyr}
 
 We started with the `summaryBy` package, since it is so easy to use. A more modern and popular approach is to use `dplyr` for all your dataframe summarizing needs. The main advantage is that `dplyr` is very, very fast. For datasets with > hundreds of thousands of rows, you will notice an incredible speed increase. For millions of rows, you really have to use `dplyr` (or `data.table`, but we don't cover that package in this book).
 
@@ -1798,7 +1798,7 @@ mutate(hfemet2008, DateTime = mdy_hm(DateTime)) %>% # convert to proper DateTime
 ```
 
 
-## Tables of counts {#xtabs}
+### Tables of counts {#xtabs}
 
 It is often useful to count the number of observations by one or more multiple factors. One option is to use `tapply` or `summaryBy` in combination with the `length` function. A much better alternative is to use the `xtabs` and `ftable` functions, in addition to the simple use of `table`. Alternatively, `dplyr` provides a `count` function. We will look at both options.
 
@@ -1824,7 +1824,7 @@ titanic %>% count(PClass, Sex, Survived)
 
 ```
 
-## Adding summary variables to dataframes {#summaryvars}
+### Adding summary variables to dataframes {#summaryvars}
 
 We saw how `tapply` can make simple tables of averages (or totals, or other functions) of some variable by the levels of one or more factor variables. The result of `tapply` is typically a vector with a length equal to the number of levels of the factor you summarized by (see examples in Section \@ref(tapply)). 
 
@@ -1846,7 +1846,7 @@ If you want results similar to `ave`, you can use `summaryBy` with the argument 
 ```
 
 
-## Reordering factor levels based on a summary variable {#reorder}
+### Reordering factor levels based on a summary variable {#reorder}
 
 It is often useful to tabulate your data in a meaningful order. We saw that, when using `summaryBy`, `tapply` or similar functions, that the results are always in the order of your factor levels. Recall that the default order is alphabetical. This is rarely what you want.
 
@@ -1931,7 +1931,7 @@ Here we used `rev` to reverse the levels.
 
 ### Merging dataframes {#merge}
 
-If we have the following dataset called `plantdat},
+If we have the following dataset called `plantdat`,
 
 ```{r echo=FALSE, out.width='33%'}
 knitr::include_graphics("screenshots/exampledata.png")
@@ -1955,7 +1955,7 @@ we get the result
 knitr::include_graphics("screenshots/mergeresult.png")
 ```
 
-Note the missing value (`NA}) for the plant for which no leaf nitrogen data was available.
+Note the missing value (`NA`) for the plant for which no leaf nitrogen data was available.
 
 In many problems, you do not have a single dataset that contains all the measurements you are interested in -- unlike most of the example datasets in this tutorial. Suppose you have two datasets that you would like to combine, or `merge`. This is straightforward in R, but there are some pitfalls.
 

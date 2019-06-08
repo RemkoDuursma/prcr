@@ -4,5 +4,5 @@ language:
     chapter_name: "Chapter "
 delete_merged_file: true
 
-rmd_files: ["index.Rmd" ,"01-intro.Rmd"] #, "02-dataskills.Rmd"]
-#rmd_files: ["index.Rmd","01-intro.Rmd","02-dataskills.Rmd","03-reporting.Rmd","05-linearregression.Rmd","07-programming.Rmd", "08-webservices.Rmd"]
+#rmd_files: ["index.Rmd" ,"01-intro.Rmd","02-dataskills.Rmd"] #, ]
+rmd_files: ["index.Rmd","01-intro.Rmd","02-dataskills.Rmd","03-reporting.Rmd","05-linearregression.Rmd","07-programming.Rmd", "08-webservices.Rmd"]
