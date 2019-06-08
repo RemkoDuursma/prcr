@@ -1,0 +1,294 @@
+\NeedsTeXFormat{LaTeX2e}
+
+% Provide the name of your page, the date it was last updated, and a comment about what it's used for
+\ProvidesPackage{rnotesformat}[2013/11/05 Latex style for Rnotes manual]
+
+
+\RequirePackage[sc]{mathpazo}
+\RequirePackage{parskip}
+\RequirePackage{imakeidx}
+\RequirePackage{float}
+\RequirePackage{pgffor}
+\RequirePackage{caption}
+\RequirePackage{breakurl}
+\RequirePackage{mathtools}
+\RequirePackage{graphicx}
+\RequirePackage{xcolor}
+\RequirePackage{MnSymbol}
+\RequirePackage{verbatim}
+\RequirePackage{listings}
+\RequirePackage{lstlinebgrd}
+\RequirePackage{booktabs}
+\RequirePackage{ltablex}
+\RequirePackage{imakeidx}
+
+\RequirePackage{fancyvrb}
+\RequirePackage{adjustbox}
+\RequirePackage{menukeys}
+
+\RequirePackage{makecell} 
+\RequirePackage{cellspace}
+
+% Set margins
+\RequirePackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
+
+% Colours
+\definecolor{blue}{rgb}{0,0,1}
+\definecolor{red}{rgb}{1,0,0}
+\definecolor{forestgreen}{rgb}{0.13,0.54,0.13}
+
+
+% Make hyperlinks blue
+\RequirePackage{url}
+\RequirePackage{xr}
+\RequirePackage[unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=2,
+ breaklinks=false,pdfborder={0 0 0},backref=false,colorlinks=true,linkcolor=blue]
+ {hyperref}
+\hypersetup{pdfstartview={XYZ null null 1}}
+
+
+% Set fonts
+\RequirePackage[T1]{fontenc}
+
+% Commands to make the tables at the end of each chapter --
+\RequirePackage{tabularx} % for \BODY in tabularx environment
+\RequirePackage{environ}
+
+\renewcommand\cellalign{lt}
+\renewcommand\theadfont{\fontfamily{pag}\normalsize\bfseries}
+
+\setlength\cellspacetoplimit{6pt}
+\setlength\cellspacebottomlimit{6pt}
+
+
+% Set sizes for section titles
+\RequirePackage{titlesec}
+\titleformat{\chapter}[display]
+  {\fontfamily{pag}\selectfont\bfseries\huge}
+  {\chaptertitlename\ \thechapter}
+  {20pt}
+  {\Huge}
+\titleformat{\section}
+  {\fontfamily{pag}\selectfont\bfseries\LARGE}
+  {\thesection}
+  {1em}
+  {}
+\titleformat{\subsection}
+  {\fontfamily{pag}\selectfont\bfseries\Large}
+  {\thesubsection}
+  {1em}
+  {}
+\titleformat{\subsubsection}
+  {\fontfamily{pag}\selectfont\bfseries\large}
+  {\thesubsubsection}
+  {1em}
+  {}
+  
+% Set main font
+\RequirePackage[default,osfigures,scale=0.95]{opensans} 
+
+% Monospace font (but not this one)
+%\usepackage[scaled]{beramono}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+% Define R as \R{}
+\newcommand{\R}{\textbf{R}}
+
+
+
+
+%===----- Settings for 'listings' -----=====
+
+% Colors for Markdown boxes 
+\definecolor{rmarkoutline}{rgb}{0.5, 0.5, 0.5}  
+\definecolor{rmarkbackground}{rgb}{1, 1, 1}
+\definecolor{rmarkcode}{gray}{0.95}
+
+\lstset{ %
+   backgroundcolor=\color{rmarkbackground}, 
+   basicstyle=\ttfamily,
+   breaklines=true,              % sets automatic line breaking
+   breakatwhitespace=true,      % sets if automatic breaks should only happen at whitespace
+   breakautoindent=false,
+   breakindent=0pt,
+   captionpos=b,                
+%  escapeinside={\%*}{*)}, % enable if you want to add LaTeX within your code 
+   frame=single,	               
+   numbers=none,                
+   rulecolor=\color{rmarkoutline}, 
+   showspaces=false,             
+   showstringspaces=false,       
+   showtabs=false,              
+   xleftmargin=1pt,
+   xrightmargin=1pt
+ }
+
+% Custom lstset for R Markdown blocks
+\lstdefinestyle{customrmark}{
+ backgroundcolor=\color{rmarkbackground}, 
+ breaklines=true,
+ columns=flexible,
+ frame=single,
+ rulecolor=\color{rmarkoutline},      
+ framesep=10pt,
+ framerule=1pt,
+ moredelim=**[is][\color{blue}]{@@}{@@},
+}
+
+\lstdefinestyle{customrmarktop}{
+ backgroundcolor=\color{rmarkbackground}, 
+ breaklines=true,
+ columns=flexible,
+ frame=trl,
+ rulecolor=\color{rmarkoutline},      
+ framesep=10pt,
+ framerule=1pt,
+ moredelim=**[is][\color{blue}]{@@}{@@},
+}
+
+\lstdefinestyle{customrmarkmiddle}{
+ backgroundcolor=\color{rmarkbackground}, 
+ breaklines=true,
+ columns=flexible,
+ frame=rl,
+ rulecolor=\color{rmarkoutline},      
+ framesep=10pt,
+ framerule=1pt,
+ moredelim=**[is][\color{blue}]{@@}{@@},
+}
+
+\lstdefinestyle{customrmarkbottom}{
+ backgroundcolor=\color{rmarkbackground}, 
+ breaklines=true,
+ columns=flexible,
+ frame=rlb,
+ rulecolor=\color{rmarkoutline},      
+ framesep=10pt,
+ framerule=1pt,
+ moredelim=**[is][\color{blue}]{@@}{@@},
+}
+
+\lstdefinestyle{customrmarkcode}{
+ backgroundcolor=\color{rmarkcode}, 
+ breaklines=true,
+ columns=flexible,
+ frame=rl,
+ rulecolor=\color{rmarkoutline},      
+ framesep=10pt,
+ framerule=1pt,
+ moredelim=**[is][\color{blue}]{@@}{@@},
+}
+
+%===----- Functions for indexing and typesetting -----=====
+\newcommand{\fun}[1]{\texttt{#1}\index{#1}}
+\newcommand{\pack}[1]{\textbf{\texttt{#1}}\index{#1@\textbf{#1}}}
+\newcommand{\FUN}[1]{\texttt{#1}\index{#1|textbf}}
+\newcommand{\PACK}[1]{\textbf{\texttt{#1}}\index{#1@\textbf{#1}|textbf}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\file}[1]{{`\normalfont\textsf{#1}'}}
+
+
+%===---- Labels for exercise difficulty -----=====
+\newcommand{\easy}{$\color{forestgreen} \filledmedsquare$ }
+\newcommand{\intermed}{$\color{blue} \filledmedlozenge$ }
+\newcommand{\hard}{$\color{red} \filledmedtriangleup$ }
+
+%===----- Custom environment(s) for 'Try this yourself' box
+\RequirePackage{framed}
+\RequirePackage{etoolbox}
+
+
+% Colours for shaded boxes
+\definecolor{shadecolor}{rgb}{0.96,1,0.96}  %tryyourself box
+\definecolor{shadecolor2}{rgb}{0.96,1,1}   %furtherreading box
+
+\newlength{\boxwidth}
+\setlength{\boxwidth}{\textwidth}
+
+\newenvironment{trybox}{%
+  \def\FrameCommand{\fboxsep=\FrameSep \fboxrule=\FrameRule \fcolorbox{black}{shadecolor}}%
+  \MakeFramed {\setlength{\boxwidth}{\textwidth}
+  \addtolength{\boxwidth}{-2\FrameSep}
+  \addtolength{\boxwidth}{-2\FrameRule}
+  \setlength{\hsize}{\boxwidth} \FrameRestore}
+  \begin{samepage}
+  \large{\textbf{\textsf{Try this yourself}}} 
+%   \rule[2mm]{85mm}{.2pt}
+%   \\ \nopagebreak
+  \normalsize{}
+  \end{samepage}
+  }%
+{\endMakeFramed}
+ 
+% This is a nice hack to avoid page breaks within tryboxes. Found on stackexchange.
+\BeforeBeginEnvironment{trybox}{\begin{minipage}{\linewidth}}
+\AfterEndEnvironment{trybox}{\end{minipage}\par}
+
+
+% Environment for 'Further reading' box.
+\newenvironment{furtherreading}{%
+  \def\FrameCommand{\fboxsep=\FrameSep \fboxrule=\FrameRule \fcolorbox{black}{shadecolor2}}%
+  \MakeFramed {\setlength{\boxwidth}{\textwidth}
+  \addtolength{\boxwidth}{-2\FrameSep}
+  \addtolength{\boxwidth}{-2\FrameRule}
+  \setlength{\hsize}{\boxwidth} \FrameRestore}
+  \begin{samepage}
+  \large{\textbf{\textsf{Further reading}}} 
+%   \rule[2mm]{85mm}{.2pt}
+%   \\ \nopagebreak
+  \normalsize{}
+  \end{samepage}
+  }%
+{\endMakeFramed}
+ 
+% This is a nice hack to avoid page breaks within furtherreading boxes. Found on stackexchange.
+\BeforeBeginEnvironment{furtherreading}{\begin{minipage}{\linewidth}}
+\AfterEndEnvironment{furtherreading}{\end{minipage}\par}
+
+
+\NewEnviron{functionstable}{
+  \keepXColumns
+  \begin{tabularx}{\linewidth}{SlX >{\ttfamily}Sl}
+  \thead{Function} & \thead{What it does} & \thead{Example use} \\[-1ex] \toprule
+  \endhead
+  \midrule
+  \endfoot
+  \bottomrule
+  \endlastfoot
+  \BODY
+  \end{tabularx}
+}
+
+% Set nice header / footer.
+\setlength{\headheight}{15.2pt}
+\RequirePackage{fancyhdr}
+
+% Reset header and footer.
+% NOTE : Chapter 1 resets them again. Not sure how to circumvent that...
+\pagestyle{fancy}
+\fancyhf{}
+
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\renewcommand{\sectionmark}[1]{\markright{#1}{}}
+
+\lhead{}
+\rhead{}
+\cfoot{\thepage}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% % Define \mytilde as a nice text tilde (not too high, not too low).
+\RequirePackage{xspace}
+\newcommand{\mytilde}{\lower.80ex\hbox{\char`\~}\xspace}
+% % define a text ^ character
+\newcommand{\myhat}{\lower.10ex\hbox{\char`\^}\xspace}
+
+
+\endinput

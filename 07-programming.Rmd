@@ -3,10 +3,11 @@
 
 ## Introduction
 
-- functions
-- lists
-- loops
-- why?
+This chapter demonstrates some building blocks of programming with R. The main purpose here is to allow batch analyses - repeating similar tasks for many subsets of data. To do this, we first have to know how to write our own functions, so that we can apply the custom function to any new subset of data. This approach results in far less, and much more readable code than copy-pasting similar code for different datasets.
+
+We also delve into "lists" in R, a versatile data object that you have worked with already - even if you didn't know it. Understanding lists well in R is the key to more complex analyses, and more readable workflows.
+
+Finally we take a brief look at 'for loops', a basic programming utility that we rarely need in R, since almost all functions are vectorized. Sometimes it is however more convenient to use loops, or makes the code just a little more easy to work with.
 
 
 
@@ -44,7 +45,7 @@ poundsToKg <- function(weight){
 }
 ```
 
-We can use this `function` just like any other in R, for example, let's convert 'weight' to kilograms in the weightloss data (Section \@ref(weightlossdata)).
+We can use this `function` just like any other in R, for example, let's convert 'weight' to kilograms in the weightloss data.
 ```{r }
 # Read data
 library(lgrdata)
@@ -370,6 +371,7 @@ This sort of analysis will be very useful when we do many regressions, and want 
 Run the code in the above examples, and practice extracting some other elements from the linear regression. Compare the output to the summary of the `lm` fit (that is, compare it to what `summary(lmfit)` shows on screen).
 ```
 
+
 ### Creating lists from dataframes {#dfrlists}
 
 For more advanced analyses, it is often necessary to repeat a particular analysis many times, for example for sections of a dataframe. 
@@ -397,9 +399,10 @@ length(allomsp)
 names(allomsp)
 ```
 
-> **Try this yourself**
-Run the code in the above example, and confirm that `allomsp[[2]]` is identical to taking a subset of `allom` of the second species in the dataset (where 'second' refers to the second level of the factor variable `species`, which you can find out with `levels`).
 
+```{block2 type="rmdtry"}
+Run the code in the above example, and confirm that `allomsp[[2]]` is identical to taking a subset of `allom` of the second species in the dataset (where 'second' refers to the second level of the factor variable `species`, which you can find out with `levels`).
+```
 
 Let's look at an example using the `hydro` data. The data contains water levels of a hydrodam in Tasmania, from 2005 to 2011.
 
@@ -440,6 +443,7 @@ We will introduce two basic tools that we use to apply functions to each element
 #### Using `sapply`
 
 First let's look at some simple examples:
+
 ```{r }
 # Let's make a simple list with only numeric vectors (of varying length)
 numlis <- list(x=1000, y=c(2.1,0.1,-19), z=c(100,200,100,100))
@@ -571,11 +575,13 @@ Try to fully understand the difference between `sapply` and `lapply` by using `l
 ## Loops {#simpleloops}
 
 Loops can be useful when we need to repeat certain analyses many times, and it is difficult to achieve this with `lapply` or `sapply`. To understand how a `for` loop works, look at this example:
+
 ```{r }
 for(i in 1:5){
   message(i)
 }
 ```
+
 Here, the bit of code between {} is executed five times, and the object `i` has the values 1,2,3,4 and 5, in that order. Instead of just printing `i` as we have done above, we can also index a vector with this object:
 
 ```{r }
@@ -586,6 +592,7 @@ for(i in 1:length(myvec)){
   message("Element ", i, " of the vector is: ", myvec[i])
 }
 ```
+
 Note that this is only a toy example: the same result can be achieved by simply typing `myvec`.
 
 Now let's look at a useful application of a `for` loop: producing multiple plots in a `pdf`, using the `allomsp` object we created earlier.
@@ -612,6 +619,7 @@ Here, we create three plots (`i` goes from 1 to 3), every time using a different
 Another way to achieve the same result is to avoid splitting the dataframe into a list first, and simply take subsets on the fly. Consider this template (make your own working example based on any dataset).
 
 We assume here you have a dataframe called 'dataset' with a factor 'species', for which you want to create separate plots of Y vs. X.
+
 ```{r eval=FALSE}
 pdf("somefilename.pdf", onefile=TRUE)
 for(lev in levels(dataset$species)){

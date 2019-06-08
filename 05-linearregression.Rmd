@@ -1,3 +1,41 @@
+# Basic statistics and linear modelling {#linmodel}
+
+
+## Introduction
+
+This book is not an *Introduction to statistics*. There are many books focused on *statistics*, with or without example R code. The focus throughout this book is on the R code itself, as we try to present clear and short solutions to common analysis tasks. In the following, we assume you have a basic understanding of linear regression, Student's $t$-tests, ANOVA, and confidence intervals for the mean.
+
+Linear modelling is a general technique that includes linear regression, but also basic means testing, comparing samples, and more complex combinations of class and numeric predictors. 
+
+In linear modelling we are interested in understanding variation in a single *numeric response variable* (or sometimes binary). We can include all sorts of *predictors* ('explanatory variables', 'independent variables'), depending on what we chose we end up with various techniques:
+
+- factor variable(s), test difference in mean in our predictor across the factor ("Analysis of variance", "t-test")
+- a single numeric predictor (simple linear regression)
+- multiple numeric predictors, and interactions (multiple linear regression)
+- mixture of factors and numeric predictors (in the simplest case, analysis of covariance - ANCOVA)
+
+There are many more complicated possibilities, but the above is what this chapter is all about.
+
+
+*Packages used*:
+
+The examples will generally let you know which packages are used, but for your convenience, here is a complete list of the packages used. 
+
+For plotting, we often use `ggplot2`, `ggthemes`, `scales` and `ggpubr` (these are frequently omitted from the examples):
+
+Otherwise:
+
+- `lgrdata` (for the example datasets)
+- `pastecs` (for descriptive statistics)
+- `dplyr` (for various data skills and the pipe operator `%>%`)
+- `pander` (to format R output for use in rmarkdown documents)
+- `broom` (for tidy printing of fitted models)
+- `multcomp` (for multiple comparisons)
+- `visreg` (for visualizing regression models)
+- `car` (for various functions used in regression)
+- `emmeans` (for computing marginal effects from regression models)
+
+
 
 ```{r echo=FALSE, cache=FALSE, results="hide", include=FALSE}
 knitr::opts_chunk$set(echo=TRUE)
@@ -29,150 +67,167 @@ knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
 ```
 
 
-# Linear modelling {#linmodel}
+## Probability distributions {#distributions}
 
+You will have encountered a number of probability distributions before. For example, the *Binomial* distribution is a model for the distribution of the number of *successes* in a sequence of independent trials, for example, the number of heads in a coin tossing experiment. Another commonly used discrete distribution is the *Poisson*, which is a useful model for many kinds of count data. Of course, the most important distribution of all is the *Normal* or Gaussian distribution.
 
-## Introduction
+R provides sets of functions to find densities, cumulative probabilities, quantiles, and to draw random numbers from many important distributions. The names of the functions all consist of a one letter prefix that specifies the type of function and a stem which specifies the distribution. Look at the examples in the table below.
 
-- what do we cover here
-- mostly about methods for very few variables. that's what we prefer, since it is real nice to be able to visualize what is going on. that does not work for many variables
-- methods for many variables: select subset of predictors, make model 'stable', hopefully end up with few variables that we can visualize
-- testing for effects (as often in science), versus making a model for prediction (as often in data science). 
-- cross validation comes later though, because overfitting is best illustrated with a non-linear model
+```{r echo=FALSE}
+library(tibble)
 
+tab <- tribble(~Prefix, ~Meaning,
+               "`d`", "density",
+               "`p`", "cumulative probability",
+               "`q`", "quantile",
+               "`r`", "simulate")
 
-```{block2 type="rmdreading"}
-An excellent book on linear modelling, including many tools that we did not cover in this chapter is:
-Fox, John, and Sanford Weisberg. *An R companion to applied regression*. Sage, 2010. This book describes the `car` package.
-
-
+knitr::kable(tab)
 ```
 
-
-## What is linear modelling
-
-Numeric response, with :
-
-- compare means with factor predictors ("Analysis of variance", "t-test")
-- a single numeric predictor (simple linear regression)
-- multiple numeric predictors, and interactions (multiple linear regression)
-- mixture of factors and numeric predictors
-- 'parametric' method
-
-Equation linear in the parameters. We can interpret parameters.
-
-
-**Packages used in this chapter**
-
-The examples will generally let you know which packages are used, but for your convenience, here is a complete list of the packages used. 
-
-For plotting, we often use `ggplot2`, `ggthemes`, `scales` and `ggpubr` (these are frequently omitted from the examples):
-
-Otherwise:
-
-- `lgrdata` (for the example datasets)
-- `dplyr` (for various data skills and the pipe operator `%>%`)
-- `pander` (to format R output for use in rmarkdown documents)
-- `broom` (for tidy printing of fitted models)
-- `multcomp` (for multiple comparisons)
-- `visreg` (for visualizing regression models)
-- `car` (for various functions used in regression)
-- `emmeans` (for computing marginal effects from regression models)
-
-
-
-
-
-## A motivating example {#icecream}
-
-It is well known that ice cream sales are higher during warm weather. As an ice cream salesman, you hardly have to apply regression analysis to know this - it is just obvious. Suppose that one year, you sell icecream at Oosterpark in Amsterdam. Sales are pretty good, the summer is nice and warm. The next year you try your luck at the Dappermarkt, a busy market in the east of Amsterdam. You tally your sales every week, and finally make a plot comparing average weekly sales:
-
-
-```{r fig.cap="Average weekly ice cream sales at two locations, over two years"}
-data(icecream)
-
-library(ggplot2)
-library(ggthemes)
-
-ggplot(icecream, aes(x = location, y = sales, fill = location)) + 
-  scale_fill_manual(values=c("white","grey")) + 
-  geom_boxplot() +
-  theme(aspect.ratio = 2, legend.position="none") +
-  lims(y=c(0,1200))
+```{r, echo=FALSE}
+tab <- tribble(~Suffix, ~Meaning,
+               "`binom`","Binomial",
+                "`pois`", "Poisson",
+                "`norm`", "Normal",
+                "`t`", "Student's t",
+                "`chisq`", "Chi-squared",
+                "`f`", "F")
+knitr::kable(tab)
 ```
 
-Based on this simple boxplot, you would either conclude that there is no difference in sales, or that perhaps sales were slightly better in Oosterpark. We can also perform a *t*-test for two samples, which tests the hypothesis that the two means are not different (in other words, location has no effect on sales).
+Using the prefix and the suffix, we can construct each desired function. For example, 
 
-```{r}
-t.test(sales ~ location, data=icecream)
+```{r }
+# Calculate the probability of 3 heads out of 10 tosses of a fair coin.
+# This is a (d)ensity of a (binom)ial distribution.
+dbinom(3, 10, 0.5)
+
+# Calculate the probability that a normal random variable (with 
+# mean of 3 and standard deviation of 2) is less than or equal to 4.
+# This is a cumulative (p)robability of a (norm)al variable.
+pnorm(4, 3, 2)
+
+# Find the t-value that corresponds to a 2.5% right-hand tail probability
+# with 5 degrees of freedom.
+# This is a (q)uantile of a (t)distribution.
+qt(0.975, 5)
+
+# Simulate 5 Poisson random variables with a mean of 3. 
+# This is a set of (r)andom numbers from a (pois)son distribution.
+rpois(5, 3)
 ```
 
-```{block2, type='rmdnote'}
-The example above - as all other examples in this chapter - shows the raw output produced by R. To produce attractive output for use in an rmarkdown document, use the `pander` package: `pander::pander(t.test(sales ~ location, data=icecream))`. The `pander` function also works for many other R objects.
+See the help page `?Distributions` for more details.
+
+To make a quick plot of a distribution, we can use the density function in combination with `curve`. The following code makes Fig. \@ref(fig:distplot).
+
+```{r distplot, fig.cap='Two univariate distributions plotted with curve()', opts.label="smallsquare"}
+# A standard normal distribution
+curve(dnorm(x, sd=1, mean=0), from=-3, to=3,
+      ylab="Density", col="blue")
+
+# Add a t-distribution with 3 degrees of freedom.
+curve(dt(x, df=3), from =-3, to=3, add=TRUE, col="red")
+
+# Add a legend (with a few options, see ?legend)
+legend("topleft", c("Standard normal","t-distribution, df=3"), lty=1, col=c("blue","red"),
+       bty='n', cex=0.8)
 ```
 
-
-From this test we conclude no difference: the P value is very large (meaning the observed sample difference is not unusual, and could have easily arisen by chance).
-
-Of course, there is something rather fishy about this experiment. We are testing the difference between two locations - but both locations were 'tested' in different years, when other conditions may have been different. In other words, we have not performed a proper experiment at all - changing just one variable at a time - location is *confounded* by the year. 
-
-We do not need to get into detail here to design a proper scientific ice cream sales experiment, instead we are going to make the point that we can account for some *confounding variables* via regression analysis. How about temperature? As an astute ice cream salesman, you downloaded weekly average air temperature for Amsterdam, and added these to the data. Now let's make a plot using *air temperature as a covariate*.
-
-
-```{r fig.cap = "Ice cream sales by location, and varying with temperature."}
-# Assuming you have loaded ggplot2 and ggthemes
-ggplot(icecream, aes(x = temperature, y = sales, fill = location)) +
-  geom_point(shape = 21, size=3) +
-  scale_fill_manual(values = c("white","dimgrey")) +
-  lims(y=c(0,1200), x=c(0,35))
-```
-
-In this figure we arrive at a completely different conclusion - but only because we have taken into account the covariate weekly temperature. Now, *at a given temperature*, ice cream sales were higher at the new location - Dappermarkt. This is an example of how a confounding variable can mask (or even reverse) effects of some other variable. It seems obvious from the figure that temperature was overall lower when you sold ice cream at the Dappermarkt, explaining why average weekly sales were in the end no different.
-
-```{block2, type="rmdtry"}
-Use a *t*-test to test that temperature was lower at the Dappermarkt location.
-```
-
-Using regression analysis, we can test the assertion that ice cream sales are higher at Dappermarkt, *at a given temperature*. But before we do that, we first introduce the tools to test difference between means (as we just did with a simple two-sample t-test), and introduce basic linear regression. We return to the icecream problem in Section \@ref(icecreamtest).
-
-
-
-### Testing or predicting?
-
-
-*Inference* is answering questions about population parameters based on a sample. The mean of a random sample from a population is an estimate of the population mean. Since it is a single number it is called a point estimate. It is often desirable to estimate a range within which the population parameter lies with high probability. This is called a confidence interval.
-
-In other applications we are not so much interested in testing for difference, but instead want to develop a model that we can use for *prediction* of new values.
-
-...
-
-**Testing: p-values and confidence intervals**
-
-**Predicting: cross-validation**
-
-The real quality of a predictive model is assessed by a completely independent test dataset. We can use the model to predict new outcomes, given the test data, and compare the predictions to the true values. In practice, however, a truly independent test dataset is rarely if ever available. Instead, we can use a trick to pretend we have lots of 'independent' test datasets: split the original data into a 'training' set (the data used to fit the model), and a 'test' set (the data used to test the model).
-
-Rather than treat this topic exhaustively, we will show one very popular method to assess predictive power of models: k-fold cross validation. 
-
-...
-
-(separate chapter with p-values, confidence intervals? Or mixed in here?
-cross validation also applies to non-linear models, classification)
-
-
-Sometimes models are better for prediction of new cases, at the expense of a slightly worse fit for the data used to fit them. Ridge regression is an example (section on shrinkage?).
-
-```{r eval=FALSE}
-# shrink package, works on lm coefficients
-# https://www.rdocumentation.org/packages/shrink/versions/1.2.1/topics/shrink
-# MASS::lm.ridge
-# ridge with glmnet
-# https://drsimonj.svbtle.com/ridge-regression-with-glmnet
-
+```{block2 type="rmdtry"}
+Make a histogram of a sample of random numbers from a distribution of your choice. use `hist` and one of the functions starting with `r` from above.
 ```
 
 
 
+## Descriptive Statistics {#descstat}
+
+Descriptive statistics summarise some of the properties of a given data set. Generally, we are interested in measures of location (central tendency, such as mean and median) and scale (variance or standard deviation). Other descriptions can include the sample size, the range, and so on. We already encountered a number of functions that can be used to summarize a vector. 
+
+Let's look at some examples for the Pupae dataset.
+  
+```{r }
+# Read data
+data(pupae)
+
+# Extract the weights (for convenience)
+weight <- pupae$PupalWeight
+
+# Find the number of observations
+length(weight)
+
+# Find the average (mean) weight
+mean(weight)
+
+# Find the Variance
+var(weight)
+```
+
+Note that R will compute the sample variance (not the population variance). The standard deviation can be calculated as the square root of the variance, or use the `sd` function directly.
+
+```{r }
+# Standard Deviation
+sqrt(var(weight))
+
+# Standard Deviation
+sd(weight)
+```
+
+Robust measures of the location and scale are the median and inter-quartile range; R has functions for these.
+
+```{r }
+# median and inter-quartile range
+median(weight)
+IQR(weight)
+```
+
+The median is the 50th percentile or the second quartile. The `quantile` function can compute quartiles as well as arbitrary percentiles/quantiles.
+
+```{r }
+# Default: computes quartiles.
+quantile(weight)
+
+# Or set any quantiles
+quantile(weight, probs=seq(0,1,0.1))
+```
+
+**Missing Values**: All of the above functions will return `NA` if the data contains *any* missing values. However, they also provide an option to remove missing values (`NA`s) before their computations (see also Section \@ref(workingmissing)).
+
+```{r }
+mean(pupae$Frass)
+mean(pupae$Frass, na.rm=TRUE)
+```
+
+The `summary` function provides a lot of the above information in a single command:
+```{r }
+summary(weight)
+```
+
+The `moments` package provides 'higher moments' if required, for example, 
+the `skewness` and `kurtosis`.
+```{r }
+# load the moments package
+library(moments)
+skewness(weight)
+kurtosis(weight)
+```
+
+The `pastecs` package includes a useful function that calculates many descriptive statistics for numeric vectors, including the standard error for the mean (for which R has no built-in function).
+
+```{r }
+library(pastecs)
+
+# see ?stat.desc for description of the abbreviations
+stat.desc(weight)
+
+# conveniently, the output is a character vector which we can index by name,
+# for example extracting the standard error for the mean
+stat.desc(weight)["SE.mean"]
+```
+
+
+Sometimes you may wish to calculate descriptive statistics for subgroups in the data. We will come back to this extensively in Section \@ref(tapplyaggregate) and later sections.
 
 
 
@@ -260,7 +315,7 @@ prop.test(x=60, n=100, p=0.5) %>% pander
 Likewise, we can perform one-sided tests with the argument ` alternative="greater"` (not shown).
 
 
-## Inference for two populations
+### Inference for two populations
 
 Commonly, we wish to compare two (or more) populations. For example, the `pupae` dataset has pupal weights for female and male pupae. We may wish to compare the weights of males (`gender=0`) and females (`gender=1`). 
 
@@ -274,7 +329,7 @@ t.test(PupalWeight ~ Gender, data=pupae, var.equal=TRUE)
 ```
   
 
-### Paired data
+#### Paired data
 
 The `t.test` can also be used when the data are paired, for example, measurements taken before and after some treatment on the same subjects. For this example, we will use the pulse data - data on pulse rates of individuals before and after exercise. We will test the simple idea that pulse rate is different after exercise. To do this, we first extract only those subjects that exercised (`Ran=1`),
 
@@ -286,7 +341,7 @@ pulse.after <- with(pulse, Pulse2[Ran==1])
 t.test(pulse.after, pulse.before, paired=TRUE)
 ```
   
-### Unequal variances
+#### Unequal variances
 
 The default for the two-sample `t.test` is actually to *not* assume equal variances. The theory for this kind of test is quite complex, and the resulting $t$-test is now only approximate, with an adjustment called the 'Satterthwaite' or 'Welch' approximation made to the degrees of freedom.
 
@@ -297,7 +352,7 @@ t.test(PupalWeight ~ Gender,  data=pupae) %>% pander
 Since this modified t-test makes fewer assumptions, you could ask why we ever use the equal variances form. If the assumption is reasonable, then this (equal variances) form will have more power, i.e. will reject the null hypothesis more often when it is actually false.
 
 
-## One-way ANOVA
+### Testing many groups at once (ANOVA)
 
 One-way ANOVA (ANalysis Of VAriance) can be used to compare means across two or more populations. We will not go into the theory here, but the foundation of ANOVA is comparing the variation *between* the group means to the variation *within* the groups (using an F-statistic). 
 
@@ -319,7 +374,7 @@ group_by(cowsub, species) %>%
   summarize(height = mean(height))
 ```
 
-We might want to ask, does the mean height vary by species? Before you do any test for significance, a graphical summary of the data is always useful. For this type of data, box plots are preferred since they visualize not just the means but also the spread of the data (see also Section \@ref(boxplot)) (Fig. \@ref(fig:allombox)).
+We might want to ask, does the mean height vary by species? Before you do any test for significance, a graphical summary of the data is always useful. For this type of data, box plots are preferred since they visualize not just the means but also the spread of the data (Fig. \@ref(fig:allombox)).
 
 ```{r allombox, fig.cap='Simple box plot for the Coweeta data.', opts.label="smallsquare"}
 boxplot(height~species, data=cowsub)
@@ -395,7 +450,7 @@ plot(tukey_Spec)
 
 
 
-## Comparing means by two variables (two-way ANOVA) {#twoway}
+### Comparing many groups by two predictors (two-way ANOVA) {#twoway}
 
 Sometimes there are two (or more) *treatment* factors. The 'age and memory' dataset (see `?memory`)  includes the number of words remembered from a list for two age groups and five memory techniques. 
 
@@ -487,7 +542,7 @@ We once again conclude that the interaction improved the model fit substantially
 
 ### Diagnostics
 
-The standard ANOVA assumes normality of the residuals, and we should always check this assumption with some diagnostic plots (Fig.~\@ref(fig:anovadiag1)). Although R has built-in diagnostic plots, we prefer the use of `qqPlot` and `residualPlot`, both from the `car` package.
+The standard ANOVA assumes normality of the residuals, and we should always check this assumption with some diagnostic plots (Fig. \@ref(fig:anovadiag1)). Although R has built-in diagnostic plots, we prefer the use of `qqPlot` and `residualPlot`, both from the `car` package.
 
 ```{r anovadiag1,  fig.show='hold', opts.label="wide", fig.cap='Simple diagnostic plots for the Memory ANOVA.'}
 par(mfrow=c(1,2))
@@ -501,24 +556,117 @@ residualPlot(fit3)
 qqPlot(fit3)
 ```
 
-The QQ-plot shows some slight non-normality in the upper right. The non-normality probably stems from the fact that the `Words` variable is a 'count' variable. We will return to this in Section~\@ref(sec:glm).
+The QQ-plot shows some slight non-normality in the upper right. The non-normality probably stems from the fact that the `Words` variable is a 'count' variable.
 
 ```{block2, type="rmdtry"}
 Check whether a log-transformation of `Words` makes the residuals closer to normally distributed.
 ```
 
 
+
+
+
+
+<!-- ### Testing or predicting? -->
+
+
+<!-- *Inference* is answering questions about population parameters based on a sample. The mean of a random sample from a population is an estimate of the population mean. Since it is a single number it is called a point estimate. It is often desirable to estimate a range within which the population parameter lies with high probability. This is called a confidence interval. -->
+
+<!-- In other applications we are not so much interested in testing for difference, but instead want to develop a model that we can use for *prediction* of new values. -->
+
+<!-- ... -->
+
+<!-- **Testing: p-values and confidence intervals** -->
+
+<!-- **Predicting: cross-validation** -->
+
+<!-- The real quality of a predictive model is assessed by a completely independent test dataset. We can use the model to predict new outcomes, given the test data, and compare the predictions to the true values. In practice, however, a truly independent test dataset is rarely if ever available. Instead, we can use a trick to pretend we have lots of 'independent' test datasets: split the original data into a 'training' set (the data used to fit the model), and a 'test' set (the data used to test the model). -->
+
+<!-- Rather than treat this topic exhaustively, we will show one very popular method to assess predictive power of models: k-fold cross validation.  -->
+
+<!-- ... -->
+
+<!-- (separate chapter with p-values, confidence intervals? Or mixed in here? -->
+<!-- cross validation also applies to non-linear models, classification) -->
+
+
+<!-- Sometimes models are better for prediction of new cases, at the expense of a slightly worse fit for the data used to fit them. Ridge regression is an example (section on shrinkage?). -->
+
+<!-- ```{r eval=FALSE} -->
+<!-- # shrink package, works on lm coefficients -->
+<!-- # https://www.rdocumentation.org/packages/shrink/versions/1.2.1/topics/shrink -->
+<!-- # MASS::lm.ridge -->
+<!-- # ridge with glmnet -->
+<!-- # https://drsimonj.svbtle.com/ridge-regression-with-glmnet -->
+
+<!-- ``` -->
+
+
+
+
+
+
 ## Linear regression
 
 
-To fit linear models of varying complexity, we can use the `lm` function. The simplest model is a straight-line relationship between an `x` and a `y` variable. In this situation, the assumption is that the `y`-variable (the response) is a linear function of the `x`-variable (the independent variable), plus some random noise or measurement error. For the simplest case, both `x` and `y` are assumed to be continuous variables. In statistical notation we write this as,
 
-\begin{equation}
-y = \alpha+\beta x +\varepsilon 
-(\#eq:simplelin)
-\end{equation}
+### Icecream sales: a motivating example {#icecream}
 
-Here $\alpha$ and $\beta$ are (population) parameters that need to be estimated from the data. The error ($\epsilon$) is assumed to follow a normal distribution with a mean of zero, and a standard deviation of $\sigma$. It is also assumed that $\sigma$ is constant and does not depend on $x$.
+It is well known that ice cream sales are higher during warm weather. As an ice cream salesman, you hardly have to apply regression analysis to know this - it is just obvious. Suppose that one year, you sell icecream at Oosterpark in Amsterdam. Sales are pretty good, the summer is nice and warm. The next year you try your luck at the Dappermarkt, a busy market in the east of Amsterdam. You tally your sales every week, and finally make a plot comparing average weekly sales:
+
+
+```{r fig.cap="Average weekly ice cream sales at two locations, over two years"}
+data(icecream)
+
+library(ggplot2)
+library(ggthemes)
+
+ggplot(icecream, aes(x = location, y = sales, fill = location)) + 
+  scale_fill_manual(values=c("white","grey")) + 
+  geom_boxplot() +
+  theme(aspect.ratio = 2, legend.position="none") +
+  lims(y=c(0,1200))
+```
+
+Based on this simple boxplot, you would either conclude that there is no difference in sales, or that perhaps sales were slightly better in Oosterpark. We can also perform a *t*-test for two samples, which tests the hypothesis that the two means are not different (in other words, location has no effect on sales).
+
+```{r}
+t.test(sales ~ location, data=icecream)
+```
+
+```{block2, type='rmdnote'}
+The example above - as all other examples in this chapter - shows the raw output produced by R. To produce attractive output for use in an rmarkdown document, use the `pander` package: `pander::pander(t.test(sales ~ location, data=icecream))`. The `pander` function also works for many other R objects.
+```
+
+
+From this test we conclude no difference: the P value is very large (meaning the observed sample difference is not unusual, and could have easily arisen by chance).
+
+Of course, there is something rather fishy about this experiment. We are testing the difference between two locations - but both locations were 'tested' in different years, when other conditions may have been different. In other words, we have not performed a proper experiment at all - changing just one variable at a time - location is *confounded* by the year. 
+
+We do not need to get into detail here to design a proper scientific ice cream sales experiment, instead we are going to make the point that we can account for some *confounding variables* via regression analysis. How about temperature? As an astute ice cream salesman, you downloaded weekly average air temperature for Amsterdam, and added these to the data. Now let's make a plot using *air temperature as a covariate*.
+
+
+```{r fig.cap = "Ice cream sales by location, and varying with temperature."}
+# Assuming you have loaded ggplot2 and ggthemes
+ggplot(icecream, aes(x = temperature, y = sales, fill = location)) +
+  geom_point(shape = 21, size=3) +
+  scale_fill_manual(values = c("white","dimgrey")) +
+  lims(y=c(0,1200), x=c(0,35))
+```
+
+In this figure we arrive at a completely different conclusion - but only because we have taken into account the covariate weekly temperature. Now, *at a given temperature*, ice cream sales were higher at the new location - Dappermarkt. This is an example of how a confounding variable can mask (or even reverse) effects of some other variable. It seems obvious from the figure that temperature was overall lower when you sold ice cream at the Dappermarkt, explaining why average weekly sales were in the end no different.
+
+```{block2, type="rmdtry"}
+Use a *t*-test to test that temperature was lower at the Dappermarkt location.
+```
+
+Using regression analysis, we can test the assertion that ice cream sales are higher at Dappermarkt, *at a given temperature*. But before we do that, we first introduce the tools to test difference between means (as we just did with a simple two-sample t-test), and introduce basic linear regression. We return to the icecream problem in Section \@ref(icecreamtest).
+
+
+
+### Simple and multiple linear regression
+
+To fit linear models of varying complexity, we can use the `lm` function. The simplest model is a straight-line relationship between an `x` and a `y` variable. In this situation, the assumption is that the `y`-variable (the response) is a linear function of the `x`-variable (the independent variable), plus some random noise or measurement error. For the simplest case, both `x` and `y` are assumed to be continuous variables. 
 
 We use this method to study the relationship between two continuous variables: a *response* ('y variable') and a *predictor* (or independent variable) ('x variable'). We can use multiple regression to study the relationship between one response and more than one predictor. 
 
@@ -569,7 +717,7 @@ As you can see, we again use the `pander` package to give super clean results, w
 
 Next, we perform some diagnostic plots (shown in Fig. \@ref(fig:cerealdiag)). The standard errors (and confidence intervals, and hypothesis tests) will be unreliable if the assumptions of normality (right panel) or linearity (left panel) are seriously violated. If you are only interested in the mean response against your predictors, but not so much their uncertainties, you can usually ignore these plots.
 
-```{r cerealdiag, opts.label="wide"}
+```{r cerealdiag, opts.label="wide", fig.cap="Diagnostic plots for linear regression of the Cereals data."}
 # Basic diagnostic plots.
 par(mfrow=c(1,2))
 car::residualPlot(fit4)
@@ -580,7 +728,7 @@ Now that we have a fitted model, what do its predictions actually look like? Wha
 
 In this case, the command `visreg::visreg(fit4)` would show two plots very similar to the ones above - which does not really add much information. What if we can show the effects of both predictors, in just one plot? The following code produces Fig. \@ref(fig:visregcereal).
 
-```{r visregcereal}
+```{r visregcereal, fig.cap="Visualizing linear regression of the Cereals data with visreg."}
 library(visreg)
 
 visreg(fit4, "sugars", by = "fiber", overlay = TRUE, 
@@ -744,10 +892,9 @@ You can ignore the warning in this case, since we have used both the predictors 
 
 ### Logarithmic transformation {#logtransform}
 
-- stabilize variance
-- but also: now we have a multiplicative model - consequences for interactions
+For data that are very heteroscedasctic, that is, have quickly increasing variance with the value of the predictor, it is usually necessary to use a logarithm transformation of the data. In extreme cases, not applying the log-transform leads to very poor model fits, with very large influence of a few points, and possibly a fit that does not describe the data well at all.
 
-See Fig. \@ref(fig:cowtransform).
+See Fig. \@ref(fig:cowtransform) for an example where a log-transform is used.
 
 ```{r cowtransform, fig.cap="An example of a dataset that screams for a logarithmic transformation. Left panel: untransformed data, showing very non-constant variance, indicating larger variation in the response variable for larger individuals. Right panel: both variables have been log-transformed, giving a nice linear relationship with constant variance."}
 data(coweeta)
@@ -788,8 +935,11 @@ grid.arrange(residPlot(lm1), residPlot(lm2), ncol = 2)
 
 ```
 
-As Fig. \@ref(cowdiagnostics) shows, the log-transformation results in much better model diagnostics. We can expect that the model will give an overall better fit to the data, because when we did not transform, the location of the regression line will be overly influenced by values far away from the line. After transformation, this effect will be much reduced, and the model will be more robust. Second, the standard errors of the coefficients in the untransformed fit are very much biased, leading to confidence intervals that are much too narrow. In this case, a log-transformation could be used to remedy this problem, but in other cases we want to avoid transformations, or they are simply not adequate. In that case, we might use the bootstrap (see Section \@ref() for an example with the same dataset).
+As Fig. \@ref(fig:cowdiagnostics) shows, the log-transformation results in much better model diagnostics. We can expect that the model will give an overall better fit to the data, because when we did not transform, the location of the regression line will be overly influenced by values far away from the line. After transformation, this effect will be much reduced, and the model will be more robust. 
 
+Second, the standard errors of the coefficients in the untransformed fit are very much biased, leading to confidence intervals that are much too narrow. In this case, a log-transformation could be used to remedy this problem, but in other cases we want to avoid transformations, or they are simply not adequate. In that case, we might use the bootstrap. 
+
+This well known and often used transformation does have some consequences for interpreting the linear model fit that are often misunderstood. The key aspect to understand is that the model is no longer *additive* as the usual linear model (where effects of predicts are simply added), but rather *multiplicative* (effects of various predictors are *multiplied*). This has consequences for understanding interactions in the model as well.
 
 
 
@@ -826,9 +976,9 @@ lmq2 <- lm(height ~ diameter + I(diameter^2), data=pipo)
 Anova(lmq2)
 ```
 
-When fitting a quadratic model, it is again very useful to use `visreg` to inspect the model that is estimated, since it becomes even more difficult to make sense of the various linear, quadratic, and intercept terms, especially when interactions with factor variables are added. Consider this example for the allometry dataset, which makes Fig.~\@ref(fig:allomquad).
+When fitting a quadratic model, it is again very useful to use `visreg` to inspect the model that is estimated, since it becomes even more difficult to make sense of the various linear, quadratic, and intercept terms, especially when interactions with factor variables are added. Consider this example for the allometry dataset, which makes Fig. \@ref(fig:allomquad).
 
-```{r allomquad, opts.label="smallsquare", fig.cap=""}
+```{r allomquad, opts.label="smallsquare", fig.cap="Height modelled as a quadratic function of diameter, by species."}
 
 # Fit a linear model with linear, quadratic terms, and all species interactions.
 allomquadfit <- lm(height ~ poly(diameter, 2)*species, data=allometry)

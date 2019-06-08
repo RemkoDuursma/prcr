@@ -13,7 +13,8 @@ suppressPackageStartupMessages(library(gplots))
 suppressPackageStartupMessages(library(reshape2))
 suppressPackageStartupMessages(library(stringr))
 suppressPackageStartupMessages(library(glue))
-
+suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(zoo))
 
 source("R/theme_datapelikaan.R")
 library(showtext)
@@ -57,6 +58,77 @@ Otherwise:
 
 
 
+
+## Generating data
+
+### Sequences of numbers {#sequences}
+
+Let's look at a few ways to generate sequences of numbers that we can use in the examples and exercises. There are also a number of real-world situations where you want to use these functions.
+
+First, as we saw already, we can use `c`() to 'concatenate' (link together) a series of numbers. We can also combine existing vectors in this way, for example:
+
+```{r}
+a <- c(1,2,3)
+b <- c(4,5,6)
+c(a,b)
+```
+
+We can generate sequences of numbers using `:`, `seq` and `rep`, like so:
+
+```{r}
+# Sequences of integer numbers using the ":" operator:
+1:10   # Numbers 1 through 10
+5:-5   # From 5 to -5, backwards
+
+# Examples using seq()
+seq(from=10,to=100,by=10)
+seq(from=23, by=2, length=12)
+
+# Replicate numbers:
+rep(2, times = 10)
+rep(c(4,5), each=3)
+```
+
+The `rep` function works with any type of vector. For example, character vectors:
+
+```{r}
+# Simple replication
+rep("a", times = 3)
+
+# Repeat elements of a vector
+rep(c("E. tereticornis","E. saligna"), each=3)
+```
+
+
+### Random numbers {#randomnumbers}
+
+We can draw random numbers using the `runif` function. The `runif` function draws from a uniform distribution, meaning there is an equal probability of any number being chosen. 
+
+```{r}
+# Ten random numbers between 0 and 1
+runif(10)
+# Five random numbers between 100 and 1000
+runif(5, 100, 1000)
+```
+
+```{block2 type="rmdtry"}
+The `runif` function is part of a much larger class of functions, each of which returns
+numbers from a different probability distribution. Inspect the help pages of the functions `rnorm`
+for the normal distribution, and `rexp` for the exponential distribution. Try generating some data from a normal distribution with a mean of 100, and a standard deviation of 10.
+```
+
+
+Next, we will `sample` numbers from an existing vector.
+
+```{r}
+numbers <- 1:15
+sample(numbers, size=20, replace=TRUE)
+```
+
+This command samples 20 numbers from the \code{numbers} vector, with replacement.
+
+
+
 ## Reading data {#readingdata}
 
 There are many ways to read data into R, but we are going to keep things simple and show only a couple of options to read data from text files, and from databases (hosted online). 
@@ -71,7 +143,7 @@ In Section \@ref(otherdata), we summarize methods to read in data from other sou
 
 ### Reading CSV files {#readcsv}
 
-A very common text format for data is 'Comma-Separated Values', or CSV. You can use `read.csv` to read these files. Suppose you have the file `Allometry.csv' in your working directory, you can read in the file into a dataframe with, 
+A very common text format for data is 'Comma-Separated Values', or CSV. You can use `read.csv` to read these files. Suppose you have the file `Allometry.csv` in your working directory, you can read in the file into a dataframe with, 
 
 ```{r eval=FALSE}
 allometry <- read.csv("Allometry.csv")
@@ -95,7 +167,9 @@ If the file is stored in a sub-directory of your working directory, you can spec
 allometry <- read.csv("data/Allometry.csv")
 ```
 
-The latter option is probably useful to keep your data files separate from your scripts and outputs in your working directory. We will not discuss how to organize your files here, but return to this important topic in Chapter \@ref(projectman).
+The latter option is probably useful to keep your data files separate from your scripts and outputs in your working directory. 
+
+<!--We will not discuss how to organize your files here, but return to this important topic in Chapter \@ref(projectman).-->
 
 The function `read.csv` has many options, let's look at some of them. We can skip a number of rows from being read, and only read a fixed number of rows. For example, use this command to read rows 10-15, skipping the header line (which is in the first line of the file) and the next 9 lines. \emph{Note:} you have to skip 10 rows to read rows 10-15, because the header line (which is ignored) counts as a row in the text file! 
 
@@ -131,7 +205,7 @@ mydata <- read.table("somedelimdata.txt", header=TRUE, sep=";")
 ```
 
 
-### Reading typed data
+### Including data in a script
 
 You can also write the dataset in a text file, and read it as in the following examples. This is useful if you have (found) a small dataset that you typed in by hand, or for making reproducible code snippets that include the dataset. 
 
@@ -145,7 +219,7 @@ a b
 
 
 
-### JSON {-}
+### JSON
 
 A very popular format for data, especially on the web, is JSON - a text-based format that can represent not just rectangular data (dataframes), but any complex nested data structure.
 
@@ -167,104 +241,12 @@ Hmisc::contents(comment_data)
 ```
 
 
-### Reading data from databases
+### (No)SQL databases
 
-#### NoSQL
-
-In this example we show how to read data from MongoDB - a popular NoSQL database. With the `mongolite` package it is very straightforward to read data that can be transformed to a dataframe. Here, every item in the database is a piece of JSON, but of equal length and with the same names, so that each item can become a row in a dataframe.
-
-For a remotely stored MongoDB database, you first have to construct the URL, which includes a username and password. The URL looks like,
-
-```
-"mongodb://username:password@hostingsite.com:portnr/databasename"
-```
-
-The next example is a working example of a database stored on mlab.com, and grabs data using the `mongolite` package.
-
-The database contains data on number of cars parked on 13 car parks in Almere, the Netherlands. The data are updated every 15 minutes.
-
-```{r, eval = FALSE}
-
-# A working URL (5/6/2019)
-parkingdata_url <- "mongodb://guest:123password123@ds229186.mlab.com:29186/almereparking"
-
-#
-library(mongolite)
-
-# Make a database connection. Here you don't download data yet, just
-# set up a connection.
-db <- mongo(collection = "almereparkingjson",
-            url = parkingdata_url)
-
-# We can now download the last 1000 rows of the data.
-parkingdata <- db$find(limit = 1000, sort = '{"updated": -1}')
-
-```
-
-The above example shows how to make a query with the `mongolite` package, you can read [more options in the documentation](https://jeroen.github.io/mongolite/query-data.html).
-
-If you simply want to download all data, just do `db$find()`, it takes less than a minute.
+We show examples of how to obtain data from SQL and NoSQL databases in Chapter \@ref(webservices).
 
 
-#### SQL
-
-Here, we briefly show how to interact with SQL databases. There are many R packages available, partly because there are many implementations of SQL databases (including postgres, which we show here). A unified interface is provided by the `DBI` package ([link to documentation](https://db.rstudio.com/dbi/)), which allows us to use nearly the same code for very different databases.
-
-Here, we only show how to read rectangular data with the `DBI` package.
-
-With `dbConnect`, we setup a connection to the remotely available database (which does not download data yet). Using the connection we can list the tables available, download a table, and many other things.
-
-```{r eval = FALSE}
-# General database interface
-library(DBI)
-
-# Drivers for postgres.
-library(RPostgreSQL)
-
-# Set up connection.
-# !! This is a working connection (6/5/2019)
-con <- dbConnect(
-    drv = RPostgreSQL::PostgreSQL(),
-    dbname = "pfmegrnargs",
-    host = "hh-pgsql-public.ebi.ac.uk",
-    port = 5432, 
-    user = "reader",
-    password = "NWDMCE5xdipIjRrp"
-  )
-
-# Use dbListTables to see what's available.
-# Because this is a large database, store it in a vector and inspect the first few
-con_tables <- dbListTables(con)
-head(con_tables)
-
-# To download an entire table, use this command.
-# NOTE: not tested on this database as it is very large!
-# Here 'sometable' is one of the tables listed above.
-# mydata <- dbReadTable("sometable")
-
-# We can now send SQL queries, and download data.
-# Here we grab the last 10 items from the rfam_models table,
-# selecting only some columns.
-myquery1 <- dbSendQuery(con, "SELECT short_name, long_name, domain FROM rfam_models LIMIT 10")
-
-# This *still* does not download data, which we now do with:
-mydata1 <- dbFetch(myquery1)
-
-```
-
-
-
-```{block2, type="rmdtry"}
-You can run both examples above and download data from the remotely stored databases, both should be operational.
-```
-
-
-
-
-### Other data formats
-
-
-#### Excel spreadsheets {-}
+### Excel spreadsheets
 
 Excel spreadsheets are *not* a recommended way to store data, but often you don't make that choice yourself. If you do need to read an XLS or XLSX file, the `readxl` package works very well. *Note*: avoid older implementations like the `xlsx` package and `read.xls` in the `gtools` package, which are less reliable.
 
@@ -277,22 +259,13 @@ Here, `sheet` will specify the sheet by number, alternatively you can refer to t
 
 
 
-
-#### Proprietary formats {-}
+### Proprietary formats
 
 Many statistical software packages store data in their own format, not just text files. For data from **SPSS**, **SAS** or **Stata**, we recommend the `haven` package for reading the data into dataframes, and the `foreign` package provides further support for Minitab, **Systat**, and **Weka.** 
 
-
-
-#### Web services
+### Web services
 
 Nowadays many data are available via a 'RESTful' API, which is now by far the most common way to download publicly available (open) data (and many other services as well). We discuss reading data from a REST service, as well as setting up our REST service in Chapter \@ref(webservices).
-
-
-
-
-
-
 
 
 
@@ -314,7 +287,7 @@ dataframes, but are actually called 'tibbles' (for example, `read_excel` returns
 
 ### Convert vectors into a dataframe {#vecstodfr}
 
-Suppose you have two or more vectors (of the same length), and you want to include these in a new dataframe. You can use the function `data.frame}. Here is a simple example:
+Suppose you have two or more vectors (of the same length), and you want to include these in a new dataframe. You can use the function `data.frame`. Here is a simple example:
 
 ```{r }
 vec1 <- c(9,10,1,2,45)
@@ -390,7 +363,8 @@ summary(allometry[,1:3])
 
 For the numeric variables, the minimum, 1st quantile, median, mean, 3rd quantile, and maximum values are printed. For so-called 'factor' variables (i.e., categorical variables), a simple table is printed (in this case, for the `species` variable). We will come back to factors in Section sec:workingfactors. If the variables have missing values, the number of missing values is printed as well (see Section \@ref(workingmissing)).
 
-If you are using an `rmarkdown` document - see Section \@ref(XXX) on how to make R output pretty when the document is converted to HTML.
+<!--If you are using an `rmarkdown` document - see Section \@ref(XXX) on how to make R output pretty when the document is converted to HTML.
+-->
 
 To see how many rows and columns your dataframe contains (handy for double-checking you read the data correctly), use `nrow` and `ncol`. Alternatively, `dim` gives the 'dimension' of the dataframe (rows x columns).
 
@@ -402,7 +376,7 @@ ncol(allometry)
 
 ### Changing column names in dataframes {#namesdataframe}
 
-To access the names of a dataframe as a vector, use the `names} function. You can also use this to change the names. Consider this example:
+To access the names of a dataframe as a vector, use the `names` function. You can also use this to change the names. Consider this example:
 
 ```{r }
 # read names:
@@ -464,7 +438,7 @@ nums1[nelements]
 
 This last example extracts the last element of a vector. To do this, we first found the length of the vector, and used that to *index* the vector to extract the last element.
 
-We can also select multiple elements, by *indexing* the vector with another vector. Recall how to construct sequences of numbers, explained in Section sec:sequences`.
+We can also select multiple elements, by *indexing* the vector with another vector. Recall how to construct sequences of numbers, explained in Section \@ref(sequences).
 
 ```{r }
 # Select the first 3:
@@ -687,7 +661,7 @@ It is also possible to save all objects that are currently loaded in memory (eve
 
 
 
-## Data types
+## Special data types
 
 Now that we know how to read in dataframes, it is time we take a closer look at the types of data that can be contained in a dataframe. For the purpose of this book, a dataframe can contain six types of data. These are summarized in the table below:
 
@@ -1027,7 +1001,7 @@ pupae_nona <- pupae %>% filter(complete.cases(.))
 
 ### Subsetting when there are missing values {#subsetmissing}
 
-When there are missing values in a vector, and you take a subset (for example all data larger than some value), should the missing values be included or dropped? There is no one answer to this, but it is important to know that `subset` drops them, but the square bracket method (`[]`) keeps them. See also Section \@ref(subsetdiff), where we showed that these two methods to subset data differ in their behaviour. 
+When there are missing values in a vector, and you take a subset (for example all data larger than some value), should the missing values be included or dropped? There is no one answer to this, but it is important to know that `subset` drops them, but the square bracket method (`[]`) keeps them. 
 
 Consider this example, and especially the use of `which` to drop missing values when subsetting.
 
@@ -1523,7 +1497,7 @@ as.Date(mydatetime)
 as.factor(mylog)
 ```
 
-```{block2 type="rmdwarning"}
+```{block2 type="rmdcaution"}
 When converting a factor to numeric (i.e. when the factor labels can be converted to numeric values), first convert it to character: `x <- as.numeric(as.character(somefactor))`. The reason for this is that factor variables are internally stored as integer numbers, referring to the *levels* of the factor.
 ```
 
@@ -1531,7 +1505,7 @@ When converting a factor to numeric (i.e. when the factor labels can be converte
 
 There are a few useful functions to print general summaries of a dataframe, to see which variables are included, what types of data they contain, and so on. We already looked at `summary` and `str` in Section \@ref(dataframes).
 
-Two more very useful functions are from the `Hmisc` package. The first, `describe`, is much like `summary`, but offers slightly more sophisticated statistics. The second, `contents`, is similar to `str`, but does a very nice job of summarizing the `factor} variables in your dataframe, prints the number of missing variables, the number of rows, and so on. 
+Two more very useful functions are from the `Hmisc` package. The first, `describe`, is much like `summary`, but offers slightly more sophisticated statistics. The second, `contents`, is similar to `str`, but does a very nice job of summarizing the `factor` variables in your dataframe, prints the number of missing variables, the number of rows, and so on. 
 
 ```{r echo=FALSE}
 suppressPackageStartupMessages(library(Hmisc))
@@ -1581,7 +1555,7 @@ knitr::include_graphics("screenshots/tapplyresult.png")
 Note that the result is a `vector` (elements of a vector can have names, like columns of a dataframe).
 
 
-If we have the following dataset called `plantdat2},
+If we have the following dataset called `plantdat2`,
 
 ```{r echo=FALSE, out.width='33%'}
 knitr::include_graphics("screenshots/exampledatalarger.png")
@@ -1601,7 +1575,7 @@ knitr::include_graphics("screenshots/tapplyresultlarger.png")
 
 Note that the result here is a `matrix`, where `A` and `B`, the species codes, are the rownames of this matrix.
 
-Often, you want to summarize a variable by the levels of another variable. For example, in the `rain` data (see Section sec:raindata}), the `Rain` variable gives daily values, but we might want to calculate annual sums,
+Often, you want to summarize a variable by the levels of another variable. For example, in the `rain` data, the `Rain` variable gives daily values, but we might want to calculate annual sums,
 
 ```{r}
 # Read data
@@ -1731,7 +1705,7 @@ summaryBy(PupalWeight+Frass ~ CO2_treatment + T_treatment,
           FUN=c(mean,sd,length))
 ```
 
-You can also use any function that returns a vector of results. In the following example we calculate the 5% and 95% quantiles of all numeric variables in the allometry dataset. To do this, use `.} for the left-hand side of the formula.
+You can also use any function that returns a vector of results. In the following example we calculate the 5% and 95% quantiles of all numeric variables in the allometry dataset. To do this, use `.` for the left-hand side of the formula.
 
 ```{r}
 # . ~ species means 'all numeric variables by species'.
@@ -1828,7 +1802,7 @@ mutate(hfemet2008, DateTime = mdy_hm(DateTime)) %>% # convert to proper DateTime
 
 It is often useful to count the number of observations by one or more multiple factors. One option is to use `tapply` or `summaryBy` in combination with the `length` function. A much better alternative is to use the `xtabs` and `ftable` functions, in addition to the simple use of `table`. Alternatively, `dplyr` provides a `count` function. We will look at both options.
 
-Consider these examples using the Titanic data (see Section sec:titanic}).
+Consider these examples using the Titanic data.
 
 ```{r tidy = FALSE}
 # Read titanic data
@@ -1852,7 +1826,7 @@ titanic %>% count(PClass, Sex, Survived)
 
 ## Adding summary variables to dataframes {#summaryvars}
 
-We saw how `tapply` can make simple tables of averages (or totals, or other functions) of some variable by the levels of one or more factor variables. The result of `tapply` is typically a vector with a length equal to the number of levels of the factor you summarized by (see examples in Section sec:tapply}). 
+We saw how `tapply` can make simple tables of averages (or totals, or other functions) of some variable by the levels of one or more factor variables. The result of `tapply` is typically a vector with a length equal to the number of levels of the factor you summarized by (see examples in Section \@ref(tapply)). 
 
 Consider the `allometry` dataset, which includes tree height for three species. Suppose you want to add a new variable 'MaxHeight', that is the maximum tree height observed per species. We can use `ave` to achieve this:
 
@@ -2188,8 +2162,10 @@ head(elect_long,3)
 ```
 
 ```{r eval=FALSE}
-# Identical results can be had with melt() from reshape2 - a function which otherwise includes more options.
-# See `?melt.data.frame` for more options (not `?melt`, which is the generic function).
+# Identical results can be had with melt() from reshape2,
+# a function which otherwise includes more options.
+# See `?melt.data.frame` for more options (not `?melt`, 
+# which is the generic function).
 library(reshape2)
 elect_long <- melt(dutchelection, variable.name="Party", value.name="Poll", id.vars="Date")
 ```
@@ -2205,7 +2181,8 @@ dat <- data.frame(Day=rep(1:3, each=2), Person=rep(letters[1:2], 3),
 dat
 
 # Now reshape to long format, using melt.data.frame
-dat_long <- melt(dat, id.vars=c("Day","Person"), value.name="Length", variable.name="BodyPart") %>%
+dat_long <- melt(dat, id.vars=c("Day","Person"), value.name="Length", 
+	variable.name="BodyPart") %>%
   mutate(BodyPart = gsub("Length.", "", BodyPart))
 
 dat_long

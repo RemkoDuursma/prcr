@@ -96,7 +96,7 @@ The way that `plot` gives different results depending on data types is both a go
 
 
 
-#### Resources
+<!--#### Resources-->
 
 
 ### ggplot2 {#ggplot2}
@@ -106,7 +106,7 @@ The `ggplot2` package is an incredibly rich and powerful toolkit to construct pl
 We will show the functionality of `ggplot2` by providing two examples, one scatterplot, and one barplot. Since we use `ggplot2` throughout this book, you can find many more examples. The following three examples were chosen because they highlight a few key options.
 
 
-#### Formatting data for `ggplot2`
+#### Preparing the data for plotting
 
 To use `ggplot2`, our data have to always be in *long format*, where each row represents an observation, and each column in the dataframe represents a type of measurement. Most of the datasets included in the `lgrdata` package are already in long format. One exception is the `dutchelection` dataset:
 
@@ -128,6 +128,8 @@ head(dutchlong, 3)
 #### Scatterplot example
 
 
+Here we show two examples of a scatter plot. In practice you start with the simplest plot you can think of, then gradually add 'layers' and other elements. Here, the quickest way to make a scatter plot is like this,
+
 
 ```{r}
 # Minimal
@@ -137,6 +139,15 @@ ggplot(automobiles, aes(x = horsepower, y = fuel_efficiency)) +
   geom_point()
 ```
 
+Next, we want to extend this example by including various other elements:
+
+- Plotting symbols colored by Region
+- A linear regression line, one for each of the three Regions
+- Text labels identifying outliers
+- A legend
+- Better axis labels
+
+Study the example below how each of these was included:
 
 
 ```{r warning=FALSE}
@@ -169,6 +180,7 @@ ggplot(automobiles2, aes(x = horsepower, y = fuel_efficiency,
 
 #### Area plot example
 
+A 'stacked area chart' can be quickly implemented with the `geom_area` function, like so:
 
 ```{r}
 data(oil)
@@ -236,21 +248,25 @@ ggplot(titanic, aes(x=PClass, fill=as.factor(Survived))) +
 ```
 
 
+
+
+#### Resources {#ggplotresources}
+
+The web is bursting with great `ggplot2` tutorials and collections of examples. If you are stuck on some aspect, simply type your question into Google, and you will usually end up at a useful Stackoverflow post. 
+
+A selection of useful resources is:
+
+- My favorite resources with lots of small examples: http://www.cookbook-r.com/Graphs/
+- A very practical gallery guide at http://www.sthda.com/english/wiki/ggplot2-essentials
+- Official page with (extensive) documentation: https://ggplot2.tidyverse.org/
+- A more gentle introduction to `ggplot2` at https://r4ds.had.co.nz/data-visualisation.html
+- An attractive gallery of useful plots, with all code at http://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html
+
 The `ggplot2` package has many extensions, packages that offer additional options, themes, plotting layouts, etc. In this book, we only use a couple of add-on packages for reasons of brevity. These include:
 
 - `ggthemes` : an excellent collection of themes and color palettes
 - `scales` : useful functions for formatting axes, adjusting colors
 - `gridExtra` : to arrange multiple, separate plots, on one page 
-
-
-#### Resources {#ggplotresources}
-
-- my favorite: http://www.cookbook-r.com/Graphs/, lots of small examples
-- also very practical gallery guide at http://www.sthda.com/english/wiki/ggplot2-essentials
-- official page at https://ggplot2.tidyverse.org/, see cheat sheet
-- more gentle introduction at https://r4ds.had.co.nz/data-visualisation.html
-- nice gallery of useful plots, with all code at http://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html
-
 
 
 
@@ -376,9 +392,8 @@ pander(test_output)
 ```
 
 
-#### Make pretty tables
+<!--#### Make pretty tables-->
 
-(to be added)
 
 
 

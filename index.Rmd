@@ -12,6 +12,7 @@ description: "The HIERmanual has new clothes."
 ---
 
 
+
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 # Preamble
 library(knitr)
@@ -30,6 +31,15 @@ knit_hooks$set(output = function(x, options) {
         x = paste(x, collapse = "\n")  # paste first n lines together
     }
     hook_output(x, options)
+})
+
+# Fix ugly tilde
+library(knitr)
+hook_source <- knit_hooks$get('source')
+knit_hooks$set(source = function(x, options) {
+  txt = hook_source(x, options)
+  # extend the default source hook
+  gsub('~', '\\\\mytilde', txt)
 })
 
 # Figure size templates
@@ -71,8 +81,8 @@ An index with the functions and packages used is provided at the end of this boo
 **How did I choose all the packages used here?**
 
 From experience and meeting criteria which include:
-- easiest syntax: usually we can come up with many ways to solve a particular problem in R. I like to choose the easiest to learn syntax, but especially if **the code is understandable by reading it**. 
-- actively maintained (although this is not necessary)
+- Easiest syntax: usually we can come up with many ways to solve a particular problem in R. I like to choose the easiest to learn syntax, but especially if **the code is understandable by reading it**. 
+- Actively maintained (although this is not necessary)
 - I like to use base R when I can, although end up using a lot of `tidyverse` packages, since they include so many nice inventions. Keeping dependencies to a minimum is one of the **R programmer's tips** (see Section)
 - Sometimes the presence of an active user base (indicated by use in blogs, stackoverflow, publications) is a positive indicator for a package. 
 

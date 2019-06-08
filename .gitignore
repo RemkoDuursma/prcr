@@ -10,3 +10,5 @@ rsconnect
 *.rds
 *.md
 *.html
+*_files/
+*_cache/

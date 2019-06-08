@@ -26,15 +26,33 @@ data("automobiles")
 
 copy_to(con, automobiles,
         indexes = list("car_name",
-                       "origin"))
+                       "origin"),
+        temporary = FALSE)
 
 cars <- tbl(con, "automobiles")
   
 
+heavycars_query <- cars %>%
+  filter(weight > 2000)
+
+show_query(heavycars_query)
+
+explain(heavycars_query)
+
+heavycars <- collect(heavycars_query)
+
+
+select(cars,
+       car_name %like% "buick") %>% collect
+
+filter(cars,
+       grepl("buick", car_name)
+       ) %>% collect
+
 
 
   
-  
+# REAL CODE  
 con <- DBI::dbConnect(drv = PostgreSQL(),
                       user = "mjvgsdzg",
                       password = rstudioapi::askForPassword("Database password"),

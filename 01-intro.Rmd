@@ -4,8 +4,6 @@
 ```{r echo=FALSE, message=FALSE, include=FALSE}
 suppressPackageStartupMessages(library(tibble))
 suppressPackageStartupMessages(library(magrittr))
-
-
 ```
 
 
@@ -115,6 +113,7 @@ When typing code directly into the console (other than a script, which is what y
 - Press **TAB** to auto-complete the name of a function (even those from loaded packages); very handy if you don't remember the name of the function, or you can't be bothered typing it in.
 - Press **CTRL-L** (CMD-L on Mac) to 'clear' the console. This does not remove the history or any objects, just starts a fresh screen.
 - Press **ESC** to cancel an operation (if R is taking long, and you don't want to wait).
+
 ```
 
 
