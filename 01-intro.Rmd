@@ -15,7 +15,7 @@ We assume that you have installed both R, and Rstudio. Please visit both website
 
 **Rstudio settings**
 
-We strongly recommend you change the following default settings in Rstudio. The default behaviour is to save all your objects to an 'RData' file when you exit, and loads the same objects when you open RStudio. This is very dangerous behaviour, and you **must** turn it off. See Section \@ref(savewd) for more information on 'RData' files. For now, make sure you go to <kbd>Tools > Global Options...</kbd> and on the <kbd>General</kbd> tab, make sure the settings are like the figure below.
+We strongly recommend you change the following default settings in Rstudio. The default behaviour is to save all your objects to an 'RData' file when you exit, and loads the same objects when you open RStudio. This is very dangerous behaviour, and you **must** turn it off. For now, make sure you go to <kbd>Tools > Global Options...</kbd> and on the <kbd>General</kbd> tab, make sure the settings are like the figure below.
 
 ```{r echo=FALSE, out.width='40%'}
 knitr::include_graphics("screenshots/neverloadrdata.png")
@@ -314,7 +314,7 @@ dir(pattern="[.]csv", ignore.case=TRUE)
 
 If you end up working primarily from Rstudio, we very strongly recommend the use of Projects in Rstudio to keep your work organized, and to help set the working directory.
 
-Rstudio projects are really just small files added to a certain folder, which "tags" that folder as containing a particular project. This idea works best if you have organized your work into smaller subsections, where you keep your different projects in separate folders. We come back to file & project organization in a later, more advanced chapter.
+Rstudio projects are really just small files added to a certain folder, which "tags" that folder as containing a particular project. This idea works best if you have organized your work into smaller subsections, where you keep your different projects in separate folders. 
 
 
 

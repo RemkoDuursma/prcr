@@ -13,7 +13,7 @@ library(showtext)
 font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
 library(ggplot2)
 theme_set(theme_datapelikaan(base_family = "Lato"))
-knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
+knitr::opts_chunk$set(fig.showtext = TRUE, dev="pdf")
 ```
 
 ## Introduction
@@ -279,14 +279,18 @@ But, scripts are not the best way to share your results with others. Instead, we
 
 Markdown is a simple set of rules for formatting text files so that they are both human-readable and processable by software, and is used not just by `rmarkdown` but in many applications (like Github and Stackoverflow). R Markdown simply adds R, by allowing code chunks with various options.
 
-RStudio offers a handy editor for markdown files, and starts with an example file that shows many of the features. Start a new markdown file by choosing `File > New 
-File > R Markdown...`. For now, leave the default settings. The new R markdown document (which is just a text file with the extension `.Rmd`) already contains some example code. Run this example by clicking the button just above the markdown document (Knit HTML). The example code will generate a new document (an HTML page), which opens in your browser You can see that the output contains text, R code, and even a plot.
 
-Throughout this book we assume that you use `rmarkdown` for all your reporting needs. It is by far the best option available at the moment, and provides many options for customization.
+
+### Getting started
+
+RStudio offers a handy editor for markdown files, and starts with an example file that shows many of the features. Start a new markdown file by choosing <kbd>File > New File > R Markdown...</kbd>. For now, leave the default settings. The new R markdown document (which is just a text file with the extension `.Rmd`) already contains some example code. Run this example by clicking the button just above the markdown document (Knit HTML). The example code will generate a new document (an HTML page), which opens in your browser You can see that the output contains text, R code, and even a plot.
+
+```{block2 type="rmdtry"}
+Try 'knitting' the example rmarkdown file (the one you see when you open your first `rmarkdown` file). First install the `knitr` and `rmarkdown` packages. Next, click the 'Knit' button in the upper-right hand corner just above the file. An HTML file was created. Find it and open it.
+```
 
 
 ### Tips
-
 
 #### Start with an example document {-}
 
@@ -304,7 +308,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-You can write all of that from scratch, but why would you?
+
 
 #### Modify the output style {-}
 
@@ -316,9 +320,6 @@ We list a few useful options; to see how these can be used search for them on th
 - `toc_float: true`, a very nice floating table of contents (the contents are always visible in a menu to the left)
 - `theme: cosmo`, or lots of other choices to be [picked from this gallery](https://bootswatch.com/3/), changes the colors, fonts, and general appearance of the document.
 
-#### Set options for all code chunks {-}
-
-The section shown above that contains  `knitr::opts_chunk$set(echo = TRUE)` sets *chunk options for the entire document*. An often used feature here is to hide all code from the eventual document by setting `echo=FALSE`, or set the figure size for all chunks with `fig.width = 5, fig.height = 5`, or use a particular graphics device (`dev = 'svg'`).
 
 
 #### Learn markdown syntax for text formatting {-}
@@ -326,7 +327,7 @@ The section shown above that contains  `knitr::opts_chunk$set(echo = TRUE)` sets
 As mentioned, the rest of the document contains two types of input: text with markup, and code chunks. Open a new rmarkdown document to see what the text with input looks like, and note the use of sections, formatting (bold, italic, etc.), weblinks, and so on. [Follow the Rstudio `rmarkdown` lessons to learn more](https://rmarkdown.rstudio.com/lesson-2.html).
 
 
-#### Set options for code chunks {-}
+#### Set options for individual code chunks {-}
 
 The code chunks contain R code, which will be executed, and the results will be visible in the eventual document (in our case, an HTML page). An R code chunk may look like this,
 
@@ -346,6 +347,11 @@ with(titanic, spineplot(Sex, PClass))
 ```
 
 Here, `fig.cap` makes a figure caption (but figures will not be automatically numbered, see below for an alternative), `fig.width` and `fig.height` set the figure size in inches, `dev="svg"` sets the graphic device to SVG (an outstanding format for the web) - you need to install `svglite` for this to work. Finally `echo=-1` hides the first row of the code in the output (in this case, we don't want the reader to be bothered by graphical settings in `par()`).
+
+
+#### Set options for all code chunks {-}
+
+The section shown above that contains  `knitr::opts_chunk$set(echo = TRUE)` sets *chunk options for the entire document*. An often used feature here is to hide all code from the eventual document by setting `echo=FALSE`, or set the figure size for all chunks with `fig.width = 5, fig.height = 5`, or use a particular graphics device (`dev = 'svg'`).
 
 
 #### Auto-numbering of figures and tables {-}

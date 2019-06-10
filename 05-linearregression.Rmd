@@ -17,7 +17,7 @@ In linear modelling we are interested in understanding variation in a single *nu
 There are many more complicated possibilities, but the above is what this chapter is all about.
 
 
-*Packages used*:
+**Packages used in this chapter**
 
 The examples will generally let you know which packages are used, but for your convenience, here is a complete list of the packages used. 
 
@@ -62,7 +62,7 @@ source("R/theme_datapelikaan.R")
 library(showtext)
 font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
 theme_set(theme_datapelikaan(base_family = "Lato"))
-knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
+knitr::opts_chunk$set(fig.showtext = TRUE, dev="pdf")
 
 ```
 

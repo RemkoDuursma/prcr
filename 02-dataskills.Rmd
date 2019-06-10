@@ -22,6 +22,7 @@ font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
 library(ggplot2)
 theme_set(theme_datapelikaan(base_family = "Lato"))
 knitr::opts_chunk$set(fig.showtext = TRUE) #, dev="svg")
+knitr::opts_knit$set(kable.force.latex = TRUE)
 ```
 
 
@@ -135,10 +136,7 @@ There are many ways to read data into R, but we are going to keep things simple 
 
 Throughout this book we focus on 'rectangular data', that is, data that can be organized in a table with columns and rows. A data table like this, with individual observations in rows, and various data fields in columns, is called a *data frame*.
 
-We first show a few options to read text files into dataframes in R, and then provide the basics of working with dataframes in Section \@ref(dataframes).
-
-In Section \@ref(otherdata), we summarize methods to read in data from other sources (JSON, proprietary formats), and from databases (SQL, NoSQL - Mongodb).
-
+We first show a few options to read text files into dataframes in R, including comma, tab-delimited, and JSON formats, and how to read data from Excel. Reading data from remote (No)SQL databases is included in Chapter \@ref(webservices).
 
 
 ### Reading CSV files {#readcsv}
