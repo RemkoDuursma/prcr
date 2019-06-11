@@ -4,7 +4,9 @@
 ```{r echo=FALSE, message=FALSE, include=FALSE}
 suppressPackageStartupMessages(library(tibble))
 suppressPackageStartupMessages(library(magrittr))
+htmltools::tagList(rmarkdown::html_dependency_font_awesome())
 ```
+
 
 
 ## Installing R and Rstudio {#installingr}
@@ -54,6 +56,10 @@ data(allometry)
 ```
 
 Each dataset has help page, inspect it (`?allometry`) to learn a bit about the dataset, the meaning and units of the variables, and sometimes a simple example plot with the data.
+
+```{block2 type="rmdtry"}
+To look at all datasets included in the `lgrdata` package, it is most convenient to use Rstudio's package explorer, under the `Packages` tab in the bottom-right hand menu. Just find the package and click on it.
+```
 
 
 ## Basic operations {#basicops}
@@ -173,7 +179,7 @@ knitr::kable(tab, caption="A selection of useful built-in functions in R.")
 
 
 
-## Vectorized operations
+## Vectorized operations {#vectorized}
 
 To continue, we are first going to open a script - simply a text file where you can type your code, and execute it immediately. To do so, click on the menu <kbd>File/New File/R Script</kbd>. In the file that opens, try typing the examples below (or copy-pasting for the lazy). A single line can be run by placing the cursor on that line, and clicking 'Run' in the menu just to the top-right of the window. Alternatively (and this is **recommended**), use the keyboard shortcut `Ctrl-Enter` (or `Cmd-Enter` on Mac) to run that line. If you make a text selection with the mouse, this selection can be executed with the same keyboard shortcut.
 
@@ -236,6 +242,61 @@ The above code can be written in at least two other equivalent ways: `log(vec2) 
 In any of the following, we assume you have loaded either `magrittr`, or some package that loads it for you (for example, `dplyr`). If you have not, you will see the error message `could not find function "%>%"`.
 
 The pipe operator has become very popular, and we use it when it greatly simplifies code, making it easier to follow what the code actually does (and in which order).
+
+
+## Working with matrices {#matrices}
+
+
+Vectors are one-dimensional collections of data; all elements are of the same type (numeric, character, etc.). A matrix has two dimensions: rows and columns, and again each element (each cell) has the same type. We do not use matrices all that often in R, since a more general data storage type (the dataframe) is generally more useful (there, each column can contain different kind of data). However, sometimes working with matrices is faster, or built-in functions return a matrix - some basic skills are useful. 
+
+```{r}
+# Construct a matrix with the matrix function:
+mymat <- matrix(c(1,2,3,4,5,6,7,8,9), ncol=3)
+
+# Note how the values are entered in the matrix column-by-column:
+mymat
+
+# Alternatively, add the values row-by-row:
+mymat2 <- matrix(c(1,2,3,4,5,6,7,8,9), ncol=3,  byrow=TRUE)
+
+# Note the difference:
+mymat2
+```
+
+A few built-in functions are especially handy when dealing with a matrix:
+
+```{r}
+# Transpose a matrix (flip it alongside the diagonal)
+t(mymat)
+
+# Row or column-wise sums
+rowSums(mymat)
+
+# Row or column-wise means
+colMeans(mymat)
+
+# Extract the diagonal:
+diag(mymat)
+```
+
+Functions usually used for vectors often work with matrices, all values are simply treated as if stored in a vector:
+
+```{r}
+# Standard deviation
+sd(mymat)
+
+# Number of observations
+length(mymat)
+
+# Is the same as number of columns * number of rows
+nrow(mymat) * ncol(mymat)
+```
+
+As with vectors, we can calculate directly on all elements:
+
+```{r}
+mymat * 10
+```
 
 
 
@@ -324,7 +385,7 @@ Rstudio projects are really just small files added to a certain folder, which "t
 
 Throughout this tutorial, we will focus on the basic functionality of R, but we will also call on a number of add-on 'packages' that include additional functions. These packages need to be *installed* (downloaded) before first use, and *loaded* every time you start a new R session.
 
-### Install packages from CRAN
+### Install packages from CRAN {#installpackage}
 
 You can find a full list of packages available for R on the CRAN site (<http://cran.r-project.org/>, navigate to 'Packages'), but be warned -- it's a very long list, with over 10000 packages. If you really want to browse a long list of packages, you should prefer the website <http://r-pkg.org/>, which provides a nice interface.
 
@@ -337,21 +398,33 @@ install.packages("gplots")
 ```
 
 ```{block2, type="rmdcaution"}
-Never use `install.packages` in an rmarkdown file (it simply does not work), and it is generally bad practice to add it to a script, since you don't want the packages to be installed every time the script is run. Instead, make it clear what the dependencies are in a README file, or use the approach outlined in "Loading many packages" further below, or in "Install missing packages". 
+Never use `install.packages` in an rmarkdown file (it simply does not work), and it is generally bad practice to add it to a script, since you do not want the packages to be installed every time the script is run. Instead, make it clear what the dependencies are in a README file, or use the approach outlined in "Loading many packages" further below, or in "Install missing packages". 
 ```
 
-The package needs to be installed only once (except when you need to update it, see Section \@ref(updatingpackages)). To use the package in your current R session, type:
+The package needs to be installed only once (except when you need to update it, see Section \@ref(updatingpackages)). 
+
+
+### Loading packages {#loadpackage}
+
+
+To use the package in your current R session, type:
 
 ```{r eval=FALSE}
 library(gplots)
 ```
 
-This loads the `gplots` package from your library into working memory. You can now use the functions available in the `gplots` package. If you close and reopen R, you will need to load the package again (but you don't have to install it again).
+This loads the `gplots` package from your local library (where all packages are stored) into working memory. You can now use the functions available in the `gplots` package. If you close and reopen R, you will need to load the package again (but you don't have to install it again).
 
 To quickly learn which functions are included in a package, type:
 ```{r eval=FALSE}
 library(help=gplots)
 ```
+
+
+```{block2 type="rmdtry"}
+Type `.libPaths()` to see where your packages are installed. You can change the default directory permanently after setting the environment variable `R_LIBS` on your system. 
+```
+
 
 ### Setting the CRAN mirror
 
@@ -360,6 +433,7 @@ CRAN is a central package for R packages, but it is hosted on many servers aroun
 If you use R from the command line, you might want to set the mirror directly:
 
 ```{r eval=FALSE}
+# Not needed from Rstudio!
 options(repos = c(CRAN = "https://cran.rstudio.com/"))
 ```
 
@@ -553,6 +627,12 @@ There, click 'Start Job', and select an R script you would like to run, and the 
 
 
 
+
+## Exercises
+
+```{r child="exercises/01_beginnerskills_exercises.Rmd", echo=FALSE, results='hide', fig.show='hide'}
+
+```
 
 
 

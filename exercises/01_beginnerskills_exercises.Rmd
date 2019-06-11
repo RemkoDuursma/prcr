@@ -1,0 +1,464 @@
+
+### Calculating
+
+First inspect Section \@ref(basicops) and \@ref(vectorintro) ("Working with vectors").
+
+Calculate the following quantities:
+
+**1.** The sum of `100.1`, `234.9` and `12.01`
+```{r }
+100.1 + 234.9 + 12.01
+```
+
+**2.** The square root of `256`
+```{r }
+sqrt(256)
+```
+
+**3.** Calculate the 10-based logarithm of `100`, and multiply the result with the cosine of $\pi$. *Hint:* see `?log` and `?pi`.
+```{r }
+log10(100)*cos(pi)
+```
+
+**4.** Calculate the cumulative sum ('running total') of the numbers 2,3,4,5,6.
+```{r }
+cumsum(c(2,3,4,5,6))
+```
+
+**5.** Calculate the cumulative sum of those numbers, but in reverse order. *Hint:* use the `rev` function.
+```{r }
+cumsum(rev(c(2,3,4,5,6)))
+```
+
+**6.** Find 10 random numbers between 0 and 100, rounded to the nearest whole number (*Hint:* you can use either `sample` or a combination of `round` and `runif`).
+```{r }
+# sample
+sample(0:100,10)
+
+# runif and round
+round(runif(10, 0, 100), 0)
+```
+
+
+
+### Simple objects
+
+Type the following code, which assigns numbers to objects `x` and `y`.
+
+```
+x <- 10
+y <- 20
+```
+
+```{r echo=FALSE}
+x <- 10
+y <- 20
+```
+
+**1.** Calculate the product of `x` and `y` 
+```{r }
+x * y
+```
+
+**2.** Store the result in a new object called `z`
+```{r }
+z <- x * y
+z
+```
+
+**3.** Inspect your workspace by typing `ls()`, and by clicking the `Environment` tab in Rstudio, and find the three objects you created.
+
+**4.** Make a vector of the objects `x`, `y` and `z`. Use this command,
+
+```
+myvec <- c(x,y,z)
+```
+
+```{r echo=FALSE}
+myvec <- c(x,y,z)
+```
+
+**5.** Find the minimum, maximum, length, and variance of `myvec`. 
+
+```{r }
+min(myvec)
+max(myvec)
+length(myvec)
+var(myvec)
+```
+
+**6.** Remove the `myvec` object from your workspace.
+
+```{r}
+rm(myvec)
+```
+
+
+### Working with a single vector {#vecexerc1}
+
+If the last exercise was easy, you can skip this one.
+
+**1.** The numbers below are the first ten days of rainfall amounts in 1996. Read them into a vector using the `c`() function.
+
+```
+ 0.1  0.6 33.8  1.9  9.6  4.3 33.7  0.3  0.0  0.1
+```
+
+```{r }
+rainfall <- c(0.1,0.6, 33.8,  1.9,  9.6,  4.3, 33.7,  0.3,  0.0,  0.1)
+```
+
+Inspect the table with functions in the Section \@ref(vectorintro) ("Working with vectors"), and answer the following questions:
+
+**2.** Make a vector with the min, max and mean of rainfall. You can also name elements of a vector, for example `c(x = 1, y = 2)`.
+
+```{r }
+mean(rainfall)
+sd(rainfall)
+```
+
+**3.** Calculate the cumulative rainfall ('running total') over these ten days. Confirm that the last value of the vector that this produces is equal to the total sum of the rainfall. 
+
+```{r }
+cumsum(rainfall)
+```
+
+**4.** Which day saw the highest rainfall (write code to get the answer)?
+
+```{r }
+which.max(rainfall)
+```
+
+### Scripts {#scriptexercise}
+
+This exercise will make sure you are able to make a 'reproducable script', that is, a script that will allow you to repeat an analysis without having to start over from scratch. First, set up an R script, and save it in your current working directory.
+
+**1.** Find the `History` tab in Rstudio. Copy a few lines of history that you would like to keep to the script you just opened, by selecting the line with the mouse and clicking `To Source`.
+**2.** Tidy up your R script by writing a few comments starting with `\#`.
+**3.** Now make sure your script works completely (that is, it is entirely *reproducible*). First clear the workspace (`rm(list=ls())` or click `Clear` from the `Environment` tab). Then, run the entire script (by clicking `Source` in the script window, top-right).
+
+
+### To quote or not to quote {#exquote}
+
+This short exercise points out the use of quotes in R.
+
+**1.** Run the following code, which makes two numeric objects.
+
+```
+one <- 1
+two <- 2
+```
+
+```{r echo=FALSE}
+one <- 1
+two <- 2
+```
+
+**2.** Run the following two lines of code, and look at the resulting two vectors. The first line makes a character vector, the second line a numeric vector by recalling the objects you just constructed. Make sure you understand the difference.
+
+```
+vector1 <- c("one","two")
+vector2 <- c(one, two)
+```
+
+```{r }
+vector1 <- c("one","two")
+vector2 <- c(one, two)
+vector1
+vector2
+```
+
+**3.** The following lines of code contain some common errors that prevent them from being evaluated properly or result in error messages. Look at the code without running it and see if you can identify the errors and correct them all. Also execute the faulty code by copying and pasting the text into the console (not typing it, R studio will attempt to avoid these errors by default) so you get to know some common error messages (but not all of these result in errors!).
+
+```
+vector1 <- c('one', 'two', 'three', 'four, 'five', 'seven')
+
+vec.var <- var(c(1, 3, 5, 3, 5, 1)
+vec.mean <- mean(c(1, 3, 5, 3, 5, 1))
+
+vec.Min <- Min(c(1, 3, 5, 3, 5, 1))
+
+Vector2 <- c('a', 'b', 'f', 'g')
+vector2
+```
+
+```{r }
+# vector1 <- c('one', 'two', 'three', 'four, 'five', 'seven')
+# missing apostrophe after 'four'
+vector1 <- c('one', 'two', 'three', 'four', 'five', 'seven')
+
+# vec.var <- var(c(1, 3, 5, 3, 5, 1)
+# missing closing parenthesis
+# vec.mean <- mean(c(1, 3, 5, 3, 5, 1))
+vec.var <- var(c(1, 3, 5, 3, 5, 1))
+vec.mean <- mean(c(1, 3, 5, 3, 5, 1))
+
+# vec.Min <- Min(c(1, 3, 5, 3, 5, 1))
+# the 'min' function should have a lower-case 'm' 
+vec.Min <- min(c(1, 3, 5, 3, 5, 1))
+
+# Vector2 <- c('a', 'b', 'f', 'g')
+# vector2
+# lower-case 'v' used here, 
+# upper-case 'V' used when defining variable in line above
+vector2 <- c('a', 'b', 'f', 'g')
+vector2
+```
+
+
+### Working with two vectors
+
+First make sure you understand Section \@ref(vectorized).
+
+**1.** You have measured five cylinders, their lengths are:
+
+```
+2.1, 3.4, 2.5, 2.7, 2.9
+```
+
+and the diameters are :
+
+```
+0.3, 0.5, 0.6, 0.9, 1.1
+```
+
+Read these data into two vectors (give the vectors appropriate names). 
+```{r }
+lengths <- c(2.1, 3.4, 2.5, 2.7, 2.9)
+diameters <- c(0.3, 0.5, 0.6, 0.9, 1.1)
+```
+
+**2.** Calculate the correlation between lengths and diameters (use the `cor` function). 
+```{r }
+cor(lengths, diameters)
+```
+
+**3.** Calculate the volume of each cylinder (V = length * pi * (diameter / 2)^2^).
+
+```{r }
+# Calculate volumes and store in new vector
+volumes <- lengths * pi * (diameters / 2)^2
+
+# Look at the volumes
+volumes
+```
+
+**4.** Calculate the mean, standard deviation, and coefficient of variation of the volumes.
+```{r }
+mean(volumes)
+sd(volumes)
+sd(volumes) / mean(volumes)
+```
+
+**5.** Assume your measurements are in centimetres. Recalculate the volumes so that their units are in cubic millimetres. Calculate the mean, standard deviation, and coefficient of variation of these new volumes.
+```{r }
+volumes.mm <- 10 * lengths * pi * (10 * diameters / 2)^2
+
+mean(volumes.mm)
+sd(volumes.mm)
+sd(volumes.mm) / mean(volumes.mm)
+```
+
+
+### Alphabet aerobics 1
+
+For the second question, you need to know that the 26 letters of the Roman alphabet are conveniently accessible in R via `letters` and `LETTERS`. These are not functions, but vectors that are always loaded.
+
+
+**1.** Using `c()` and `rep()` make this vector (in one line of code):
+
+```
+"A" "A" "A" "B" "B" "B" "C" "C" "C" "D" "D" "D"
+```
+
+and this:
+
+```
+"A" "B" "C" "D" "A" "B" "C" "D" "A" "B" "C" "D"
+```
+
+If you are unsure, look at `?rep`.
+
+```{r }
+lets <- c("A", "B", "C", "D")
+
+rep(lets, each = 3)
+
+rep(lets, times = 3)
+
+# The times argument can be omitted,
+rep(lets, 3)
+```
+
+**2.** Draw 10 random letters from the lowercase alphabet, and sort them alphabetically (*Hint:* use `sample` and `sort`). The solution can be one line of code.
+
+```{r }
+# First inspect letters, it is a vector:
+letters
+
+# Sample ten random letters (optionally, set replace=TRUE for sampling with replacement)
+sample(letters, 10)
+
+# And, in one line of code, sort them alphabetically
+sort(sample(letters, 10))
+```
+
+
+**3.** Draw 5 random letters from each of the lowercase and uppercase alphabets, incorporating both into a single vector, and sort it alphabetically.
+
+```{r }
+# If you like, you can store both sets of 5 letters in a vector, then combine:
+low <- sample(letters, 5)
+upp <- sample(LETTERS, 5)
+
+# And then sort the combination of these vectors (use c() for that)
+sort(c(low,upp))
+
+# All of this can be achieved in one line of code
+sort(c(sample(letters, 5),sample(LETTERS, 5)))
+```
+
+
+**4.** Repeat the above exercise but sort the vector alphabetically in descending order.
+
+```{r }
+# Inspect the help page ?sort, to find,
+sort(c(sample(letters, 5),sample(LETTERS, 5)), decreasing = TRUE)
+```
+
+
+
+### Comparing and combining vectors
+
+This question is **harder**! You learn three new functions and have to learn by experimenting.
+
+Inspect the help page `union`, and note the useful functions `union`, `setdiff` and `intersect`. These can be used to compare and combine two vectors. Make two vectors : 
+
+```
+x <- c(1,2,5,9,11)
+y <- c(2,5,1,0,23)
+```
+
+Experiment with the three functions to find solutions to these questions.
+
+**1.** Find values that are contained in both `x` and `y`
+
+```{r }
+# First read the vectors
+x <- c(1,2,5,9,11)
+y <- c(2,5,1,0,23)
+
+# Having read the help page, it seems we need to use intersect()
+intersect(x,y)
+```
+
+
+**2.** Find values that are in `x` but not `y` (and vice versa). 
+
+```{r }
+# Note difference between,
+setdiff(x,y)
+
+# and
+setdiff(y,x)
+```
+
+**3.** Construct a vector that contains all values contained in either `x` or `y`, and compare this vector to `c(x,y)`.
+
+```{r }
+# union() finds values that are either in x or y,
+union(x,y)
+
+# ... whereas c(x,y) simply concatenates (glues together) the two vectors
+c(x,y)
+```
+
+
+### Into the matrix
+
+In this exercise you will practice some basic skills with matrices. Recall Section \@ref(matrices).
+
+**1.** Construct a matrix with 10 columns and 10 rows, all filled with random numbers between 0 and 1.
+
+```{r }
+m <- matrix(runif(100), ncol=10)
+```
+
+**2.** Calculate the row means of this matrix (*Hint:* use `rowMeans`). Also calculate the standard deviation across the row means (now also use `sd`).
+
+```{r }
+rowMeans(m)
+sd(rowMeans(m))
+```
+
+
+**3.** Now remake the above matrix with 100 columns, and 10 rows. Then calculate the column means (using, of course, `colMeans`), and plot a frequency diagram (a 'histogram') using `hist`. We will see this function in more detail in a later chapter, but it is easy enough to use as you just do `hist(myvector)`, where `myvector` is any numeric vector (like the column means). What sort of shape of the histogram do you expect? Now repeat the above with more rows, and more columns.
+
+```{r }
+# This resembles a normal distribution, a little bit?
+m <- matrix(runif(100*10), ncol=100)
+cm <- colMeans(m)
+hist(cm)
+
+# Yes, it does! This is the central limit theorem at work,
+# the sum or mean of a bunch of random numbers follow a normal distribution.
+m <- matrix(runif(1000*100), ncol=1000)
+cm <- colMeans(m)
+hist(cm, breaks=20)  # breaks argument to make more bins
+```
+
+
+### Packages
+
+This exercise makes sure you know how to install packages, and load them. First, read the first subsections of \@ref(packages), on installing and loading packages.
+
+**1.** Install the `car` package (you only have to do this once for any computer).
+
+```{r eval=FALSE}
+install.packages("car")
+```
+
+**2.** Load the `car` package (you have to do this every time you open Rstudio).
+```{r eval=FALSE}
+library(car)
+```
+
+**3.** Look at the help file for `densityPlot`.
+
+```{r}
+?densityPlot
+```
+
+**4.** Run the example for `densityPlot` (at the bottom of the help file), by copy-pasting the example into a script, and then executing it.
+
+```{r eval=FALSE, tidy=TRUE}
+# Scroll down in the help file, and simply 
+# copy-paste the code into the R console.
+```
+
+**5.** Run the example for `densityPlot` again, but this time use the `example` function:
+
+```
+example(densityPlot)
+```
+
+Follow the instructions to cycle through the different steps.
+
+```{r eval=FALSE, tidy=FALSE}
+example(densityPlot)
+```
+
+**6.** Explore the contents of the `car` package by clicking first on the `Packages` tab, then finding the `car` package, and clicking on that. This way, you can find out about all functions a package contains (which, normally, you hope to avoid, but sometimes it is the only way to find what you are looking for). The same list can be obtained with the command `library(help=car)`, but that displays a list that is not clickable, so probably not as useful.
+
+
+
+
+
+
+
+
+
+
+
+
+

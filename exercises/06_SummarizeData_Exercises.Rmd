@@ -1,0 +1,356 @@
+%---------------------------------------------------------------------------%
+% Copyright 2015 Remko Duursma, Jeff Powell                                 %
+%                                                                           %
+% This file is part of HIERmanual                                           %
+%                                                                           %
+%     HIERmanual is free software: you can redistribute it and/or modify    %
+%     it under the terms of the GNU General Public License as published by  %
+%     the Free Software Foundation, either version 3 of the License, or     %
+%     (at your option) any later version.                                   %
+%                                                                           % 
+%     HIERmanual is distributed in the hope that it will be useful,         %
+%     but WITHOUT ANY WARRANTY; without even the implied warranty of        %
+%     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         %
+%     GNU General Public License for more details.                          %
+%                                                                           %
+%     You should have received a copy of the GNU General Public License     %
+%     along with HIERmanual.  If not, see <http://www.gnu.org/licenses/>.   %
+%---------------------------------------------------------------------------%
+
+```{r child="exercise_colorcodingexplained.Rnw", eval=TRUE}
+```
+
+### Summarizing the cereal data
+
+\begin{enumerate}
+\item \easy Read the cereal data, and produce quick summaries using `str`, `summary`,  `contents` and `describe` (recall that the last two are in the `Hmisc` package). Interpret the results.
+```{r eval=FALSE}
+# (Results not shown:)
+cereal <- read.csv("cereals.csv")
+str(cereal)
+summary(cereal)
+
+# contents and describe are in the Hmisc package
+library(Hmisc)
+contents(cereal)
+describe(cereal)
+```
+% not sure why I read this again?
+```{r echo=FALSE}
+cereal <- read.csv("cereals.csv")
+```
+
+
+
+\item \easy Find the average sodium, fiber and carbohydrate contents by `Manufacturer`.
+```{r }
+# use summaryBy() from the doBy package to get means of these three variables by every
+# level of Manufacturer
+library(doBy)
+summaryBy(sodium + fiber + carbo ~ Manufacturer, data=cereal, FUN=mean)
+```
+
+
+\item \easy Add a new variable 'SodiumClass', which is 'high' when sodium \textgreater 150 and 'low' otherwise. Make sure the new variable is a factor. Look at the examples in Section~\ref{sec:workingfactors} to recall how to do this. Now, find the average, minimum and maximum sugar content for 'low' and 'high' sodium. *Hint:* make sure to use `na.rm=TRUE`, because the dataset contains missing values.
+```{r }
+# Values greater than 150 will be 'high', values less than 150 'low'
+cereal$sodiumClass <- factor(ifelse(cereal$sodium > 150,"high","low"))
+
+# Solution 1 : use tapply() three times.
+with(cereal, tapply(sugars,sodiumClass,min,na.rm=TRUE))
+with(cereal, tapply(sugars,sodiumClass,max,na.rm=TRUE))
+with(cereal, tapply(sugars,sodiumClass,mean,na.rm=TRUE))
+
+# Solution 2 : use summaryBy()
+library(doBy)
+summaryBy(sugars ~ sodiumClass, data=cereal, FUN=c(min,max,mean), na.rm=TRUE)
+```
+
+
+\item \intermed Find the maximum sugar content by Manufacturer and sodiumClass, using `tapply`. Inspect the result and notice there are missing values. Try to use `na.rm=TRUE` as an additional argument to `tapply`, only to find out that the values are still missing. Finally, use `xtabs` (see Section~\ref{sec:xtabs}, p.~\pageref{sec:xtabs}) to count the number of observations by the two factors to find out we have missing values in the `tapply` result.
+```{r }
+# using tapply (make a 2x2 table)
+# We use na.rm=TRUE to remove missing values, this argument will be passed to max()
+with(cereal, tapply(sugars, list(sodiumClass,Manufacturer), FUN=max, na.rm=TRUE))
+
+# using xtabs (count number of observations per group)
+# the result shows that two manufacturers have no cereals in the 'high' sodium class
+xtabs( ~ sodiumClass + Manufacturer, data=cereal)
+```
+
+\item \easy Repeat the previous question with `summaryBy`. Compare the results.
+```{r }
+# Results are the same as with tapply, except the result is a dataframe, not a 2x2 table.
+library(doBy)
+summaryBy(sugars ~ sodiumClass + Manufacturer, data=cereal, FUN=max, na.rm=TRUE)
+```
+
+\item \easy Count the number of observations by Manufacturer and whether the cereal is 'hot' or 'cold', using `xtabs` (see Section~\ref{sec:xtabs}, p.~\pageref{sec:xtabs}).
+```{r }
+# You can also use tapply to get a similar result.
+cereal <- read.csv("Cereals.csv")
+xtabs( ~ Cold.or.Hot + Manufacturer, data=cereal)
+```
+
+
+\end{enumerate}
+
+
+### Words and the weather
+
+\begin{enumerate}
+\item \easy Using the 'Age and memory' dataset (first read Section~\ref{sec:agemem} on p.~\pageref{sec:agemem} how to read this dataset), find the mean and maximum number of words recalled by 'Older' and 'Younger' age classes.
+
+```{r }
+# Data are tab-delimited (see Appendix).
+words <- read.table("eysenck.txt", header=TRUE)
+
+# Solution 1: use tapply twice
+with(words, tapply(Words, Age, mean))
+with(words, tapply(Words, Age, max))
+
+# Solution 2 : use summaryBy
+library(doBy)
+summaryBy(Words ~ Age, data=words, FUN=c(mean,max))
+```
+
+\item \intermed Using the HFE weather dataset (see Section~\ref{sec:hfemet}, p.~\pageref{sec:hfemet}), find the mean air temperature by month. To do this, first add the month variable as shown in Section~\ref{sec:datetime} (p.~\pageref{sec:datetime}).
+```{r }
+# Read the data.
+hfemet <- read.csv("HFEmet2008.csv")
+
+# Inspect the last few rows, here you can usually tell the format of DateTime
+tail(hfemet)
+
+# In this case it looks like the format is month/day/year.
+library(lubridate)
+hfemet$DateTime <- mdy_hm(hfemet$DateTime)
+
+# Add month (1,2,...,12)
+# Note: this requires the lubridate package
+hfemet$month <- month(hfemet$DateTime)
+
+# average Tair by month:
+with(hfemet, tapply(Tair, month, mean, na.rm=TRUE))
+```
+
+\end{enumerate}
+
+
+### Merge new data onto the pupae data
+
+\begin{enumerate}
+\item \easy First read the pupae data (see Section~\ref{sec:pupaedata}, p.~\pageref{sec:pupaedata}).
+Also read this short dataset, which gives a label 'roomnumber' for each CO$_2$ treatment.
+
+\begin{verbatim}
+|CO2_treatment |Roomnumber  |
+|-------------:|-----------:|
+|280           |1           |
+|400           |2           |
+\end{verbatim}
+
+To read this dataset, consider the `data.frame` function described in Section~\ref{sec:readingotherdata} (p.~\pageref{sec:readingotherdata}).
+
+\item \easy Merge the short dataset onto the pupae data. Check the result.
+
+```{r }
+pupae <- read.csv("pupae.csv")
+
+# A new dataframe with the CO2 levels and room number.
+CO2room <- data.frame(CO2_treatment=c(280,400), Roomnumber=1:2)
+
+# Merge the two dataframes.
+pupae <- merge(pupae, CO2room)
+
+# Inspect to see if the merge was successful.
+head(pupae)
+```
+
+\end{enumerate}
+
+
+### Merging multiple datasets
+
+Read Section~\ref{sec:multmerge} (p.~\pageref{sec:multmerge}) before trying this exercise.
+
+First, run the following code to construct three dataframes that we will attempt to merge together.
+
+\begin{verbatim}
+dataset1 <- data.frame(unit=letters[1:9], treatment=rep(LETTERS[1:3],each=3),
+                       Damage=runif(9,50,100))
+unitweight <- data.frame(unit=letters[c(1,2,4,6,8,9)], Weight = rnorm(6,100,0.3))
+treatlocation <- data.frame(treatment=LETTERS[1:3], Glasshouse=c("G1","G2","G3"))
+\end{verbatim}
+
+```{r echo=FALSE}
+dataset1 <- data.frame(unit=letters[1:9], treatment=rep(LETTERS[1:3],each=3),
+                       Damage=runif(9,50,100))
+unitweight <- data.frame(unit=letters[c(1,2,4,6,8,9)], Weight = rnorm(6,100,0.3))
+treatlocation <- data.frame(treatment=LETTERS[1:3], Glasshouse=c("G1","G2","G3"))
+```
+
+
+\begin{enumerate}
+\item \intermed Merge the three datasets together, to end up with one dataframe that has the columns 'unit', 'treatment', 'Glasshouse', 'Damage' and 'Weight'. Some units do not have measurements of `Weight`. Merge the datasets in two ways to either include or exclude the units without `Weight` measurements.
+
+```{r }
+# First merge the dataset and the treatlocation dataframe.
+dtreat <- merge(dataset1, treatlocation, by="treatment")
+
+# When all=TRUE, we get NA where some Weights are missing:
+merge(dtreat, unitweight, all=TRUE, by="unit")
+
+# When all=FALSE, we omit rows where some Weights are missing:
+merge(dtreat, unitweight, all=FALSE, by="unit")
+
+```
+
+\end{enumerate}
+
+
+### Ordered boxplot
+
+\begin{enumerate}
+\item First recall Section~\ref{sec:boxplot} (p.~\pageref{sec:boxplot}), and produce Fig.~\ref{fig:simpleboxplot} (p.~\pageref{fig:simpleboxplot}). 
+```{r }
+cereal <- read.csv("Cereals.csv")
+
+# A simple boxplot showing the distribution of sodium for each level of Manufacturer.
+boxplot(sodium ~ Manufacturer, data=cereal, ylab="Sodium content", xlab="Manufacturer")
+```
+
+
+\item \intermed Now, redraw the plot with Manufacturer in order of increasing mean sodium content (use `reorder`, see Section~\ref{sec:reorder} on p.~\pageref{sec:reorder}).
+```{r }
+# Using reorder, the levels of Manufacturer are ordered by the mean 
+# of sodium for each level.
+cereal$Manufacturer <- with(cereal, reorder(Manufacturer, sodium, mean))
+
+# Note how the order is now increasing with sodium.
+boxplot(sodium ~ Manufacturer, data=cereal, ylab="Sodium content", xlab="Manufacturer")
+```
+
+\item \intermed Inspect the help page ?`boxplot`, and change the boxplots so that the width varies with the number of observations per manufacturer (*Hint:* find the `varwidth` argument).
+```{r }
+# With varwidth=TRUE, the width of the boxes is proportional to the sample size.
+boxplot(sodium ~ Manufacturer, data=cereal, ylab="Sodium content", xlab="Manufacturer",
+        varwidth=TRUE)
+```
+
+
+\end{enumerate}
+
+### Variances in the I x F
+{#sec:ifvariance}
+
+Here, we use the tree inventory data from the irrigation by fertilization (I x F) experiment in the Hawkesbury Forest Experiment (HFE) (see Section~\ref{sec:ifdata}, p.~\pageref{sec:ifdata}).
+
+\begin{enumerate}
+\item \intermed Use only data from 2012 for this exercise. You can use the file \file{HFEIFplotmeans2012.csv} if you want to skip this step.
+```{r }
+# Read and prepare data. To use year(), the lubridate package must be loaded.
+hfeif <- read.csv('HFEIFplotmeans.csv', stringsAsFactors=FALSE)
+hfeif$Date <- as.Date(mdy(hfeif$Date))
+hfeif$Year <- year(hfeif$Date)
+hfeif2012 <- subset(hfeif, Year == 2012)
+```
+
+\item{#ite:variances} \intermed There are four treatments in the dataframe. Calculate the variance of diameter for each of the treatments (this should give four values). These are the *within-treatment* variances. Also calculate the variance of tree diameter across all plots (this is one number). This is the *plot-to-plot variance*.
+
+```{r }
+# Variances across plots within treatments 
+withinvar <- with(hfeif2012, tapply(diameter,treat,FUN=var))
+
+# Variance of diameter across all plots
+plotvar <- var(hfeif2012$diameter)
+```
+
+
+\item \intermed In \ref{ite:variances}, also calculate the mean within-treatment variance. Compare the value to the plot-to-plot variance. What can you tentatively conclude about the treatment effect?
+```{r }
+# Average within-treatment variance
+mean(withinvar)
+
+# Variance across all plots
+plotvar
+
+# Variance within treatments seems much smaller than
+# the variance across all plots.
+# This indicates that there is likely a treatment effect.
+```
+
+
+\end{enumerate}
+
+
+
+
+### Weight loss
+
+This exercise brings together many of the skills from the previous chapters.
+
+Consider a dataset of sequential measurements of a person's weight while on a diet (the 'weightloss' dataset, see Section~\ref{sec:weightlossdata} on p.~\pageref{sec:weightlossdata}). 
+
+\begin{enumerate}
+\item \easy Read the dataset (\file{weightloss.csv}), and convert the 'Date' variable to the `Date` class. See Section~\ref{sec:readingdates} for converting the date, and note the example in Section~\ref{sec:seqdates} (p.~\pageref{sec:seqdates}).
+```{r }
+# Read the data and convert Date to a proper Date class. Note the format is D/M/Y!
+weightloss <- read.csv("weightloss.csv")
+str(weightloss)
+weightloss$Date <- as.Date(dmy(weightloss$Date))
+```
+
+\item \easy Add a new variable to the dataset, with the subjects's weight in kilograms (kg) (1 kg = 2.204 pounds). 
+```{r }
+# It is generally a good idea to add a new variable when changing units to avoid
+# confusion.
+weightloss$weightkg <- weightloss$Weight / 2.204
+```
+
+\item \easy Produce a line plot that shows weight (in kg) versus time. 
+```{r }
+plot(weightkg ~ Date, data=weightloss, type='l')
+```
+
+
+\item \hard The problem with the plot you just produced is that all measurements are connected by a line,
+although we would like to have line breaks for the days where the weight was not measured. To do this, 
+construct a dataframe based on the `weightloss` dataset that has daily values.
+Hints:
+\begin{itemize}
+\item Make an entirely new dataframe, with a Date variable, ranging from the first to last days in the weightloss dataset, with a step of one day (see Section~\ref{sec:seqdates}, p.~\pageref{sec:seqdates}).
+\item Using `merge`, paste the Weight data onto this new dataframe. Check for missing values. Use the new dataframe to make the plot.
+\end{itemize}
+```{r }
+# Sequence of dates from beginning to end of the dataset, with step of one day.
+dateseq <- seq(min(weightloss$Date), max(weightloss$Date),
+               by="day")
+
+# Make into a dataframe
+weightall <- data.frame(Date=dateseq)
+
+# Merge the original data onto this dataframe that contains all dates.
+weightall <- merge(weightall, weightloss, all=TRUE)
+
+# plot() will omit the line pieces where NAs are present.
+plot(weightkg ~ Date, data=weightall, type='l')
+```
+
+
+\item \hard Based on the new dataframe you just produced, graph the daily change in weight versus time. Also add a dashed horizontal line at `y=0`.
+
+```{r }
+# Calculate sequential difference with diff().
+# Note: you have to add one NA, since the new 
+# vector is one element too short!
+weightall$weightloss <- c(NA, diff(weightall$weightkg))
+
+plot(weightloss ~ Date, data=weightall, type='l', col="red", lwd=2)
+abline(h=0)
+```
+
+\end{enumerate}
+
+
+

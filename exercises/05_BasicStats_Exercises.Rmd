@@ -1,0 +1,282 @@
+
+```{r child="exercise_colorcodingexplained.Rnw", eval=TRUE}
+```
+
+### Probabilities
+
+For this exercise, refer to the tables and examples in Section~\ref{sec:distributions} (p.~\pageref{sec:distributions}).
+
+\begin{enumerate}
+\item \easy For a normal random variable $X$ with mean 5.0, and standard deviation 2.0, find the probability that $X$ is less than 3.0.
+```{r }
+# pnorm gives the cumulative probability (i.e. prob. that value is less than some value).
+pnorm(3.0, 5,2)
+```
+
+\item \easy Find the probability that $X$ is *greater than* 4.5.
+```{r }
+# Because pnorm gives the probability that X is *less than* some value,
+# we need the inverse.
+
+# Solution 1 : use 'lower.tail=FALSE'
+pnorm(4.5, 5,2, lower.tail=FALSE)
+
+# Solution 2 : calculate the complement (because total probability must be 1!)
+1-pnorm(4.5,5,2)
+```
+
+\item \easy Find the value $K$ so that $P(X > K) = 0.05$.
+```{r }
+# qnorm is the opposite of pnorm. Given a probability, find K so that the probability
+# of X is less than K is equal to that probability. Note that the default of qnorm
+# is to find the probability *less than* some value. We therefore need the inverse.
+
+# Because total probability is 1, 
+# P(X > K) = 0.05 is the same as P(X < K) = 1-0.05
+qnorm(0.95, 5, 2)
+
+# Or, use lower.tail=FALSE
+qnorm(0.05, 5, 2, lower.tail=FALSE)
+```
+
+
+\item \easy When tossing a fair coin 10 times, find the probability of seeing no heads (*Hint:* this is a binomial distribution.)
+```{r }
+# dbinom finds the probability of 'x' occurrences (0 in this case) when we 
+# repeat N ('size') events (here, 10), each with probability 'prob' (here, 0.5).
+dbinom(x = 0, size = 10, prob = 0.5)
+```
+
+\item \easy Find the probability of seeing exactly 5 heads.
+```{r }
+# Same as before, but now K=5.
+dbinom(x = 5, size = 10, prob = 0.5)
+```
+
+\item \easy Find the probability of seeing more than 7 heads.
+```{r }
+# Here we can use the cumulative probability, but realizing that the default gives us
+# the probability of *less than* the given number of events.
+1-pbinom(q=7, size=10, prob=0.5)
+```
+
+\end{enumerate}
+
+
+### Univariate distributions
+
+
+\begin{enumerate}
+\item \easy Simulate a sample of 100 random data points from a normal distribution with mean 100 and standard deviation 5, and store the result in a vector.
+```{r }
+# rnorm simulates from a normal distribution.
+# Here we store the results in vector x.
+x <- rnorm(n=100, mean=100, sd=5)
+```
+
+\item \easy Plot a histogram and a boxplot of the vector you just created (see Section~\ref{sec:hist} on p.~\pageref{sec:hist} and Section~\ref{sec:boxplot} on p.~\pageref{sec:boxplot}).
+```{r }
+# Let's put them side-by-side
+par(mfrow=c(1,2))
+hist(x)
+boxplot(x)
+```
+
+\item \easy Calculate the sample mean and standard deviation.
+```{r }
+mean(x)
+sd(x)
+```
+
+\item \easy Calculate the median and interquartile range.
+```{r }
+median(x)
+IQR(x)
+```
+
+\item \easy Using the data above, test the hypothesis that the mean equals 100 (using `t.test`).
+```{r }
+t.test(x, mu=100)
+```
+
+\item \easy Test the hypothesis that mean equals 90. 
+```{r }
+t.test(x, mu=90)
+```
+
+\item \easy Repeat the above two tests using a Wilcoxon signed rank test. Compare the p-values with those from the $t$-tests you just did.
+```{r }
+wilcox.test(x, mu=100)
+wilcox.test(x, mu=90)
+```
+
+\end{enumerate}
+
+
+### More $t$-tests
+
+For this question, use the `pupae` data (see Section~\ref{sec:pupaedata} on p.~\pageref{sec:pupaedata}).
+
+\begin{enumerate}
+\item \easy Use the `t.test` function to compare `PupalWeight` by `T\_treatment`.
+```{r }
+pupae <- read.csv("pupae.csv")
+
+# When we use a formula in t.test, it will test the means of PupalWeight between the two
+# levels of T_treatment. Note that this only works when the factor (on the right-hand side)
+# contains exactly two levels.
+t.test(PupalWeight ~ T_treatment, data=pupae,
+       var.equal=TRUE)
+```
+
+\item \easy Repeat above using a Wilcoxon rank sum test. 
+```{r }
+wilcox.test(PupalWeight ~ T_treatment, data=pupae)
+```
+
+\item \easy Run the following code to generate some data:
+\begin{verbatim}
+base <- rnorm(20, 20, 5)
+x <- base + rnorm(20,0,0.5)
+y <- base + rnorm(20,1,0.5)
+\end{verbatim}
+
+```{r }
+base <- rnorm(20, 20, 5)
+x <- base + rnorm(20,0,0.5)
+y <- base + rnorm(20,1,0.5)
+```
+
+
+\item \easy Using a two-sample $t$-test compare the means of `x` and `y`, assume that the variance is equal for the two samples.
+```{r }
+t.test(x,y, var.equal=TRUE)
+```
+
+\item \easy Repeat the above using a paired $t$-test. How has the $p$-value changed? 
+```{r }
+# The p-value is much smaller.
+t.test(x,y, paired=TRUE)
+```
+
+\item \intermed Which test is most appropriate?
+```{r }
+# The paired t-test is more appropriate because X and Y are 
+# not independent : they use the same 'base' value.
+```
+
+\end{enumerate}
+
+
+### Simple linear regression
+
+For this question, use the `pupae` data (see Section~\ref{sec:pupaedata}, p.~\pageref{sec:pupaedata}).
+Perform a simple linear regression of `Frass` on `PupalWeight`. Produce and inspect the following:
+
+\begin{enumerate}
+\item \easy Plots of the data.
+```{r }
+plot(Frass ~ PupalWeight, data = pupae)
+```
+
+\item \easy Summary of the model.
+```{r }
+model <- lm(Frass ~ PupalWeight, data = pupae)
+summary(model)
+```
+
+\item \easy Diagnostic plots.
+```{r }
+# To place side-by-side
+par(mfrow=c(1,2))
+# QQ plot and residual plot. 
+library(car)
+residualPlot(model)
+qqPlot(model)
+```
+
+\item \intermed All of the above for a subset of the data, where `Gender` is 0, and `CO2\_treatment` is 400.
+```{r }
+# We can pass a subset directly to lm(). Alternatively, make the subset first with subset().
+plot(Frass ~ PupalWeight, data = pupae, subset=Gender==0 & CO2_treatment == 400)
+model <- lm(Frass ~ PupalWeight, data = pupae, subset=Gender==0 & CO2_treatment == 400)
+summary(model)
+
+par(mfrow=c(1,2))
+library(car)
+residualPlot(model)
+qqPlot(model)
+```
+
+\end{enumerate}
+
+
+### Quantile Quest
+
+You have already used quantile-quantile (QQ) plots many times, but in this exercise you will get to the bottom of the idea of comparing quantiles of distributions.
+
+As in the previous exercises, we will use the `pupae` data.
+
+\begin{enumerate}
+
+\item \easy From the pupae data, extract the PupalWeight and store it as a vector called 'pupweight'. Make a histogram of this vector, noticing that the distribution seems perhaps quite like the normal distribution.
+
+```{r }
+pupweight <- pupae$PupalWeight
+hist(pupweight)
+```
+
+\item \intermed When we say 'quite like the normal distribution', we mean that the overall shape seems similar. Now simulate a histogram like the one above, using `rnorm` with the mean and standard deviation of the pupal weights (i.e. `pupweight`), and the same sample size as well. Plot it repeatedly to get an idea of whether the simulated histogram looks similar often enough.
+
+```{r }
+hist(rnorm(length(pupweight), mean=mean(pupweight), sd=sd(pupweight)))
+
+
+# Better yet, place them side-by-side:
+par(mfrow=c(1,2))
+hist(pupweight)
+hist(rnorm(length(pupweight), mean=mean(pupweight), sd=sd(pupweight)))
+```
+
+\item \intermed Of course a visual comparison like that is not good enough, but it is a useful place to start. We can also compare the quantiles as follows. If we calculate the 25\% and 75\% quantiles of `pupweight`, we are looking for the values below which 25\% or 75\% of all observations occur. Clearly if two distributions have the same *shape*, their quantiles should be roughly similar. Calculate the 25, 50 and 75\% quantiles for `pupweight`, and also calculate them for the normal distribution using `qnorm`. Are they similar?
+
+```{r }
+# Some quantiles of the measured distribution
+quantile(pupweight, c(0.25, 0.5, 0.75))
+
+# Some quantiles of the standard normal distribution with the same mean and sd:
+qnorm(c(0.25, 0.5, 0.75), mean=mean(pupweight), sd=sd(pupweight))
+
+# The values are very similar! We can conclude that for these quantiles at least, our data
+# behaves as if they were drawn from a normal distribution.
+```
+
+
+\item \hard Now repeat the above exercise, but calculate many quantiles (e.g. from 2.5\% to 97.5\% with steps of 2.5\% or whatever you choose) for both the measured data, and the standard normal distribution. Compare the two with a simple scatter plot, and add a 1:1 line. If you are able to do this, you just made your own QQ-plot (and if not, I suggest you inspect the solutions to this Exercise). *Hint:* use `seq` to make the vector of quantiles, and use it both in `quantile` and `qnorm`. Save the results of both those as vectors, and plot. As a comparison, use `qqPlot(pupweight, distribution="norm")` (`car` package), make sure to plot the normal quantiles on the X-axis.
+
+```{r }
+# Set up a vector of probabilities, used in calculating the quantiles.
+qs <- seq(0.025, 0.975, by=0.025)
+
+# Quantiles of the measured data
+q_meas <- quantile(pupweight, probs=qs)
+
+# Quantiles of the corresponding normal distribution
+q_norm <- qnorm(qs, mean=mean(pupweight), sd=sd(pupweight))
+
+# A simple 1:1 plot
+plot(q_norm, q_meas)
+abline(0,1)
+
+# A standard QQ plot. Make sure to use the normal distribution because qqPlot uses
+# the t-distribution by default.
+# The two are not exactly the same because of the choice of the quantiles,
+# but they are similar enough.
+qqPlot(pupweight, distribution="norm")
+```
+
+
+
+\end{enumerate}
+
+

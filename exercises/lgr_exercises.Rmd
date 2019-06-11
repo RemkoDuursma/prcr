@@ -1,0 +1,24 @@
+---
+title: "A Learning Guide to R - Exercises"
+author: "Remko Duursma"
+date: "10/06/2019"
+output: 
+  html_document:
+    number_sections: true
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Chapter 2 - Beginner Skills
+
+## Section test
+
+```{r child="01_beginnerskills_exercises.Rmd", echo=FALSE, results='hide', fig.show='hide'}
+
+```
+
+
