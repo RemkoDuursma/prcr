@@ -1,0 +1,291 @@
+
+
+
+### Summarizing the cereal data
+
+1. Read the cereal data, and produce quick summaries using `str`, `summary`,  `contents` and `describe` (recall that the last two are in the `Hmisc` package). Interpret the results.
+
+```{r eval=FALSE}
+library(lgrdata)
+data(cereals)
+
+# structure
+str(cereals)
+
+# summary
+summary(cereals)
+
+# contents and describe are in the Hmisc package
+library(Hmisc)
+contents(cereals)
+describe(cereals)
+```
+
+
+
+2. Find the average sodium, fiber and carbohydrate contents by `Manufacturer`. Use either `summaryBy` or `dplyr`.
+```{r }
+# use summaryBy() from the doBy package to get means of these three variables by every
+# level of Manufacturer
+library(doBy)
+summaryBy(sodium + fiber + carbo ~ Manufacturer, data=cereals, FUN=mean)
+```
+
+
+3. Add a new variable 'SodiumClass', which is 'high' when sodium > 150 and 'low' otherwise. Make sure the new variable is a factor. Look at the examples in Section  \@ref(workingfactors) to recall how to do this. Now, find the average, minimum and maximum sugar content for 'low' and 'high' sodium. *Hint:* make sure to use `na.rm=TRUE`, because the dataset contains missing values.
+```{r }
+# Step 1 : Values greater than 150 will be 'high', values less than 150 'low'
+cereals$sodiumClass <- factor(ifelse(cereals$sodium > 150,"high","low"))
+
+# Step 2: Summarize with summaryBy
+library(doBy)
+summaryBy(sugars ~ sodiumClass, data=cereals, FUN=c(min,max,mean), na.rm=TRUE)
+
+
+# OR Step 2 : use dplyr.
+library(dplyr)
+group_by(cereals, sodiumClass) %>%
+  summarize(sugars_min = min(sugars, na.rm=TRUE),
+            sugars_max = max(sugars, na.rm=TRUE),
+            sugars_mean = mean(sugars, na.rm=TRUE))
+
+
+# If you want, do both in one step:
+mutate(cereals, 
+       sodiumClass = factor(ifelse(sodium > 150,"high","low"))) %>% 
+  group_by(sodiumClass) %>%
+  summarize(sugars_min = min(sugars, na.rm=TRUE),
+            sugars_max = max(sugars, na.rm=TRUE),
+            sugars_mean = mean(sugars, na.rm=TRUE))
+
+# BUT notice how we do not add the column `sodiumClass` to cereals;
+# we only use it to 'pipe' to group_by and summarize.
+
+```
+
+
+4. Find the maximum sugar content by Manufacturer and sodiumClass, using `tapply`. Inspect the result and notice there are missing values. Try to use `na.rm=TRUE` as an additional argument to `tapply`, only to find out that the values are still missing. Finally, use `xtabs` (see Section  \@ref(xtabs), p.  \@ref(xtabs)) to count the number of observations by the two factors to find out if we have missing values in the `tapply` result.
+
+```{r }
+# using tapply (make a 2x2 table)
+# We use na.rm=TRUE to remove missing values, this argument will be passed to max()
+with(cereals, tapply(sugars, list(sodiumClass,Manufacturer), FUN=max, na.rm=TRUE))
+
+# using xtabs (count number of observations per group)
+# the result shows that two manufacturers have no cereals in the 'high' sodium class
+xtabs( ~ sodiumClass + Manufacturer, data=cereals)
+```
+
+5. Repeat the previous question with `summaryBy` or `dplyr`. Compare the results.
+
+```{r }
+# Results are the same as with tapply, except the result is a dataframe, not a 2x2 table.
+library(doBy)
+summaryBy(sugars ~ sodiumClass + Manufacturer, data=cereal, FUN=max, na.rm=TRUE)
+
+# Results are the same as with tapply, except the result is a dataframe, not a 2x2 table.
+group_by(cereals, sodiumClass, Manufacturer) %>% 
+  summarize(sugars_max = max(sugars, na.rm=TRUE))
+```
+
+6. Count the number of observations by Manufacturer and whether the cereal is 'hot' or 'cold', using `xtabs` (see Section  \@ref(xtabs)).
+
+```{r }
+# base R
+xtabs( ~ Cold.or.Hot + Manufacturer, data=cereals)
+
+# dplyr
+group_by(cereals, Manufacturer) %>%
+  tally()
+```
+
+
+}
+
+
+### Words and the weather
+
+1. Using the 'Age and memory' dataset (`memory` from the `lgrdata` package), find the mean and maximum number of words recalled by 'Older' and 'Younger' age classes.
+
+```{r }
+data(memory)
+
+# Solution 1: use tapply twice
+with(memory, tapply(Words, Age, mean))
+with(memory, tapply(Words, Age, max))
+
+# Solution 2 : use summaryBy
+library(doBy)
+summaryBy(Words ~ Age, data=memory, FUN=c(mean,max))
+```
+
+2. The `hfemet2008` dataset contains meteorological measurements at a station near Sydney, Australia. Find the mean air temperature by month. To do this, first add the month variable as shown in Section  \@ref(datetime).
+
+```{r }
+# Read the data.
+data(hfemet2008)
+
+# Inspect the last few rows, here you can usually tell the format of DateTime
+tail(hfemet2008)
+
+# In this case it looks like the format is month/day/year.
+library(lubridate)
+hfemet2008$DateTime <- mdy_hm(hfemet2008$DateTime)
+
+# Add month (1,2,...,12)
+# Note: this requires the lubridate package
+hfemet2008$month <- month(hfemet2008$DateTime)
+
+# average Tair by month:
+with(hfemet2008, tapply(Tair, month, mean, na.rm=TRUE))
+```
+
+
+### Merging data
+
+
+1. Load the `pupae` dataset. The data contain measurements of larva ('pupae') weight and 'frass' (excrement) production while allowed to feed on leaves, grown under different concentrations of carbon dioxide (CO2). Also read this short dataset, which gives a label 'roomnumber' for each CO$_2$ treatment.
+
+\begin{verbatim}
+|CO2_treatment |Roomnumber  |
+|-------------:|-----------:|
+|280           |1           |
+|400           |2           |
+\end{verbatim}
+
+To read this dataset, consider the `data.frame` function described in Section  \@ref(readingotherdata).
+
+1. Merge the short dataset onto the pupae data. Check the result.
+
+```{r }
+data(pupae)
+
+# A new dataframe with the CO2 levels and room number.
+CO2room <- data.frame(CO2_treatment=c(280,400), Roomnumber=1:2)
+
+# Merge the two dataframes.
+pupae <- merge(pupae, CO2room)
+
+# Inspect to see if the merge was successful.
+head(pupae)
+```
+
+
+
+### Merging multiple datasets
+
+Read Section  \@ref(multmerge).
+
+First, run the following code to construct three dataframes that we will attempt to merge together.
+
+```
+dataset1 <- data.frame(unit=letters[1:9], treatment=rep(LETTERS[1:3],each=3),
+                       Damage=runif(9,50,100))
+unitweight <- data.frame(unit=letters[c(1,2,4,6,8,9)], Weight = rnorm(6,100,0.3))
+treatlocation <- data.frame(treatment=LETTERS[1:3], Glasshouse=c("G1","G2","G3"))
+```
+
+```{r echo=FALSE}
+dataset1 <- data.frame(unit=letters[1:9], treatment=rep(LETTERS[1:3],each=3),
+                       Damage=runif(9,50,100))
+unitweight <- data.frame(unit=letters[c(1,2,4,6,8,9)], Weight = rnorm(6,100,0.3))
+treatlocation <- data.frame(treatment=LETTERS[1:3], Glasshouse=c("G1","G2","G3"))
+```
+
+
+1. Merge the three datasets together, to end up with one dataframe that has the columns 'unit', 'treatment', 'Glasshouse', 'Damage' and 'Weight'. Some units do not have measurements of `Weight`. Merge the datasets in two ways to either include or exclude the units without `Weight` measurements. To do this, either use `merge` or `dplyr::join` twice - you cannot merge more than two datasets in one step.
+
+```{r }
+# First merge the dataset and the treatlocation dataframe.
+dtreat <- merge(dataset1, treatlocation, by="treatment")
+
+# When all=TRUE, we get NA where some Weights are missing:
+merge(dtreat, unitweight, all=TRUE, by="unit")
+
+# When all=FALSE, we omit rows where some Weights are missing:
+merge(dtreat, unitweight, all=FALSE, by="unit")
+
+```
+
+}
+
+
+### Ordered boxplot
+
+1. First read the `cereals` data and learn how to make a boxplot, using R base graphics:
+
+```{r }
+data(cereals)
+
+# A simple boxplot showing the distribution of sodium for each level of Manufacturer.
+boxplot(sodium ~ Manufacturer, data=cereals, ylab="Sodium content", xlab="Manufacturer")
+```
+
+Notice the *ordering* of the boxes from left to right, and compare it to `levels` of the factor variable `Manufacturer`.
+
+
+2. Now, redraw the plot with Manufacturer in order of increasing mean sodium content (use `reorder`, see Section  \@ref(reorder)).
+
+```{r }
+# Using reorder, the levels of Manufacturer are ordered by the mean 
+# of sodium for each level.
+cereal$Manufacturer <- with(cereal, reorder(Manufacturer, sodium, mean))
+
+# Note how the order is now increasing with sodium.
+boxplot(sodium ~ Manufacturer, data=cereal, ylab="Sodium content", xlab="Manufacturer")
+```
+
+3. Inspect the help page (`?boxplot`), and change the boxplots so that the width varies with the number of observations per manufacturer (*Hint:* find the `varwidth` argument).
+
+```{r }
+# With varwidth=TRUE, the width of the boxes is proportional to the sample size.
+boxplot(sodium ~ Manufacturer, data=cereal, ylab="Sodium content", xlab="Manufacturer",
+        varwidth=TRUE)
+```
+
+
+<!-- ### Variances in the I x F {#ifvariance} -->
+
+<!-- Here, we use the tree inventory data from the irrigation by fertilization (I x F) experiment in the Hawkesbury Forest Experiment (HFE) (see Section  \@ref(ifdata}, p.  \@ref(ifdata}). -->
+
+<!-- } -->
+<!-- 1. Use only data from 2012 for this exercise. You can use the file \file{HFEIFplotmeans2012.csv} if you want to skip this step. -->
+<!-- ```{r } -->
+<!-- # Read and prepare data. To use year(), the lubridate package must be loaded. -->
+<!-- hfeif <- read.csv('HFEIFplotmeans.csv', stringsAsFactors=FALSE) -->
+<!-- hfeif$Date <- as.Date(mdy(hfeif$Date)) -->
+<!-- hfeif$Year <- year(hfeif$Date) -->
+<!-- hfeif2012 <- subset(hfeif, Year == 2012) -->
+<!-- ``` -->
+
+<!-- \item{#ite:variances} \intermed There are four treatments in the dataframe. Calculate the variance of diameter for each of the treatments (this should give four values). These are the *within-treatment* variances. Also calculate the variance of tree diameter across all plots (this is one number). This is the *plot-to-plot variance*. -->
+
+<!-- ```{r } -->
+<!-- # Variances across plots within treatments  -->
+<!-- withinvar <- with(hfeif2012, tapply(diameter,treat,FUN=var)) -->
+
+<!-- # Variance of diameter across all plots -->
+<!-- plotvar <- var(hfeif2012$diameter) -->
+<!-- ``` -->
+
+
+<!-- 1. In \ref{ite:variances}, also calculate the mean within-treatment variance. Compare the value to the plot-to-plot variance. What can you tentatively conclude about the treatment effect? -->
+<!-- ```{r } -->
+<!-- # Average within-treatment variance -->
+<!-- mean(withinvar) -->
+
+<!-- # Variance across all plots -->
+<!-- plotvar -->
+
+<!-- # Variance within treatments seems much smaller than -->
+<!-- # the variance across all plots. -->
+<!-- # This indicates that there is likely a treatment effect. -->
+<!-- ``` -->
+
+
+<!-- } -->
+
+
+
+
+

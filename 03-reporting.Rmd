@@ -18,13 +18,13 @@ knitr::opts_chunk$set(fig.showtext = TRUE, dev="pdf")
 
 ## Introduction
 
-Data visualization is an integral part of any data analytical project. We use data viz to spot patterns in data, check model assumptions, communicate findings, and to convince the audience that our analysis and conclusions make sense. Data viz is not something you only do at the end, but we switch cycle between analysis and visualization. It is therefore not only an important skill to make beautiful visualizations in the final communication of your results, but also to be able to make quick & dirty graphs at any step in the analysis.
+Data visualization is an integral part of any data analytical project. We use data viz to spot patterns in data, check model assumptions, communicate findings, and to convince the audience that our analysis and conclusions make sense. Data viz is not something you only do at the end, but we cycle between analysis and visualization. It is therefore not only an important skill to make beautiful visualizations in the final communication of your results, but also to be able to make quick & dirty graphs at any step in the analysis.
 
-We do not only communicate with visualizations, but like to combine text, tables, figures, images, and well-formatted text in reports. We now have a powerful tool available in R, the `rmarkdown` document - a flexible toolkit to generate documents containing all results from R (with or without the code). These reports ensure that the results you see are made from the code in the document, we never have to ask: which version of my code produced those results? We already used `rmarkdown` in Chapter \@ref(intro), but go a few steps further here and provide useful tips & tricks.
+We do not only use visualizations, but also like to combine text, tables, figures, images, and well-formatted text in reports. We now have a powerful tool available in R, the `rmarkdown` document - a flexible toolkit to generate documents containing all results from R (with or without the code). These reports ensure that the results you see are made from the code in the document, we never have to ask: which version of my code produced those results? We already used `rmarkdown` in Chapter \@ref(intro), but go a few steps further here and provide useful tips & tricks.
 
-This chapter is different from the rest: we do not provide a complete beginners guide to either data visualization with `ggplot2`, or reporting with `rmarkdown`. We point to online resources for getting started, including comprehensive manuals, and galleries of examples. Instead, we focus on pointing out typical difficulties when getting started with these tools.
+This chapter is different from the rest: we do not provide a complete beginners guide to either data visualization with `ggplot2`, or reporting with `rmarkdown`. We point to online resources for getting started, including comprehensive manuals, and galleries of examples. Instead, we focus on pointing out typical difficulties when getting started with these tools, and give some handy tips that may go unnoticed.
 
-For data visualization, also be aware that the entire book in front of you includes many figures produced with `ggplot2` or base graphics. As always, learning from example is the best way.
+For data visualization, also be aware that the entire book in front of you includes many figures produced with `ggplot2` or base graphics - we encourage you to study the examples. As always, learning from example is the easiest.
 
 
 ## Visualizing data {#visualizing}
@@ -43,10 +43,10 @@ A few points to consider:
 - It is generally easier to achieve consistent figure formatting with `ggplot2`, through the use of themes.
 - Many packages include some built-in plotting function, more often than not these use base graphics. It is usually much easier to use those functions directly than to implement the figure from scratch in `ggplot2`. A basic understanding of base graphics is therefore useful in practice.
 - Sometimes, base graphics are easier, especially when you are experimenting and want to make quick and dirty plots. To plot a mathematical function, we can do `curve(x^3, from=-1, to=1)` - this is not so easy in `ggplot2`. 
-- There is no support for 3D graphics in `ggplot2`, base has a number of possibilities. That said, you probably do not want to make many 3D plots.
+- There is no support for 3D graphics in `ggplot2`, but `base` has a number of possibilities. That said, you probably do not want to make many 3D plots.
 - Use base graphics when you are making a simple plot, and wish to avoid *dependencies*. Keeping dependencies to a minimum will make it more likely your code works in the future, and on someone else's machine. The `ggplot2` package is rather stable these days, but has changed dramatically in the past - often breaking old code.
 
-For the reasons mentioned above, in this book we mostly use ggplot2, except when base graphics are a lot easier (that is, use less code).
+For the reasons mentioned above, in this book we mostly use `ggplot2`, except when base graphics are a lot easier (that is, use less code).
 
 
 ### Base graphics
@@ -95,8 +95,36 @@ plot(as.factor(Survived) ~ PClass, data=titanic, ylab="Survived", main="factor v
 The way that `plot` gives different results depending on data types is both a good thing (for basic plots, you need very little code), and a bad thing because reading the code often does not tell you what sort of plot will be produced, and where to read the documentation (`?plot`, `?plot.default`, `?plot.factor`?). 
 
 
+### Histograms {#hist}
 
-<!--#### Resources-->
+One reason I still use base graphics is the quickest way to draw a histogram (frequency or density diagram). We often use these during analyses, to get an idea of the kind data contained in a vector.
+
+
+
+```{r, fig.cap="A simple histogram of the vessel dataset."}
+data(vessel)
+
+# Some formatting first. par() is a powerful yet difficult to learn function.
+# If you leave out 'breaks', the breaks are automatically calculated. 
+# A setting worth experimenting with though!!
+par(mar=c(5,5,2,2), cex.lab=1.1)
+hist(vessel$vesseldiam, main = "", breaks=50, col="darkgoldenrod3",
+     xlab="Tree vessel diameter (micrometer)")
+```
+
+
+```{block2, type="rmdtry"}
+Make the plot above, inspect the data to find out why there are two peaks. Now make two histograms, each with one peak, based on subsets of the data.
+```
+
+
+
+
+#### Resources
+
+One standout resource with examples and explanations is here: <http://www.sthda.com/english/wiki/r-base-graphs>.
+
+
 
 
 ### ggplot2 {#ggplot2}
@@ -115,7 +143,7 @@ data(dutchelection)
 head(dutchelection, 3)
 ```
 
-We cannot really use `ggplot2` when the data are formatted like this. Instead we want to have a dataframe with columns 'Date', 'party', and 'vote_percent', so that we can label the graph by political party. As we will see in Section \@ref(reshaping), quite magically we can use `melt` from `reshape2` :
+We cannot really use `ggplot2` when the data are formatted like this. Instead we want to have a dataframe with columns 'Date', 'party', and 'vote_percent', so that we can label the graph by political party. As we saw in Section \@ref(reshaping), quite magically we can use `melt` from `reshape2` :
 
 ```{r message=FALSE}
 library(reshape2)
@@ -139,13 +167,20 @@ ggplot(automobiles, aes(x = horsepower, y = fuel_efficiency)) +
   geom_point()
 ```
 
+Explanation:
+
+- The first argument to `ggplot` is a dataframe (`automobiles`)
+- The `aes` function defines the "aesthetics", here `x` for X-axis, and `y` for Y-axis. 
+- `ggplot` doesn't really plot anything yet, just gets things ready. Layers are *added* with `+`. Here, a single layer with points. 
+
+
 Next, we want to extend this example by including various other elements:
 
-- Plotting symbols colored by Region
-- A linear regression line, one for each of the three Regions
-- Text labels identifying outliers
-- A legend
-- Better axis labels
+- Plotting symbols colored by Region.
+- A linear regression line, one for each of the three `Region`s.
+- Text labels identifying outliers.
+- A legend.
+- Better axis labels.
 
 Study the example below how each of these was included:
 
@@ -156,6 +191,7 @@ data(automobiles)
 
 library(ggrepel)
 library(dplyr)
+library(ggthemes)
 
 automobiles2 <- mutate(automobiles, 
        resid = residuals(lm(fuel_efficiency ~ horsepower, 
@@ -180,7 +216,7 @@ ggplot(automobiles2, aes(x = horsepower, y = fuel_efficiency,
 
 #### Area plot example
 
-A 'stacked area chart' can be quickly implemented with the `geom_area` function, like so:
+A 'stacked area chart' can be quickly implemented with the `geom_area` function, like the next example. Note how we use another aesthetic, `fill`, to set the colour of the filled areas by `country`.
 
 ```{r}
 data(oil)

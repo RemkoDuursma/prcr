@@ -1,38 +1,17 @@
-%---------------------------------------------------------------------------%
-% Copyright 2015 Remko Duursma, Jeff Powell                                 %
-%                                                                           %
-% This file is part of HIERmanual                                           %
-%                                                                           %
-%     HIERmanual is free software: you can redistribute it and/or modify    %
-%     it under the terms of the GNU General Public License as published by  %
-%     the Free Software Foundation, either version 3 of the License, or     %
-%     (at your option) any later version.                                   %
-%                                                                           % 
-%     HIERmanual is distributed in the hope that it will be useful,         %
-%     but WITHOUT ANY WARRANTY; without even the implied warranty of        %
-%     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         %
-%     GNU General Public License for more details.                          %
-%                                                                           %
-%     You should have received a copy of the GNU General Public License     %
-%     along with HIERmanual.  If not, see <http://www.gnu.org/licenses/>.   %
-%---------------------------------------------------------------------------%
-
-```{r child="exercise_colorcodingexplained.Rnw", eval=TRUE}
-```
-
-
 
 ### Writing functions
 
-\begin{enumerate}
-\item \easy Write a function that adds two numbers, and divides the result by 2.
+
+1.  Write a function that adds two numbers, and divides the result by 2.
+
 ```{r }
 addtwo <- function(num1, num2){
   (num1 + num2)/2
 }
 ```
 
-\item \easy You learned in Section~\ref{sec:workingwithtext} that you can take subset of a string using the `substr` function. First, using that function to extract the first 2 characters of a bit of text. Then, write a function called `firstTwoChars` that extracts the first two characters of any bit of text.
+2.  You learned in Section \@ref(workingwithtext) that you can take subset of a string using the `substr` function. First, using that function to extract the first 2 characters of a bit of text. Then, write a function called `firstTwoChars` that extracts the first two characters of any bit of text.
+
 ```{r }
 firstTwoChars <- function(txt){
   
@@ -42,13 +21,14 @@ return(twoch)
 ```
 
 
-\item \easy Write a function that checks if there are any missing values in a vector (using `is.na` and `any`). The function should return `TRUE` if there are missing values, and `FALSE` if not.
+3.  Write a function that checks if there are any missing values in a vector (using `is.na` and `any`). The function should return `TRUE` if there are missing values, and `FALSE` if not.
+
 ```{r }
 anymiss <- function(x)any(is.na(x))
 ```
 
 
-\item \intermed Improve the function so that it tells you which of the values are missing, if any (*Hint:*use the `which` function).
+4.  Improve the function so that it tells you which of the values are missing, if any (*Hint:*use the `which` function). You can use `message` to write messages to the console.
 ```{r }
 anymiss <- function(x){
   miss <- any(is.na(x))
@@ -60,7 +40,8 @@ return(miss)
 }
 ```
 
-\item \intermed The function `readline` can be used to ask for data to be typed in. First, figure out how to use `readline` by reading the corresponding help file. Then, construct a function called `getAge` that asks the user to type his/her age. (*Hint:* check the examples in the `readline` help page).
+5.  The function `readline` can be used to ask for data to be typed in. First, figure out how to use `readline` by reading the corresponding help file. Then, construct a function called `getAge` that asks the user to type his/her age. (*Hint:* check the examples in the `readline` help page).
+
 ```{r }
 getAge <- function(){
   
@@ -70,7 +51,7 @@ return(as.numeric(age))
 }
 ```
 
-\item \hard Look at the calculations for a confidence interval of the mean in the example in Section~\ref{sec:inference} (p.~\pageref{sec:inference}). Write a function that returns the confidence interval for a vector. The function should have two inputs: the vector, and the desired 'alpha'.
+6. **Hard**. Look at the calculations for a confidence interval of the mean in the example in Section \@ref(inference). Write a function that returns the confidence interval for a vector. The function should have two inputs: the vector, and the desired 'alpha'.
 
 ```{r }
 calculateCI <- function(x, alpha=0.05){
@@ -90,8 +71,8 @@ calculateCI(rnorm(100))
 ```
 
 
-\item \hard Recall the functions `head` and `tail`. Write a function called `middle` that shows a few rows around (approx.) the 'middle' of the dataset. *Hint:* use `nrow`, `print`, and possibly `floor`.
-\end{enumerate}
+7. **hard** Recall the functions `head` and `tail`. Write a function called `middle` that shows a few rows around (approx.) the 'middle' of the dataset. *Hint:* use `nrow`, `print`, and possibly `floor`.
+
 ```{r }
 # Solution 1 : Shows ten rows starting at middle
 middle <- function(x, n=10){
@@ -121,17 +102,17 @@ middle <- function(x, n=10){
 
 First read the following list:
 
-\begin{verbatim}
+```
 veclist <- list(x=1:5, y=2:6, z=3:7)
-\end{verbatim}
+```
 
 ```{r echo=FALSE}
 veclist <- list(x=1:5, y=2:6, z=3:7)
 ```
 
 
-\begin{enumerate}
-\item \easy Using `sapply`, check that all elements of the list are vectors of the same length. Also calculate the sum of each element. 
+
+1.  Using `sapply`, check that all elements of the list are vectors of the same length. Also calculate the sum of each element. 
 
 ```{r }
 sapply(veclist, length)
@@ -141,25 +122,25 @@ all(sapply(veclist,length) == 5)
 sapply(veclist, sum)
 ```
 
-\item \intermed Add an element to the list called 'norms' that is a vector of 10 numbers drawn from the standard normal distribution (recall Section~\ref{chap:basic}, p.~\pageref{chap:basic}).
+2.  Add an element to the list called 'norms' that is a vector of 10 numbers drawn from the standard normal distribution (recall Section \@ref(distributions)).
 
 ```{r }
 veclist$norms <- rnorm(10)
 ```
 
-\item \intermed Using the pupae data (Section~\ref{sec:pupaedata}, p.~\pageref{sec:pupaedata}), use a $t$-test to find if PupalWeight varies with temperature treatment, separate for the two CO$_2$ treatments (so, do two $t$-tests). Use `split` and `lapply`.
+3.  Using the `pupae` data, use a $t$-test to find if PupalWeight varies with temperature treatment, separate for the two CO$_2$ treatments (so, do two $t$-tests). You **must** use `split` and `lapply`.
 ```{r }
-pupae <- read.csv("pupae.csv")
+data(pupae)
 pupae_sp <- split(pupae, pupae$CO2_treatment)
 
 lapply(pupae_sp, function(x)t.test(PupalWeight ~ T_treatment, data=x))
 ```
 
 
-\item \easy / \intermed Recall the exercise in Section~\ref{sec:coweetascatter} (p.~\pageref{sec:coweetascatter}). First read the data. 
-Then, split the data by `species`, to produce a list called `coweeta\_sp`. Keep only those species that have at least 10 observations. (*Hint:* first count the number of observations per species, save that as a vector, find which are at least 10, and use that to subscript the list.) If you don't know how to do this last step, skip it and continue to the next item.
+4.  For this exercise use the `coweeta` data - a dataset with measurements of tree size. Split the data by `species`, to produce a list called `coweeta_sp`. Keep only those species that have at least 10 observations. (*Hint:* first count the number of observations per species, save that as a vector, find which are at least 10, and use that to subscript the list.) If you don't know how to do this last step, skip it and continue to the next item.
+
 ```{r }
-coweeta <- read.csv("coweeta.csv")
+data(coweeta)
 
 # Make list of dataframes
 coweeta_sp <- split(coweeta, coweeta$species)
@@ -177,24 +158,40 @@ coweeta_sp <- coweeta_sp[morethan10]
 nspec <- sapply(coweeta_sp,nrow)
 # find names of species that have at least 10 observations
 morethan10 <- names(nspec)[nspec > 9] 
+
 # Use that to subset the original data, and resplit
 coweeta_subs <- droplevels(subset(coweeta, species %in% morethan10))
 coweeta_sp <- split(coweeta_subs, coweeta_subs$species)
+
+
+# SOLUTION 3 (dplyr)
+library(dplyr)
+coweeta_subs2 <- group_by(coweeta, species) %>%
+  filter(n() >= 10)
+  
 ```
 
-\item \easy Using the split Coweeta data, perform a linear regression of `log10(biomass)` on `log10(height)`, separately by species. (*Hint:* recall section \ref{sec:lapply}, p.~\pageref{sec:lapply}).
+5.  Using the split Coweeta data, perform a linear regression of `log10(biomass)` on `log10(height)`, separately by species. Use `lapply`.
+
 ```{r }
 lms <- lapply(coweeta_sp, function(x)lm(log10(biomass) ~ log10(height),
                                         data=x))
 
 ```
 
-\item{#ite:lmxy} \intermed Run this code to get two vectors:
-\begin{verbatim}
+
+### Functions for histograms
+
+
+First run this code to produce two vectors.
+
+```
 x <- rnorm(100)
 y <- x + rnorm(100)
-\end{verbatim}
-Run a linear regression y = f(x), save the resulting object. Look at the structure of this object, and note the names of the elements. Extract the residuals and make a histogram.
+```
+
+
+1. Run a linear regression y = f(x), save the resulting object. Look at the structure of this object, and note the names of the elements. Extract the residuals and make a histogram.
 
 ```{r }
 x <- rnorm(100)
@@ -205,7 +202,8 @@ str(lmfit)
 hist(lmfit$residuals)
 ```
 
-\item \hard From question~\ref{ite:lmxy}, write a function that takes an `lm` object as an argument, and plots a histogram of the residuals.
+2. **Hard**. From the previous question, write a function that takes an `lm` object as an argument, and plots a histogram of the residuals.
+
 ```{r }
 # good:
 lmResidHist <- function(lmobj){
@@ -222,23 +220,23 @@ lmResidHist <- function(lmobj,...){
 lmResidHist(lmfit, main="My Residuals")
 ```
 
-\end{enumerate}
+
 
 
 ### Using functions to make many plots
 
 
-\begin{enumerate}
-\item \intermed Read the cereal data. Create a subset of data where the `Manufacturer` has at least two observations (use `table` to find out which you want to keep first). Don't forget to drop the empty factor level you may have created!
+
+1.  Read the cereals data. Create a subset of data where the `Manufacturer` has at least two observations (use `table` to find out which you want to keep first). Don't forget to drop the empty factor level you may have created!
 
 ```{r }
-cereal <- read.csv("cereals.csv")
-tab <- table(cereal$Manufacturer)
+data(cereals)
+tab <- table(cereals$Manufacturer)
 morethan1 <- names(tab)[tab > 1]
-cereal <- droplevels(subset(cereal, Manufacturer %in% morethan1))
+cereals <- droplevels(subset(cereals, Manufacturer %in% morethan1))
 ```
 
-\item \intermed Make a single PDF with six plots, with a scatter plot between potassium and fiber for each of the six (or seven?) Manufacturers. (*Hint:* ook at the template for producing a PDF with multiple pages at the bottom of Section~\ref{sec:simpleloops}, p.~\pageref{sec:simpleloops}).
+2.  Make a single PDF with six plots, with a scatter plot between potassium and fiber for each of the six (or seven?) Manufacturers. (*Hint:* ook at the template for producing a PDF with multiple pages at the bottom of Section \@ref(simpleloops).
 
 ```{r eval=FALSE}
 cerealsp <- split(cereal, cereal$Manufacturer)
@@ -253,44 +251,13 @@ dev.off()
 ```
 
 
-\item \hard Recall that we can use `points` to add points or lines to a current plot. See Section~\ref{sec:addingtoplot} (p.~\pageref{sec:addingtoplot}) for an example using the Dutch election data. Read the data (and convert the Date variable!).
-```{r }
-election <- read.csv("dutchelection.csv")
-election$Date <- as.Date(election$Date)
-```
 
-\item \hard Write a function that adds lines for each of the parties in the election data to a plot. First set up an empty plot using,
-
-\begin{verbatim}
-with(election, plot(Date, VVD, type='n', ylim=c(0,40)))
-\end{verbatim}
-
-Then carefully inspect the example in Section~\ref{sec:addingtoplot} (p.~\pageref{sec:addingtoplot}) to see how you can write a function that adds a line for one party (e.g. 'SP') to that plot.
-
-\item \hard Loop through all columns of the election data, add a line for each column to the plot.
-```{r }
-# Set colour palette
-palette(rainbow(12))
-
-addline <- function(columnnr, colour){
-  Y <- election[,columnnr]
-  X <- election$Date
-  
-  lines(X,Y, col=colour)
-}
-with(election, plot(Date, VVD, type='n', ylim=c(0,40)))
-# Be careful: poll results are in columns 2 to 12
-for(i in 2:12)addline(i,colour=palette()[i])
-```
-
-
-\end{enumerate}
 
 
 ### Monthly weather plots
 
-\begin{enumerate}
-\item \intermed For the HFE weather dataset (Section~\ref{sec:hfemet}, p.~\pageref{sec:hfemet}), write a function that makes a scatter plot between PAR and VPD. 
+
+1.  For the HFE weather dataset (`hfemet2008`) that makes a scatter plot between PAR (a measure of light intensity) and VPD (a measure of the dryness of air).
 
 ```{r }
 # This function works for any dataframe, as long as it has
@@ -300,9 +267,9 @@ PARVPD <- function(dat){
 }
 ```
 
-\item \intermed Then, split the dataset by month (recall Section~\ref{sec:dfrlists}, p.~\pageref{sec:dfrlists}), and make twelve such scatter plots. Save the result in a single PDF, or on one page with 12 small figures.
+1.  Then, split the dataset by month (recall Section \@ref(dfrlists)), and make twelve such scatter plots. Save the result in a single PDF, or on one page with 12 small figures.
 ```{r }
-hfe <- read.csv("HFEmet2008.csv")
+data(hfemet2008)
 
 library(lubridate)
 hfe$DateTime <- mdy_hm(as.character(hfe$DateTime))
@@ -319,49 +286,49 @@ for(i in 1:12)PARVPD(hfesp[[i]])
 ```
 
 
-\end{enumerate}
 
 
-### The Central limit theorem
 
-The 'central limit theorem' (CLT) forms the backbone of inferential statistics. This theorem states (informally) that if you draw samples (of *n* units) from a population, the mean of these samples follows a normal distribution. This is true regardless of the underlying distribution you sample from. 
+<!-- ### The Central limit theorem -->
 
-In this exercise, you will apply a simple simulation study to test the CLT, and to make histograms and quantile-quantile plots. 
+<!-- The 'central limit theorem' (CLT) forms the backbone of inferential statistics. This theorem states (informally) that if you draw samples (of *n* units) from a population, the mean of these samples follows a normal distribution. This is true regardless of the underlying distribution you sample from.  -->
 
-\begin{enumerate}
-
-\item{#ite:draw200} \intermed Draw 200 samples of size 10 from a uniform distribution. Use the `runif` function to sample from the uniform distribution, and the `replicate` function to repeat this many times.
-```{r }
-unisamples <- replicate(200, runif(10))
-```
-
-\item \intermed Compute the sample mean for each of the 200 samples in~\ref{ite:draw200}. Use `apply` or `colMeans` to calculate column-wise means of a matrix (note: `replicate` will return a matrix, if used correctly).
-```{r }
-colMeans(unisamples)
-```
-
-\item \intermed Draw a histogram of the 200 sample means, using `hist`. Also draw a normal quantile-quantile plot, using `qqnorm`. 
-```{r }
-hist(colMeans(unisamples))
-qqnorm(colMeans(unisamples))
-```
+<!-- In this exercise, you will apply a simple simulation study to test the CLT, and to make histograms and quantile-quantile plots.  -->
 
 
-\item \intermed On the histogram, add a normal curve using the `dnorm` function. Note: to do this, plot the histogram with the argument `freq=FALSE`, so that the histogram draws the probability density, not the frequency. 
-```{r }
-X <- colMeans(unisamples)
-hist(X, freq=FALSE)
-curve(dnorm(x, mean=mean(X), sd=sd(X)), add=T)
-```
 
-\item \hard Write a function that does all of the above, and call it `PlotCLT`.
-```{r }
-plotCLT <- function(n1=200, n2=10){
-  unisamples <- replicate(n1, runif(n2))
-  X <- colMeans(unisamples)
-  hist(X, freq=FALSE)
-  curve(dnorm(x, mean=mean(X), sd=sd(X)), add=T)
-}
-```
+<!-- 1. Draw 200 samples of size 10 from a uniform distribution. Use the `runif` function to sample from the uniform distribution, and the `replicate` function to repeat this many times. -->
+<!-- ```{r } -->
+<!-- unisamples <- replicate(200, runif(10)) -->
+<!-- ``` -->
 
-\end{enumerate}
+<!-- 1.  Compute the sample mean for each of the 200 samples in~\ref{ite:draw200}. Use `apply` or `colMeans` to calculate column-wise means of a matrix (note: `replicate` will return a matrix, if used correctly). -->
+<!-- ```{r } -->
+<!-- colMeans(unisamples) -->
+<!-- ``` -->
+
+<!-- 1.  Draw a histogram of the 200 sample means, using `hist`. Also draw a normal quantile-quantile plot, using `qqnorm`.  -->
+<!-- ```{r } -->
+<!-- hist(colMeans(unisamples)) -->
+<!-- qqnorm(colMeans(unisamples)) -->
+<!-- ``` -->
+
+
+<!-- 1.  On the histogram, add a normal curve using the `dnorm` function. Note: to do this, plot the histogram with the argument `freq=FALSE`, so that the histogram draws the probability density, not the frequency.  -->
+<!-- ```{r } -->
+<!-- X <- colMeans(unisamples) -->
+<!-- hist(X, freq=FALSE) -->
+<!-- curve(dnorm(x, mean=mean(X), sd=sd(X)), add=T) -->
+<!-- ``` -->
+
+<!-- \item \hard Write a function that does all of the above, and call it `PlotCLT`. -->
+<!-- ```{r } -->
+<!-- plotCLT <- function(n1=200, n2=10){ -->
+<!--   unisamples <- replicate(n1, runif(n2)) -->
+<!--   X <- colMeans(unisamples) -->
+<!--   hist(X, freq=FALSE) -->
+<!--   curve(dnorm(x, mean=mean(X), sd=sd(X)), add=T) -->
+<!-- } -->
+<!-- ``` -->
+
+

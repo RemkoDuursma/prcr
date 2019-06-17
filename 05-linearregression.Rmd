@@ -295,7 +295,7 @@ We can use `t.test` to do one-sided tests,
 t.test(weight, mu=0.29, alternative="greater") %>% pander
 ```
 
-The `t.test` is appropriate for data that is approximately normally distributed. You can check this using a histogram or a QQ-plot (see Sections sec:hist and sec:diagplots). If the data is not very close to a normal distribution then the `t.test` is often still appropriate, as long as the sample is large.
+The `t.test` is appropriate for data that is approximately normally distributed. You can check this using a histogram or a QQ-plot (see Section \@ref(diagplots)). If the data is not very close to a normal distribution then the `t.test` is often still appropriate, as long as the sample is large.
 
 If the data is not normal and the sample size is small, there are a couple of alternatives: transform the data (often a log transform is enough) or use a *nonparametric* test, in this case the Wilcoxon signed rank test. We can use the `wilcox.test` function for the latter, its interface is similar to `t.test` and it tests the hypothesis that the data is symmetric about the hypothesized population mean. For example,
 
@@ -992,7 +992,7 @@ visreg(allomquadfit, "diameter", by="species", overlay=TRUE)
 
 
 
-### Which predictors are more important?
+### Which predictors are more important? {#importance}
 
 Frequently we are interested in knowing which of the predictor variables explain more variation in the response variable, in other words are more strongly correlated with the response.
 
