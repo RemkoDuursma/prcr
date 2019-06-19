@@ -4,12 +4,22 @@
 ```{r echo=FALSE, message=FALSE, include=FALSE}
 suppressPackageStartupMessages(library(tibble))
 suppressPackageStartupMessages(library(magrittr))
-htmltools::tagList(rmarkdown::html_dependency_font_awesome())
+#htmltools::tagList(rmarkdown::html_dependency_font_awesome())
+
+library(knitr)
+
+current_output <- opts_knit$get("rmarkdown.pandoc.to")
+
+knit_theme$set("earendel")
+opts_chunk$set(background="grey94", 
+               fig.showtext = TRUE,
+               dev = ifelse(current_output == "latex", "pdf", "svg"))
 ```
 
 
 
 ## Installing R and Rstudio {#installingr}
+
 
 We assume you have installed R and Rstudio. We occasionally give some tips on how to use Rstudio effectively, but since Rstudio is likely to change more quickly than R - we instead suggest you keep an eye on their documentation (link).
 
@@ -153,7 +163,7 @@ cumsum(nums1)  # cumulative sum
 
 There are many more functions you can use directly on vectors. See the table below for a few useful ones.
 
-```{r echo=FALSE}
+```{r echo=FALSE, results='asis'}
 tab <- tribble(~Function,   ~`What it does`,           ~Example,
                   "`length`",     "Length of the vector", "`length(nums1)`",
                   "`rev`",       "Reverses the elements of a vector", "`rev(nums1)`",
@@ -164,8 +174,8 @@ tab <- tribble(~Function,   ~`What it does`,           ~Example,
                   "`min`",       "The minimum value", "`min(nums1)`",
                   "`which.max`", "Which element of the vector is the max?", "`which.max(nums1)`",
                   "`which.min`", "Which element of the vector is the min?", "`which.min(nums1)`",
-                  "`mean`",      "Computes the average of the vector", "`mean(nums1)`",
-                  "`median`",    "Computers the median", "`median(nums1)`",
+                  "`mean`",      "The average value", "`mean(nums1)`",
+                  "`median`",    "The median", "`median(nums1)`",
                   "`var`",       "Variance", "`var(nums1)`",
                   "`sd`",        "Standard deviation", "`sd(nums1)`",
                   "`cumsum`",    "Cumulative sum (running total)", "`cumsum(nums1)`",
@@ -173,7 +183,20 @@ tab <- tribble(~Function,   ~`What it does`,           ~Example,
                   "`unique`",    "Unique values used in the vector", "`unique(nums1)`",
                   "`round`",     "Rounds numbers to a specified number of decimal points", "`round(nums1, 2)`"
                   )
-knitr::kable(tab, caption="A selection of useful built-in functions in R.")
+if(current_output == "latex"){
+  
+  latexify <- function(x){
+    x <- gsub("`","", x)
+    paste0("\\texttt{", x, "}")  
+  }
+  tab$Function <- latexify(tab$Function)
+  tab$Example <- latexify(tab$Example)
+  
+  xtab <- xtable::xtable(tab, caption="A selection of useful built-in functions in R.")
+  print(xtab,sanitize.text.function=function(x){x})
+} else {
+  knitr::kable(tab, caption="A selection of useful built-in functions in R.")
+}
 ```
 
 

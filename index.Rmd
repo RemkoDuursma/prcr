@@ -17,7 +17,8 @@ description: "This book teaches introductory to intermediate skills in R."
 # Preamble
 library(knitr)
 knit_theme$set("earendel")
-opts_chunk$set(background="grey94")
+opts_chunk$set(background="grey94", 
+               fig.showtext = TRUE)
 
 # Avoid long output
 hook_output = knit_hooks$get("output")

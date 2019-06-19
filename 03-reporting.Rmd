@@ -13,7 +13,15 @@ library(showtext)
 font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
 library(ggplot2)
 theme_set(theme_datapelikaan(base_family = "Lato"))
-knitr::opts_chunk$set(fig.showtext = TRUE, dev="pdf")
+
+library(knitr)
+current_output <- opts_knit$get("rmarkdown.pandoc.to")
+opts_knit$set(kable.force.latex = TRUE)
+knit_theme$set("earendel")
+opts_chunk$set(background="grey94", 
+               fig.showtext = TRUE,
+               dev = ifelse(current_output == "latex", "pdf", "svg"))
+
 ```
 
 ## Introduction
@@ -110,6 +118,7 @@ data(vessel)
 par(mar=c(5,5,2,2), cex.lab=1.1)
 hist(vessel$vesseldiam, main = "", breaks=50, col="darkgoldenrod3",
      xlab="Tree vessel diameter (micrometer)")
+box()
 ```
 
 

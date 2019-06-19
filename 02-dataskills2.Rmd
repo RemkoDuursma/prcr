@@ -21,8 +21,14 @@ library(showtext)
 font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
 library(ggplot2)
 theme_set(theme_datapelikaan(base_family = "Lato"))
-knitr::opts_chunk$set(fig.showtext = TRUE) #, dev="svg")
-knitr::opts_knit$set(kable.force.latex = TRUE)
+
+library(knitr)
+current_output <- opts_knit$get("rmarkdown.pandoc.to")
+opts_knit$set(kable.force.latex = TRUE)
+knit_theme$set("earendel")
+opts_chunk$set(background="grey94", 
+               fig.showtext = TRUE,
+               dev = ifelse(current_output == "latex", "pdf", "svg"))
 ```
  
 
@@ -236,6 +242,7 @@ You can also use any function that returns a vector of results. In the following
 # . ~ species means 'all numeric variables by species'.
 # Extra arguments to the function used (in this case quantile) can be set here as well,
 # they will be passed to that function (see ?quantile).
+data(allometry)
 summaryBy(. ~ species, data=allometry, FUN=quantile, probs=c(0.05, 0.95))
 ```
 
@@ -538,7 +545,7 @@ merge(data1, data2, by=c("unit","Time"), all=TRUE)
 ```
 
 
-### Using join from `dplyr`
+### Using join from `dplyr` {#dplyrjoin}
 
 We showed how to use the `merge` function above, which is provided by base R. For larger datasets, it is advisable to use the `join*` functions from `dplyr`.
 
@@ -880,7 +887,7 @@ In this example we will use the `weightloss` data, again from the `lgrdata` pack
 
 The `pad` function is quite powerful: it takes a dataframe, figures the time-indexing variable (in our case, Date), and stretches the dataset to include all Dates along the dataset, filling NA where no data were available.
 
-The `zoo` package contains many useful functions for timeseries data. Here we use `na.approx` to linearly interpolate missing values. We also make a plot of the weight loss data, clarifying which data were interpolated. The following code make Fig. \@ref(weightlossinterp).
+The `zoo` package contains many useful functions for timeseries data. Here we use `na.approx` to linearly interpolate missing values. We also make a plot of the weight loss data, clarifying which data were interpolated. The following code make Fig. \@ref(fig:weightlossinterp).
 
 ```{r weightlossinterp, fig.cap="The weightloss data, with linearly interpolated missing values (red)."}
 library(lubridate)
@@ -901,3 +908,11 @@ ggplot(weightloss2, aes(x = Date, y = Weight)) +
   geom_point(colour = ifelse(weightloss2$measured, "darkgrey", "red2"))
 
 ```
+
+
+## Exercises
+
+```{r child="exercises/02_dataskills2_exercises.Rmd", echo=FALSE, results='hide', fig.show='hide'}
+
+```
+

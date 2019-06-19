@@ -81,7 +81,7 @@ xtabs( ~ sodiumClass + Manufacturer, data=cereals)
 ```{r }
 # Results are the same as with tapply, except the result is a dataframe, not a 2x2 table.
 library(doBy)
-summaryBy(sugars ~ sodiumClass + Manufacturer, data=cereal, FUN=max, na.rm=TRUE)
+summaryBy(sugars ~ sodiumClass + Manufacturer, data=cereals, FUN=max, na.rm=TRUE)
 
 # Results are the same as with tapply, except the result is a dataframe, not a 2x2 table.
 group_by(cereals, sodiumClass, Manufacturer) %>% 
@@ -153,7 +153,7 @@ with(hfemet2008, tapply(Tair, month, mean, na.rm=TRUE))
 |400           |2           |
 \end{verbatim}
 
-To read this dataset, consider the `data.frame` function described in Section  \@ref(readingotherdata).
+To read this dataset, consider the `data.frame` function described in Section  \@ref(vecstodfr).
 
 1. Merge the short dataset onto the pupae data. Check the result.
 
@@ -174,7 +174,7 @@ head(pupae)
 
 ### Merging multiple datasets
 
-Read Section  \@ref(multmerge).
+Read Section  \@ref(dplyrjoin), and learn how to merge more than two datasets together.
 
 First, run the following code to construct three dataframes that we will attempt to merge together.
 
@@ -229,17 +229,17 @@ Notice the *ordering* of the boxes from left to right, and compare it to `levels
 ```{r }
 # Using reorder, the levels of Manufacturer are ordered by the mean 
 # of sodium for each level.
-cereal$Manufacturer <- with(cereal, reorder(Manufacturer, sodium, mean))
+cereals$Manufacturer <- with(cereals, reorder(Manufacturer, sodium, mean))
 
 # Note how the order is now increasing with sodium.
-boxplot(sodium ~ Manufacturer, data=cereal, ylab="Sodium content", xlab="Manufacturer")
+boxplot(sodium ~ Manufacturer, data=cereals, ylab="Sodium content", xlab="Manufacturer")
 ```
 
 3. Inspect the help page (`?boxplot`), and change the boxplots so that the width varies with the number of observations per manufacturer (*Hint:* find the `varwidth` argument).
 
 ```{r }
 # With varwidth=TRUE, the width of the boxes is proportional to the sample size.
-boxplot(sodium ~ Manufacturer, data=cereal, ylab="Sodium content", xlab="Manufacturer",
+boxplot(sodium ~ Manufacturer, data=cereals, ylab="Sodium content", xlab="Manufacturer",
         varwidth=TRUE)
 ```
 

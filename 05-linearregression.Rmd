@@ -62,7 +62,15 @@ source("R/theme_datapelikaan.R")
 library(showtext)
 font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
 theme_set(theme_datapelikaan(base_family = "Lato"))
-knitr::opts_chunk$set(fig.showtext = TRUE, dev="pdf")
+
+library(knitr)
+current_output <- opts_knit$get("rmarkdown.pandoc.to")
+opts_knit$set(kable.force.latex = TRUE)
+knit_theme$set("earendel")
+opts_chunk$set(background="grey94", 
+               fig.showtext = TRUE,
+               dev = ifelse(current_output == "latex", "pdf", "svg"))
+
 
 ```
 
@@ -272,7 +280,7 @@ Here, we assumed a normal distribution for the population. You may have been tau
 Confirm that the $t$-distribution converges to a normal distribution when *n* is large (using `qt` and `qnorm`).
 ```
 
-### Hypothesis testing
+### Hypothesis testing {#inference}
 
 There may be a reason to ask whether a dataset is consistent with a certain mean. For example, are the pupae weights consistent with a population mean of 0.29? For normal populations, we can use Student's $t$-test, available in R as the `t.test` function. In all following results, we use the `pander` function (from the `pander`) package to make the output short and readable (and in markdown format). For best results, use it in an rmarkdown document (though it works fine otherwise as well). We assume you have loaded these two packages:
 
@@ -295,7 +303,7 @@ We can use `t.test` to do one-sided tests,
 t.test(weight, mu=0.29, alternative="greater") %>% pander
 ```
 
-The `t.test` is appropriate for data that is approximately normally distributed. You can check this using a histogram or a QQ-plot (see Section \@ref(diagplots)). If the data is not very close to a normal distribution then the `t.test` is often still appropriate, as long as the sample is large.
+The `t.test` is appropriate for data that is approximately normally distributed. You can check this using a histogram or a QQ-plot. If the data is not very close to a normal distribution then the `t.test` is often still appropriate, as long as the sample is large.
 
 If the data is not normal and the sample size is small, there are a couple of alternatives: transform the data (often a log transform is enough) or use a *nonparametric* test, in this case the Wilcoxon signed rank test. We can use the `wilcox.test` function for the latter, its interface is similar to `t.test` and it tests the hypothesis that the data is symmetric about the hypothesized population mean. For example,
 
@@ -1045,6 +1053,11 @@ A more common approach is to test how mucb the R^2^ decreases if a predictor is 
 Where RSS is the 'residual sum of squares' after dropping the term; higher means the variable is 'more important'.
 ```
 
+## Exercises
+
+```{r child="exercises/05_linearregression_exercises.Rmd", echo=FALSE, results='hide', fig.show='hide'}
+
+```
 
 
 

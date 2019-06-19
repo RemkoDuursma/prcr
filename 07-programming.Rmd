@@ -22,7 +22,15 @@ source("R/theme_datapelikaan.R")
 library(showtext)
 font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
 theme_set(theme_datapelikaan(base_family = "Lato"))
-knitr::opts_chunk$set(fig.showtext = TRUE, dev="pdf")
+
+library(knitr)
+current_output <- opts_knit$get("rmarkdown.pandoc.to")
+opts_knit$set(kable.force.latex = TRUE)
+knit_theme$set("earendel")
+opts_chunk$set(background="grey94", 
+               fig.showtext = TRUE,
+               dev = ifelse(current_output == "latex", "pdf", "svg"))
+
 ```
 
 
@@ -631,6 +639,12 @@ for(lev in levels(dataset$species)){
 dev.off()
 ```
 
+
+## Exercises
+
+```{r child="exercises/10_programming_exercises.Rmd", echo=FALSE, results='hide', fig.show='hide'}
+
+```
 
 
 

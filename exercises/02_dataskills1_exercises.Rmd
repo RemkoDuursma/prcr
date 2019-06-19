@@ -2,6 +2,12 @@
 ### Working with a single vector - indexing
 
 Recall Exercise \@ref(vecexerc1). Load the `rainfall` data once more.
+
+```{r echo=FALSE}
+rainfall <- c(0.1,0.6, 33.8,  1.9,  9.6,  4.3, 33.7,  0.3,  0.0,  0.1)
+```
+
+
 We now practice subsetting a vector (see Section \@ref(vectorindexing)).
 
 **1.** Take a subset of the rainfall data where rain is larger than 20.
@@ -167,7 +173,7 @@ head(cereal_subs)
 ```
 
 
-**8.** For one of the above subsets, write a new CSV file to disk using `write.csv` (see Section \@ref(writecsv)).
+**8.** For one of the above subsets, write a new CSV file to disk using `write.csv` (see Section \@ref(exportingdata)).
 
 ```{r eval=FALSE}
 # Use row.names=FALSE to avoid unnecessary row numbers in the CSV file.
@@ -197,7 +203,7 @@ cereals <- rename(cereals,
 ### A short dataset
 
 
-**1.** Read the following data into R (number of cuckoos seen in a week by an avid birdwatcher). Give the resulting dataframe a reasonable name. *Hint:*To read this dataset, look at Section  \@ref(readingotherdata) (there are at least two ways to read this dataset, or you can type it into Excel and save as a CSV file if you prefer).
+**1.** Read the following data into R (number of cuckoos seen in a week by an avid birdwatcher). Give the resulting dataframe a reasonable name. *Hint:*To read this dataset, look at Section  \@ref(datainscript) for a possibility (there are at least two ways to read this dataset, or you can type it into Excel and save as a CSV file if you prefer).
 
 ```
 Day nrbirds
@@ -212,7 +218,7 @@ saturday 2
 
 
 ```{r readhoney, tidy=FALSE}
-honeyeaters <- read.csv(text="
+cuckoos <- read.csv(text="
 Day, nrbirds
 sunday, 3
 monday, 2
@@ -226,19 +232,19 @@ saturday, 2")
 
 **2.** Add a day number to the dataset you read in above (sunday=1, saturday=7). Recall the `seq` function (Section  \@ref(sequences)).
 ```{r honeyadd}
-honeyeaters$daynumber <- 1:7
+cuckoos$daynumber <- 1:7
 ```
 
 **3.** Delete the 'Day' variable (to only keep the `daynumber` that you added above). 
 ```{r }
 # Solution 1
-honeyeaters <- subset(honeyeaters, select=-Day)
+cuckoos2 <- subset(cuckoos, select=-Day)
 
 # Solution 2 (simply deletes the first column)
-honeyeaters <- honeyeaters[,-1]
+cuckoos2 <- cuckoos[,-1]
 
 # Solution 3
-honeyeaters <- dplyr::select(honeyeaters, -Day)
+cuckoos2 <- dplyr::select(cuckoos, -Day)
 ```
 
 ```{r echo=FALSE}
@@ -249,16 +255,16 @@ honeyeaters <- dplyr::select(honeyeaters, -Day)
 **4.** On which `daynumber` did you observe the most honeyeaters? *Hint:* use `which.max`, in combination with indexing.
 
 ```{r }
-honeyeaters$daynumber[which.max(honeyeaters$nrbirds)]
+cuckoos$daynumber[which.max(cuckoos$nrbirds)]
 ```
 
 
 
 **5.** Sort the dataset by number of birds seen. *Hint:* use the `order` function to find the order of the number of birds, then use this vector to index the dataframe.
 ```{r }
-nrbird_order <- order(honeyeaters$nrbirds)
+nrbird_order <- order(cuckoos$nrbirds)
 
-honey_sorted <- honeyeaters[nrbird_order,]
+honey_sorted <- cuckoos[nrbird_order,]
 ```
 
 
@@ -505,7 +511,7 @@ In this exercise, you will practice working with Dates and Date-Time combination
 
 In this dataset, a new row was produced every 30min - of various meteorological measurements above a forest in Spain. For example, `FCO2` is the flux of carbon dioxide out of forest, so that negative values indicate photosynthesis.
 
-**1.** Read the dataframe. Rename the first column to 'DateTime' (recall Section  \@ref(colrownames)).
+**1.** Read the dataframe. Rename the first column to 'DateTime' (recall Section  \@ref(namesdataframe)).
 ```{r }
 data(fluxtower)
 
@@ -556,7 +562,7 @@ Did it rain on this forest in Spain?
 str(fluxtower$Rain)
 
 # Solution 2: set bad values to NA
-flux$Rain[flux$Rain == "#DIV/0!"] <- NA
+fluxtower$Rain[fluxtower$Rain == "#DIV/0!"] <- NA
 ```
 
 
@@ -613,7 +619,7 @@ flux$Rain[flux$Rain == "#DIV/0!"] <- NA
 DNA sequences can also be represented using text strings. In this exercise, you will make an artificial DNA sequence. 
 
 
-**1.** Make a random DNA sequence, consisting of a 100 random selections of the letters `C`,`A`,`G`,`T`, and paste the result together into one character string (*Hint* : use `sample` as in Section  \@ref(randomnumbers) with replacement, and use `paste` as shown in Section  \@ref(workingwithtext). Write it in one line of R code.
+**1.** Make a random DNA sequence, consisting of a 100 random selections of the letters `C`,`A`,`G`,`T`, and paste the result together into one character string (*Hint* : use `sample` as in Section  \@ref(randomnumbers) with replacement, and use `paste` as shown in Section  \@ref(workingtext). Write it in one line of R code.
 
 ```{r }
 paste(sample(c("C","A","G","T"), 100, replace=TRUE), collapse="")

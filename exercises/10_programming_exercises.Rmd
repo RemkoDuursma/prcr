@@ -10,7 +10,7 @@ addtwo <- function(num1, num2){
 }
 ```
 
-2.  You learned in Section \@ref(workingwithtext) that you can take subset of a string using the `substr` function. First, using that function to extract the first 2 characters of a bit of text. Then, write a function called `firstTwoChars` that extracts the first two characters of any bit of text.
+2.  You learned in Section \@ref(workingtext) that you can take subset of a string using the `substr` function. First, using that function to extract the first 2 characters of a bit of text. Then, write a function called `firstTwoChars` that extracts the first two characters of any bit of text.
 
 ```{r }
 firstTwoChars <- function(txt){
@@ -272,12 +272,12 @@ PARVPD <- function(dat){
 data(hfemet2008)
 
 library(lubridate)
-hfe$DateTime <- mdy_hm(as.character(hfe$DateTime))
+hfemet2008$DateTime <- mdy_hm(as.character(hfemet2008$DateTime))
 
 # extract month,
-hfe$month <- month(hfe$DateTime)
+hfemet2008$month <- month(hfemet2008$DateTime)
 
-hfesp <- split(hfe, hfe$month)
+hfesp <- split(hfemet2008, hfemet2008$month)
 
 # windows(10,10)  # optional - add this command if the window is too small
 par(mfrow=c(3,4))
