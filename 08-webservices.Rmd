@@ -213,9 +213,6 @@ https://opendata.cbs.nl/ODataApi/odata/37556/TypedDataSet
 
 ## Deploying an API with `plumber`
 
-
-### Deploying a simple API
-
 With `plumber` we can quickly set up an API, that we can use from within any other programming language, web site, or program. Normally you would deploy the API on a server running R, so that the R service can be used from anywhere. Here, to keep things simple, we deploy the API on your own machine ('locally'), but it will work similarly to when it runs on a remote server.
 
 The first step is to create a standalone script (with extension .R) that defines as many *functions* as you like. Each function can take arguments. Take the following example, paste it in a script, call it `plumber.R`.

@@ -671,7 +671,7 @@ It is also possible to save all objects that are currently loaded in memory (eve
 Now that we know how to read in dataframes, it is time we take a closer look at the types of data that can be contained in a dataframe. For the purpose of this book, a dataframe can contain six types of data. These are summarized in the table below:
 
 
-```{r echo=FALSE}
+```{r echo=FALSE, results='asis'}
 suppressPackageStartupMessages(library(tibble))
 
 numeric_descriptor <- "Any number, including `double` (double precision floating point) and `integer` (whole numbers). In R you very rarely have to worry about the exact nature of numeric values."

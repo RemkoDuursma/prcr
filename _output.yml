@@ -31,6 +31,7 @@ bookdown::pdf_book:
   dev: pdf
   includes:
     in_header: preamble.tex
+    before_body: before_body.tex
   latex_engine: pdflatex
   citation_package: natbib
   keep_tex: yes
