@@ -4,9 +4,11 @@
 
 We have now explored various basic and more advanced regression approaches - each time we were trying to explain variation in a *continuous* (numeric) variable. In classification, we are instead trying to explain a *discrete* (factor) variable. There are many practical applications of classification, and R has many tools to fit, analyze, and visualize classification models.
 
-In the previous chapter, we looked in detail at logistic regression models. These models aim to predict the *probability* of some occurrence (for example, the probability of dying when you travelled on the Titanic's ultimate journey). What if we want to convert a *probability* (a number between 0 and 1) to a *classifier* (either 0 *or* 1)? We will look at this problem in the next section.
+In the previous chapter, we looked in detail at logistic regression models. These models aim to predict the *probability* of some occurrence (for example, the probability of dying when you travelled on the Titanic's ultimate journey). What if we want to convert a *probability* (a number between 0 and 1) to a *classifier* (either 0 *or* 1)? This is a harder problem than it may seem at first sight, and we will discuss it in the next section.
 
 After we know how to construct a classifier, we will look at a few different popular classification algorithms, without going into much of the theory underlying them. Instead, we will treat the topic by example.
+
+
 
 **Packages used in this chapter**
 
@@ -16,11 +18,14 @@ suppressPackageStartupMessages(library(rpart))
 suppressPackageStartupMessages(library(ranger))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(ggthemes))
+suppressPackageStartupMessages(library(lgrdata))
+suppressPackageStartupMessages(library(rpart.plot))
 ```
 
-- `caret`
-- `rpart`
-- `ranger`
+- `caret` : for various machine learning helper functions
+- `rpart` : recursive partitioning
+- `RandomForest` : for Random Forest
+- `ranger` : for Random Forest (faster!)
 
 
 
@@ -33,73 +38,157 @@ confusion matrix
 
 
 ```{r}
+library(lgrdata)
 data(titanic)
 
-library(rpart)
 
+library(rpart)
 titanic$Survived <- as.factor(titanic$Survived)
 r1_titanic <- rpart(Survived ~ PClass + Age + Sex, data=titanic)
 
-plot(r1_titanic)
+```
 
+```{block2 type="rmdtry"}
+Look at `summary(r1_titanic)` for a detailed explanation of the fitted recursive partitioning object. Usually, a plot is more insightful.
+```
+
+
+
+```{r}
 library(rpart.plot)
 prp(r1_titanic,
     clip.right.labs = FALSE)
+```
 
+
+```{r}
 # this seems like a nice option
 # box:
 # - 0 or 1 (predicted class on this leaf)
 # - classification rate (correct / n)
 # - % of all observations fall into this leaf
 xy <- rpart.plot(r1_titanic, type=3, extra=102)
+```
 
 
-caret::confusionMatrix(predict(r1_titanic, type="class"),
+
+```{r}
+library(caret)
+confusionMatrix(predict(r1_titanic, type="class"),
                        titanic$Survived,
                        positive = "1")
-
-
 ```
 
 
 
 
-```{r eval=FALSE}
-# Make ROC figure with two confusion matrices pointed out
-# plot table on top of plot with plotrix::addtable2plot
+Recursive partitioning is a divisive clustering method. The tree is grown from the top, deciding each time on the optimal split in two classes. The process is repeated for each of the groups, all the way down. A regression or classification tree constructed in this way will be very much overfitted; in other words it leads to a model that is useless to predict new cases. 
+
+* the tree is pruned back based on cross validation errors
+
+For a classification tree, we do
+
+```{r}
+data(mushroom)
+
+library(rpart)
+rp1 <- rpart(edibility ~ ., data=mushroom, method="class")
 ```
 
+Confusion matrix
+
+```{r}
+table(predict(rp1, type="class"), mushroom$edibility)
+```
+
+Each split in the tree is based on maximizing the inequality between the two groups (the basic idea of clustering!). We can decide on either the *information* or the Gini coefficient. This setting is very well hidden in `?rpart`.
 
 
+To use the Gini coefficient instead of the Information to decide the splits (which is the default), set it like this:
+
+```{r}
+rp3 <- rpart(edibility ~ ., data=mushroom, method="class", parms=list(split="gini"))
+```
+
+In this case, the results are exactly the same - but this won't always be the case.
+
+
+
+
+# Multiple classes
 
 ```{r eval=FALSE}
 library(dplyr)
 data(cereals)
-cereals <- read.csv("Cereals.csv") %>%
-  filter(Manufacturer != "A") %>%
+cereals2 <- filter(cereals, 
+                   Manufacturer != "A",
+                   !is.na(carbo),
+                   !is.na(potass),
+                   !is.na(sugars)
+                   ) %>%
   droplevels
 
 
 form <- formula(Manufacturer ~ calories + protein + fat + sodium + fiber + carbo + sugars + potass + vitamins)
 
 library(rpart)
-c1 <- rpart(form, data=cereals, method="class")
+c1 <- rpart(form, data=cereals2, method="class")
+```
 
-caret::confusionMatrix(predict(c1, type = "class"), 
-                       cereals$Manufacturer)$table
 
+
+```{r}
+predict(c1, type = "class")
+
+mean(predict(c1, type = "class") == cereals2$Manufacturer)
+
+```
+
+
+
+```{r}
+library(caret)
+confusionMatrix(predict(c1, type = "class"), 
+                       cereals2$Manufacturer)$table
+
+
+sum(predict(c1) == cereals2$Manufacturer) / nrow(cereals2)
+
+
+```
+
+
+```{r}
+tab_confus <- confusionMatrix(predict(c1, type = "class"), 
+                       cereals2$Manufacturer)$table
+
+library(reshape2)
+dfr_confus <- melt(tab_confus)
+
+
+library(ggplot2)
+
+ggplot(dfr_confus, aes(x = Reference, y = Prediction, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient(low = "white", high = "steelblue")
+
+```
+
+```{r}
+filter(dfr_confus, Reference == Prediction) %>% pull(value) %>% sum
+```
+
+
+
+## Random Forest
+
+```{r}
 
 library(randomForest)
 
-# can omit NAs but sucks because we can't make the confusion matrix
-c2 <- randomForest(form, data=cereals, mtry = 3, na.action = na.omit)
-caret::confusionMatrix(predict(c2), 
-                       cereals$Manufacturer)$table
 
-
-cereals2 <- cereals[complete.cases(cereals),]
 c2 <- randomForest(form, data=cereals2, mtry = 3, na.action = na.omit)
-caret::confusionMatrix(predict(c2), 
+confusionMatrix(predict(c2), 
                        cereals2$Manufacturer)
 
 # Accuracy
@@ -109,19 +198,10 @@ sum(predict(c2) == cereals2$Manufacturer) / nrow(cereals2)
 
 library(e1071)
 
-c3 <- naiveBayes(form, data=cereals)
-caret::confusionMatrix(predict(c3, newdata = cereals), 
-                       cereals$Manufacturer)
+c3 <- naiveBayes(form, data=cereals2)
+confusionMatrix(predict(c3, newdata = cereals2), 
+                       cereals2$Manufacturer)
 
-
-library(AppliedPredictiveModeling)
-transparentTheme(trans = .4)
-library(caret)
-featurePlot(x = cereals[, 4:12], 
-            y = cereals$Manufacturer, 
-            plot = "pairs",
-            ## Add a key at the top
-            auto.key = list(columns = 3))
 
 ```
 
@@ -140,7 +220,7 @@ library(ggthemes)
 ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, col=Species)) +
   geom_point(size=3) +
   theme_tufte() +
-  scale_colour_economist() +
+  scale_colour_tableau() +
   lims(x=c(4,8), y=c(2,4.5))
 
 

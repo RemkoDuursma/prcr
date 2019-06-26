@@ -134,7 +134,9 @@ which.max(rainfall)
 This exercise will make sure you are able to make a 'reproducable script', that is, a script that will allow you to repeat an analysis without having to start over from scratch. First, set up an R script, and save it in your current working directory.
 
 **1.** Find the `History` tab in Rstudio. Copy a few lines of history that you would like to keep to the script you just opened, by selecting the line with the mouse and clicking `To Source`.
-**2.** Tidy up your R script by writing a few comments starting with `\#`.
+
+**2.** Tidy up your R script by writing a few comments starting with `#`.
+
 **3.** Now make sure your script works completely (that is, it is entirely *reproducible*). First clear the workspace (`rm(list=ls())` or click `Clear` from the `Environment` tab). Then, run the entire script (by clicking `Source` in the script window, top-right).
 
 
@@ -425,7 +427,7 @@ library(car)
 
 **3.** Look at the help file for `densityPlot`.
 
-```{r}
+```{r eval=FALSE}
 ?densityPlot
 ```
 

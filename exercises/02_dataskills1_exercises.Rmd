@@ -15,12 +15,12 @@ We now practice subsetting a vector (see Section \@ref(vectorindexing)).
 rainfall[rainfall > 20]
 ```
 
- **1.** What is the mean rainfall for days where the rainfall was at least 4?
+ **2.** What is the mean rainfall for days where the rainfall was at least 4?
 ```{r }
 mean(rainfall[rainfall >= 4])
 ```
 
- **1.** Subset the vector where it is either exactly zero, or exactly 0.6. 
+ **3.** Subset the vector where it is either exactly zero, or exactly 0.6. 
 ```{r }
 rainfall[rainfall == 0 | rainfall == 0.6]
 
@@ -35,7 +35,7 @@ rainfall[rainfall %in% c(0, 0.6)]
 The 26 letters of the Roman alphabet are conveniently accessible in R via `letters` and `LETTERS`. These are not functions, but vectors that are always loaded.
 
 
- **1.** What is the 18th letter of the alphabet?
+**1.** What is the 18th letter of the alphabet?
 
 ```{r }
 # You could have guessed,
@@ -44,7 +44,7 @@ LETTERS[18]
 # or letters[18]
 ```
 
- **2.** What is the last letter of the alphabet (pretend you don't know the alphabet has 26 letters)?
+**2.** What is the last letter of the alphabet (pretend you don't know the alphabet has 26 letters)?
 
 ```{r }
 # Use length() to index the vector,
@@ -148,6 +148,8 @@ dplyr::filter(cereals,
 
 
 **7.** Take a subset of the dataframe containing cereals that contain at least 1 unit of sugar, and keep only the variables 'Cereal.name', 'calories' and 'vitamins'. Then inspect the first few rows of the dataframe with `head`.
+
+
 ```{r }
 # Using 'subset' (base R)
 cereal_subs <- subset(cereals, 
@@ -158,7 +160,7 @@ cereal_subs <- subset(cereals,
 library(dplyr)
 cereal_subs <- filter(cereals, 
                       sugars >= 1) %>%
-               select(Cereal.name, calories, vitamins)
+               dplyr::select(Cereal.name, calories, vitamins)
 
 
 # You can also use square bracket indexing.
@@ -446,8 +448,9 @@ trees <- hfeifplotmeans
 summary(trees)
 str(trees)
 
-library(Hmisc)
-describe(trees)
+# Instead of library(Hmisc), which avoids some conflicts
+Hmisc::describe(trees)
+
 ```
 ```{r echo=FALSE}
 data(hfeifplotmeans)

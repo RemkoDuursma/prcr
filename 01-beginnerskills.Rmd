@@ -1,7 +1,7 @@
 # Beginner skills {#intro}
 
 
-```{r echo=FALSE, message=FALSE, include=FALSE}
+```{r setup echo=FALSE, message=FALSE, include=FALSE}
 suppressPackageStartupMessages(library(tibble))
 suppressPackageStartupMessages(library(magrittr))
 #htmltools::tagList(rmarkdown::html_dependency_font_awesome())
@@ -181,8 +181,8 @@ tab <- tribble(~Function,   ~`What it does`,           ~Example,
                   "`cumsum`",    "Cumulative sum (running total)", "`cumsum(nums1)`",
                   "`diff`",      "Successive difference of a vector", "`diff(nums1)`",
                   "`unique`",    "Unique values used in the vector", "`unique(nums1)`",
-                  "`round`",     "Rounds numbers to a specified number of decimal points", "`round(nums1, 2)`"
-                  )
+                  "`round`",     "Rounds numbers to a specified number of decimal points", "`round(nums1, 2)`")
+                  
 if(current_output == "latex"){
   
   latexify <- function(x){
@@ -193,18 +193,25 @@ if(current_output == "latex"){
   tab$Example <- latexify(tab$Example)
   
   xtab <- xtable::xtable(tab, caption="A selection of useful built-in functions in R.")
-  print(xtab,sanitize.text.function=function(x){x})
+  print(xtab,sanitize.text.function=function(x){x},
+        comment = FALSE)
 } else {
   knitr::kable(tab, caption="A selection of useful built-in functions in R.")
 }
 ```
 
 
+## Writing code in a script
+
+To continue, we are first going to open a script - simply a text file where you can type your code, and execute it immediately. To do so, click on the menu <kbd>File/New File/R Script</kbd>. 
+
+You now have an empty R script, where you can write code, and add comments.
+
+A single line can be run by placing the cursor on that line, and clicking 'Run' in the menu just to the top-right of the window. Alternatively (and this is **recommended**), use the keyboard shortcut <kbd>Ctrl-Enter</kbd> (or <kbd>Cmd-Enter</kbd> on Mac) to run that line. If you make a text selection with the mouse, this selection can be executed with the same keyboard shortcut.
+
 
 
 ## Vectorized operations {#vectorized}
-
-To continue, we are first going to open a script - simply a text file where you can type your code, and execute it immediately. To do so, click on the menu <kbd>File/New File/R Script</kbd>. In the file that opens, try typing the examples below (or copy-pasting for the lazy). A single line can be run by placing the cursor on that line, and clicking 'Run' in the menu just to the top-right of the window. Alternatively (and this is **recommended**), use the keyboard shortcut `Ctrl-Enter` (or `Cmd-Enter` on Mac) to run that line. If you make a text selection with the mouse, this selection can be executed with the same keyboard shortcut.
 
 In the above section, we introduced a number of functions that you can use to do calculations on a vector of numbers. In R, a number of operations can be done on two vectors, and the result is a vector itself. Basically, R knows to apply these operations one element at a time. This is best illustrated by some examples:
 

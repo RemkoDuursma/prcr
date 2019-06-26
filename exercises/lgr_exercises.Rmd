@@ -1,23 +1,99 @@
 ---
-title: "A Learning Guide to R - Exercises"
+title: "A Learning Guide to R - Solution to Exercises"
 author: "Remko Duursma"
 date: "10/06/2019"
 output: 
   html_document:
     number_sections: true
     theme: flatly
+    toc: true
+    toc_float: true
+    code_folding: hide
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, echo=FALSE, message=FALSE}
+
 knitr::opts_chunk$set(echo = TRUE)
+suppressPackageStartupMessages(library(tibble))
+suppressPackageStartupMessages(library(doBy))
+
+suppressPackageStartupMessages(library(dplyr))
+# suppressPackageStartupMessages(library(Hmisc))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(lgrdata))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(ggthemes))
+suppressPackageStartupMessages(library(padr))
+suppressPackageStartupMessages(library(gplots))
+suppressPackageStartupMessages(library(reshape2))
+suppressPackageStartupMessages(library(stringr))
+suppressPackageStartupMessages(library(glue))
+suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(zoo))
+
+suppressPackageStartupMessages(library(lgrdata))
+suppressPackageStartupMessages(library(scales))
+
+suppressPackageStartupMessages(library(pander))
+suppressPackageStartupMessages(library(broom))
+suppressPackageStartupMessages(library(multcomp))
+suppressPackageStartupMessages(library(visreg))
+suppressPackageStartupMessages(library(car))
+suppressPackageStartupMessages(library(scales))
+suppressPackageStartupMessages(library(ggpubr))
+suppressPackageStartupMessages(library(emmeans))
+suppressPackageStartupMessages(library(gridExtra))
+suppressPackageStartupMessages(library(relaimpo))
+suppressPackageStartupMessages(library(corrplot))
+
+suppressPackageStartupMessages(library(wrapr))
+
+suppressPackageStartupMessages(library(plumber))
+suppressPackageStartupMessages(library(DBI))
+suppressPackageStartupMessages(library(dbplyr))
+suppressPackageStartupMessages(library(purrr))
+
+
+
+library(knitr)
+
+current_output <- opts_knit$get("rmarkdown.pandoc.to")
+
+knit_theme$set("earendel")
+opts_chunk$set(background="grey94", 
+               fig.showtext = TRUE,
+               dev = ifelse(current_output == "latex", "pdf", "svg"))
 ```
+
 
 
 # Chapter 2 - Beginner Skills
 
-## Section test
+```{r child="01_beginnerskills_exercises.Rmd"}
 
-```{r child="01_beginnerskills_exercises.Rmd", echo=FALSE, results='hide', fig.show='hide'}
+```
+
+# Chapter 3 - Data Skills - Part 1
+
+```{r child="02_dataskills1_exercises.Rmd"}
+
+```
+
+# Chapter 4 - Data Skills - Part 2
+
+```{r child="02_dataskills2_exercises.Rmd"}
+
+```
+
+# Chapter 6 - Basic statistics and linear regression
+
+```{r child="05_linearregression_exercises.Rmd"}
+
+```
+
+# Chapter 7 - Functions, lists and loops
+
+```{r child="10_programming_exercises.Rmd"}
 
 ```
 

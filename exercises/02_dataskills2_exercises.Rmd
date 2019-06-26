@@ -16,9 +16,8 @@ str(cereals)
 summary(cereals)
 
 # contents and describe are in the Hmisc package
-library(Hmisc)
-contents(cereals)
-describe(cereals)
+Hmisc::contents(cereals)
+Hmisc::describe(cereals)
 ```
 
 

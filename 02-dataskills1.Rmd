@@ -694,9 +694,13 @@ if(current_output == "latex"){
     paste0("\\texttt{", x, "}")  
   }
   tab$Example <- latexify(tab$Example)
+  tab$`Data type` <- gsub("*", "", tab$`Data type`, fixed=TRUE)
   
-  xtable::xtable(tab, sanitize.text.function=function(x){x})
-  
+  xtab <- xtable::xtable(tab, sanitize.text.function=function(x){x},
+                  comment = FALSE)
+
+  print(xtab,tabular.environment="longtable")
+
 } else {
   knitr::kable(tab)
 }

@@ -74,6 +74,11 @@ We have placed many *Try it yourself* boxes throughout the text to give you some
 
 
 
+info@infoprints.nl
+
+
+
+
 ## About the author
 
 Remko Duursma is a Data Scientist and R Trainer at [Shinto Labs](http://www.shintolabs.nl). Previously, he was a scientist in the field of forestry and plant ecology, and studied the effects of climate change with the use of data and models. He has published nearly 70 articles in the scientific literature, and more than ten R packages. 

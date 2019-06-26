@@ -136,14 +136,14 @@ One standout resource with examples and explanations is here: <http://www.sthda.
 
 
 
-### ggplot2 {#ggplot2}
+## ggplot2 {#ggplot2}
 
 The `ggplot2` package is an incredibly rich and powerful toolkit to construct plots. It is far beyond the scope of this book to provide a complete overview of the package, but luckily lots of free online resources are available (see Section \@ref(ggplotresources)).
 
 We will show the functionality of `ggplot2` by providing two examples, one scatterplot, and one barplot. Since we use `ggplot2` throughout this book, you can find many more examples. The following three examples were chosen because they highlight a few key options.
 
 
-#### Preparing the data for plotting
+### Preparing the data for plotting
 
 To use `ggplot2`, our data have to always be in *long format*, where each row represents an observation, and each column in the dataframe represents a type of measurement. Most of the datasets included in the `lgrdata` package are already in long format. One exception is the `dutchelection` dataset:
 
@@ -162,7 +162,7 @@ head(dutchlong, 3)
 
 
 
-#### Scatterplot example
+### Scatterplot example
 
 
 Here we show two examples of a scatter plot. In practice you start with the simplest plot you can think of, then gradually add 'layers' and other elements. Here, the quickest way to make a scatter plot is like this,
@@ -223,7 +223,7 @@ ggplot(automobiles2, aes(x = horsepower, y = fuel_efficiency,
 
 
 
-#### Area plot example
+### Area plot example
 
 A 'stacked area chart' can be quickly implemented with the `geom_area` function, like the next example. Note how we use another aesthetic, `fill`, to set the colour of the filled areas by `country`.
 
@@ -237,7 +237,7 @@ ggplot(oil, aes(x=year, y=production/1000, fill=country)) +
 
 
 
-#### Barplot example
+### Barplot example
 
 More complex barplots is one area where `ggplot2` is much, much easier to use than base graphics. If you want to represent count data as bars - a common application of barplots - `ggplot2` does the counting for you automatically, saving a step where such tables of counts have to be constructed. 
 
@@ -295,7 +295,7 @@ ggplot(titanic, aes(x=PClass, fill=as.factor(Survived))) +
 
 
 
-#### Resources {#ggplotresources}
+### Resources {#ggplotresources}
 
 The web is bursting with great `ggplot2` tutorials and collections of examples. If you are stuck on some aspect, simply type your question into Google, and you will usually end up at a useful Stackoverflow post. 
 
@@ -341,17 +341,16 @@ Try 'knitting' the example rmarkdown file (the one you see when you open your fi
 
 When you open a new rmarkdown file (see previous section), the first step is to delete everything in the example document, *except the top section and the first code chunk*. Your rmarkdown document will now look like this:
 
-```
+````r
 ---
 title: "Untitled"
 output: html_document
 ---
 
-```
-
-```{r setup, include=FALSE}`r ''`
+`r ''````{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+````
 
 
 
@@ -376,9 +375,12 @@ As mentioned, the rest of the document contains two types of input: text with ma
 
 The code chunks contain R code, which will be executed, and the results will be visible in the eventual document (in our case, an HTML page). An R code chunk may look like this,
 
-```{r titanicglm, echo = TRUE, eval = TRUE}`r ''`
+````r
+
+`r ''````{r titanicglm, echo = TRUE, eval = TRUE}
 fit <- glm(Survived ~ Age, data = titanic)
 ```
+````
 
 Here, `titanicglm` is a label for the chunk (you don't need to set it), and `echo = TRUE` make the code visible in the document, and `eval=TRUE` actually runs the code in the chunk. Both these options are used a lot. You use `echo=FALSE` to not show code, for example when there is too much messy code to share for this particular block. You use `eval = FALSE` to disable execution of a single code chunk. This is very useful when you have some code that simply does not work yet, but you hate using comments (`#`) to disable it, instead you can place the code in its own chunk and set `echo=FALSE, eval=FALSE`.
 
@@ -386,10 +388,13 @@ Here, `titanicglm` is a label for the chunk (you don't need to set it), and `ech
 
 An important step is to control the output of figures. The documentation (see \@Section(rmarkdownresources)) is a bit overwhelming, but here is an example with some useful settings:
 
-```{r titanicplot1, fig.cap="Number of passengers by Sex and PClass", fig.width=4, fig.height=4, dev="svg", echo = -1}`r''`
+````r
+
+`r ''````{r titanicplot1, fig.cap="Number of passengers by Sex and PClass", fig.width=4, fig.height=4, dev="svg", echo = -1}`r''`
 par(bg="azure")
 with(titanic, spineplot(Sex, PClass))
 ```
+````
 
 Here, `fig.cap` makes a figure caption (but figures will not be automatically numbered, see below for an alternative), `fig.width` and `fig.height` set the figure size in inches, `dev="svg"` sets the graphic device to SVG (an outstanding format for the web) - you need to install `svglite` for this to work. Finally `echo=-1` hides the first row of the code in the output (in this case, we don't want the reader to be bothered by graphical settings in `par()`).
 
