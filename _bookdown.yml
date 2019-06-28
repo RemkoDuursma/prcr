@@ -5,5 +5,5 @@ language:
 delete_merged_file: true
 
 #rmd_files: ["index.Rmd" ,"01-beginnerskills.Rmd"] #,"02-dataskills.Rmd"] #, ]
-#rmd_files: ["index.Rmd","01-beginnerskills.Rmd","02-dataskills1.Rmd","02-dataskills2.Rmd","03-reporting.Rmd","05-linearregression.Rmd","07-programming.Rmd", "08-webservices.Rmd"]
-rmd_files: ["index.Rmd","03-reporting.Rmd"]
+rmd_files: ["index.Rmd","01-beginnerskills.Rmd","02-dataskills1.Rmd","02-dataskills2.Rmd","03-reporting.Rmd","05-linearregression.Rmd","07-programming.Rmd", "08-webservices.Rmd"]
+#rmd_files: ["index.Rmd","03-reporting.Rmd"]

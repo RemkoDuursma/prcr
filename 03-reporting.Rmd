@@ -129,7 +129,7 @@ Make the plot above, inspect the data to find out why there are two peaks. Now m
 
 
 
-#### Resources
+### Resources
 
 One standout resource with examples and explanations is here: <http://www.sthda.com/english/wiki/r-base-graphs>.
 
