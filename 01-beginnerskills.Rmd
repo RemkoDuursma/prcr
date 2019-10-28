@@ -1,7 +1,7 @@
 # Beginner skills {#intro}
 
 
-```{r setup echo=FALSE, message=FALSE, include=FALSE}
+```{r setup, echo=FALSE, message=FALSE, include=FALSE}
 suppressPackageStartupMessages(library(tibble))
 suppressPackageStartupMessages(library(magrittr))
 #htmltools::tagList(rmarkdown::html_dependency_font_awesome())

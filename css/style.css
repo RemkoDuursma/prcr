@@ -10,6 +10,10 @@ then added lots of styles */
   margin: 0.1em 0; 
 }
 
+body {
+  text-align: justify;
+}
+
 .book .book-body .page-wrapper .page-inner section.normal {
   line-height: 1.3em;
 }

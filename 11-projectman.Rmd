@@ -1,0 +1,251 @@
+# Project management and workflow {#projectman}
+
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+suppressPackageStartupMessages({
+  library(lubridate)
+  library(doBy)
+})
+
+source("R/theme_datapelikaan.R")
+library(showtext)
+font_add_google(name = "Lato", family = "Lato", regular.wt = 400, bold.wt = 700)
+library(ggplot2)
+theme_set(theme_datapelikaan(base_family = "Lato"))
+
+library(knitr)
+current_output <- opts_knit$get("rmarkdown.pandoc.to")
+opts_knit$set(kable.force.latex = TRUE)
+knit_theme$set("earendel")
+opts_chunk$set(background="grey94", 
+               fig.showtext = TRUE,
+               dev = ifelse(current_output == "latex", "pdf", "svg"))
+```
+ 
+## Tips on organizing your code
+
+In this chapter, we present a few tips on how to improve your workflow and organization of scripts, functions, raw data, and outputs (figures, processed data, etc.). The structure that we present below is just an example, and will depend on the particular project, and your personal taste. We encourage you to experiment with different workflows and organization of your script(s) and outputs, to declutter your working directory and to be able to keep track of what you have accomplished in your analysis sofar.
+
+Although much of this is subject to personal preference, we believe that if you follow these rules, management of your code will be much easier and more transparent:
+
+
+- Use 'projects' in Rstudio to manage your files and workspace
+- Keep raw (original) data in a separate folder, and *never modify raw data*
+- Outputs (figures, processed datasets) are disposable, your scripts can always re-produce the output
+- Keep functions separate from other code
+- Write functions as much as possible
+
+
+If you follow (something like) the structure we show here, you have the added benefit that your directory is fully portable. That is, you can zip it, email it to someone, they can unzip it and run the entire analysis. 
+
+The most important tip is to *use projects in Rstudio*. Projects are an efficient method to keep your files organized, and to keep all your different projects separated. There is a natural tendency for analyses to grow over time, to the point where they become too large to manage properly. The way we usually deal with this is to try to split projects into smaller ones, even if there is some overlap between them. 
+
+
+## Set up a project in Rstudio
+
+In Rstudio, click on the menu item `File/New Project...`. If you already have a folder for the project, take the 2nd option (`Existing directory`), otherwise create a folder as well by choosing the 1st option (`New project`). We will discuss "version control" in the next chapter.
+
+Browse for the directory you want to create a project in, and click `Choose`. This creates a file with extension `.Rproj`. Whenever you open this project, Rstudio will set the working directory to the location of the project file. If you use projects, you no longer need to set the working directory manually as we showed in Section \@ref(fileswd).
+
+Rstudio has now switched to your new project. Notice in the top-right corner there is a button that shows the current project. For the example project 'facesoil', it looks like this:
+
+```{r echo=FALSE, out.width='30%'}
+knitr::include_graphics("screenshots/projectbutton.png")
+```
+
+**Folder structure; just an example**
+
+By clicking on that button you can easily switch over to other projects. The working directory is automatically set to the right place, and all files you had open last time are remembered as well. As an additional bonus, the workspace is also cleared. This ensures that if you switch projects, you do not inadvertently load objects from another project.
+
+
+## Directory structure
+
+For the 'facesoil' project, we came up with the following directory structure. Each item is described further below.
+
+```{r echo=FALSE, out.width='70%'}
+knitr::include_graphics("screenshots/folderstructure.png")
+```
+
+**Folder structure; just an example**
+
+
+### `rawdata`
+
+Most importantly, *keep your raw data separate from everything else*. Here we have placed our raw CSV files in the `rawdata` directory.
+
+In some projects it makes sense to further keep raw data files separate from each other, for example you might have subfolders in the rawdata folder that contain different types of datasets (e.g. 'rawdata/leafdata', 'rawdata/isotopes'). Again, the actual solution will depend on your situation, but it is at least very good practice to store your raw data files in a separate folder.
+
+### `Rfunctions`
+
+If you do not frequently write functions already, you should force yourself to do so. Particularly for tasks that you do more than once, functions can greatly improve the clarity of your scripts, helps you avoid mistakes, and makes it easier to reuse code in another project. 
+
+It is good practice to keep functions in a separate folder, for example `Rfunctions`, with each function in a separate file (with the extension `.R`). It may look like this,
+
+```{r echo=FALSE, out.width='70%'}
+knitr::include_graphics("screenshots/rfunctions.png")
+```
+
+**Contents of Rfunctions folder, example.**
+
+We will use `source()` to load these functions, see further below.
+
+### `output`
+
+It is a good idea to send all output from your R scripts to a separate folder. This way, it is very clear what the *outputs* of the analysis are. It may also be useful to have subfolders specifying what type of output it is. Here we decided to split it into figures, processeddata, and text :
+
+```{r echo=FALSE, out.width='70%'}
+knitr::include_graphics("screenshots/output.png")
+```
+
+**Contents of Rfunctions folder, example.**
+
+
+## The R scripts
+
+A few example scripts are described in the following sections. Note that these are just examples, the actual setup will depend on your situation, and your personal preferences. The main point to make here is that it is tremendously useful to separate your code into a number of separate scripts. This makes it easier to maintain your code, and for an outsider to follow the logic of your workflow.
+
+### `facesoil_analysis.R`
+
+This is our 'master' script of the project. It calls (i.e., executes) a couple of scripts using `source`. First, it 'sources' the `facesoil\_load.R` script, which loads packages and functions, and reads raw data. Next, we do some analyses (here is a simple example where we calculate daily averages), and call a script that makes the figures (`facesoil_figures.R`).
+
+Note how we direct all output to the `output` folder, by specifying the *relative path*, that is, the path relative to the current working directory.
+
+```{r eval=FALSE}
+# Calls the load script.
+source("facesoil_load.R")
+
+# Export processed data
+write.csv(allTheta, "output/processeddata/facesoil_allTheta.csv",
+          row.names=FALSE)
+
+## Aggregate by day
+
+# Make daily data
+allTheta$Date <- as.Date(allTheta$DateTime)
+allTheta_agg <- summaryBy(. ~ Date + Ringnr, data=allTheta,
+                          FUN=mean, keep.names=TRUE)
+
+# Export daily data
+write.csv(allTheta_agg, "output/processeddata/facesoil_alltheta_daily.csv",
+          row.names=FALSE)
+
+## make figures
+source("figures.R")
+
+```
+
+
+
+### `facesoil_figures.R`
+
+In this example we make the figures in a separate script. If your project is quite small, perhaps this makes little sense. When projects grow in size, though, I have found that collecting the code that makes the figures in a separate script really helps to avoid clutter.
+
+Also, you could have a number of different 'figure' scripts, one for each 'sub-analysis' of your project. These can then be sourced in the master script (here `facesoil\_analysis.R`), for example, to maintain a transparent workflow.
+
+Here is an example script that makes figures only. Note the use of `dev.copy2pdf`, which will produce a PDF and place it in the `output/figures` directory.
+
+```{r eval=FALSE}
+# Make a plot of soil water content over time
+windows()
+with(allTheta, plot(DateTime, R30.mean, pch=19, cex=0.2,
+                    col=Ringnr))
+dev.copy2pdf(file="./output/figures/facesoil_overtime.pdf")
+
+# More figures go here!
+```
+
+
+### `facesoil_load`
+
+This script contains all the bits of code that are 
+
+- Cleaning the workspace
+- Loading packages 
+- Loading homemade functions
+- Reading and pre-processing the raw data
+
+
+Remember that it is important to start with a clean workspace (see Section \@ref(cleanmemory)), as it guarantees that all your work is reproducible (and not dependent on objects that you created ages ago).
+
+It is useful to load all packages in one location in your, which makes it easy to fix problems should they arise (i.e., some packages are not installed, or not available).
+
+```{r eval=FALSE}
+# Clean workspace
+rm(list=ls())
+
+# Load packages
+library(doBy)
+library(lubridate)
+
+# Source functions (this loads functions but does no actual work)
+source("Rfunctions/rmDup.R")
+
+# Make the processed data (this runs a script)
+source("facesoil_readdata.R")
+```
+
+
+### `facesoil_readdata.R`
+
+This script produces a dataframe based on the raw CSV files in the `rawdata` folder. The example below just reads a dataset and changes the DateTime variable to a POSIXct class. In this script, I normally also do all the tedious things like deleting missing data, converting dates and times, merging, adding new variables, and so on. The advantage of placing all of this in a separate script is that you keep the boring bits separate from the code that generates results, such as figures, tables, and analyses.
+
+```{r eval=FALSE}
+# Read raw data from 'rawdata' subfolder
+allTheta <- read.csv("rawdata/FACE_SOIL_theta_2013.csv")
+
+# Convert DateTime
+allTheta$DateTime <- ymd_hms(as.character(allTheta$DateTime))
+
+# Add Date
+allTheta$Date <- as.Date(allTheta$DateTime)
+
+# Etc.
+```
+
+
+
+## Archiving the output
+
+
+In the example workflow we have set up in the previous sections, all items in the output folder will be automatically overwritten every time we run the master script `facesoil_analysis.R`. One simple way to back up your previous results is to create a zipfile of the entire output directory, place it in the `archive` folder, and rename it so it has the date as part of the filename.
+
+After a while, that directory may look like this:
+
+```{r echo=FALSE, out.width='70%'}
+knitr::include_graphics("screenshots/archive.png")
+```
+
+**Contents of Rfunctions folder, example.**
+
+If your `processData` folder is very large, this may not be the optimal solution. Perhaps the `processedData` can be in a separate output folder, for example.
+
+
+### Adding a Date stamp to output files
+
+Another option is to use a slightly different output filename every time, most usefully with the current Date as part of the filename. The following example shows how you can achieve this with the `today` from the `lubridate` package, and `paste0` (which is the same as `paste`, with the argument `sep=""`).
+
+```{r }
+# For the following to work, load lubridate
+# Recall that in your workflow, it is best to load all packages in one place.
+library(lubridate)
+
+# Make a filename with the current Date:
+fn <- paste0("output/figures/FACE_soilfigure1_",today(),".pdf")
+fn
+
+# Also add the current time, make sure to reformat as ':' is not allowed!
+fn <- paste0("output/figures/FACE_soilfigure1_",format(now(),"%Y-%m-%d_%H-%M"),".pdf")
+fn
+```
+
+With the above filename, we can now make a PDF, like so:
+
+```{r eval=FALSE}
+windows(7,7)
+# .... make plot here ....
+dev.copy2pdf(file=fn)
+```
+
+
+
+
