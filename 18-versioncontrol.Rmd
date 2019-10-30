@@ -210,28 +210,15 @@ A better approach is to use SSH, since you never have to type your password - a 
 
 #### Setting up SSH
 
-**Warning: this section has not been tested for >24 months**
-
-If you are using SSH for authentication, you must first make a sort of password (an 'SSH key'), which is stored on your computer as well as on the hosting site. To do this, you must first create the directory where the key will be stored - this is very specific so pay close attention.
-
+If you are using SSH for authentication, you must first make a sort of password (an 'SSH key'), which is stored on your computer as well as on the hosting site. This is a straightforward process thanks to Rstudio.
 
 - Go to `Tools/Global Options...` then click on the `Git/SVN` button, and note the 'SSH/RSA key' field.
-- This field is probably blank, now click on `Create RSA Key` **but don't create it yet}. Make a note of the directory shown in the top box ("The RSA key will be created at").
-- Now create the directory you just wrote down with this command (in R), 
-
-```
-dir.create('c:/Users/90021859/.ssh')
-```
-
-The reason you have to do this in R (or from a command window) is that Windows does not allow you to make a directory that starts with a period. Once you have created the directory, again go to `Create RSA key` as above, and this time actually create it.
+- This field is probably blank, now click on `Create RSA Key`. Leave the passphrase blank (unless you would like an extra layer of security), and click OK.
+- Next, click 'View RSA Key' (a small link), and copy the key (Ctrl-C).
 
 The next step is to paste the SSH key in the remote hosting site, so it knows who you are when you try to use the repository.
 
-On bitbucket, when logged in, click 'Manage Account', and find 'SSH Keys' on the left. Then click 'Add Key', and you now have to paste the contents of the file `id_rsa.pub` in this field. You can find it from the directory you created above, or use this R command (make sure to change this to your actual directory).
-
-```
-writeClipboard(readLines("c:/users/90021859/.ssh/id_rsa.pub"))
-```
+On bitbucket, when logged in, click 'Manage Account', and find 'SSH Keys' on the left. Then click 'Add Key', and you now have to paste the key that you copied in the previous step.
 
 On github, go to Settings/SSH and GPG keys and make a "New SSH key", and paste it in as above.
 
