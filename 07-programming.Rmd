@@ -1,6 +1,8 @@
 # Functions, lists and loops {#programming}
 
 
+
+
 ## Introduction
 
 This chapter demonstrates some building blocks of programming with R. The main purpose here is to allow batch analyses - repeating similar tasks for many subsets of data. To do this, we first have to know how to write our own functions, so that we can apply the custom function to any new subset of data. This approach results in far less, and much more readable code than copy-pasting similar code for different datasets.
@@ -39,7 +41,7 @@ opts_chunk$set(background="grey94",
 We use no new packages in this chapter except the `wrapr` package. All other functionality is included in base R, or commonly used packages `dplyr`, `ggplot2`, `lubridate`, and `lgrdata` for the example data.
 
 
-## Writing simple functions {#writefunctions}
+## Writing functions {#writefunctions}
 
 We have already used many built-in functions throughout this tutorial, but you can become very efficient at complex data tasks when you write your own simple functions. Writing your own functions can help with tasks that are carried out many times, which would otherwise result in a lot of code.
 
@@ -54,6 +56,7 @@ poundsToKg <- function(weight){
 ```
 
 We can use this `function` just like any other in R, for example, let's convert 'weight' to kilograms in the weightloss data.
+
 ```{r }
 # Read data
 library(lgrdata)
@@ -92,25 +95,9 @@ You can use functions that you defined yourself just like any other function, fo
 ```
 
 
-### Functions with many arguments
-
-Functions can also have multiple arguments. The following very simple function takes two numbers, and finds the absolute difference between them, using `abs`.
-```{r }
-# Define function
-absDiff <- function(num1,num2)abs(num1 - num2)
-
-# Test it with two numbers:
-absDiff(5,1)
-
-# As in many functions in R, you can also give multiple values
-# as an argument.
-# The following returns the absolute difference between 
-# 1 and 3, then 5 and 6, and 9 and 0 (in that order).
-absDiff(c(1,5,9), c(3,6,0))
-```
 
 
-### Functions can return many results
+### Returning results
 
 What if a function should return not just one result, as in the examples above, but many results? 
 
@@ -124,8 +111,7 @@ seandsd <- function(x){
   sdresult <- sd(x)
 
   # Store results in a vector with names
-  vec <- c(seresult, sdresult)
-  names(vec) <- c("SE","SD")
+  vec <- c(SE = seresult, SD = sdresult)
 
 return(vec)
 }
@@ -137,7 +123,7 @@ seandsd(x)
 
 ### Functions without arguments
 
-Sometimes, a function takes no arguments (input) at all. Consider this very helpful example. 
+Sometimes, a function takes no arguments (input) at all.
 
 ```{r }
 sayhello <- function()message("Hello!")
@@ -149,6 +135,14 @@ We will return to defining our own functions when we look at applying functions 
 
 
 ### Wrapper functions {#wrapfunctions}
+
+
+!!!TODO
+
+...
+do.call(function, list)
+
+
 
 We often need to write simple functions that adjust one or two arguments to other functions. For example, suppose we often make plots with filled circles, with our favorit color ("dimgrey") :
 
@@ -193,7 +187,7 @@ Take the `plot_filled_grey` function above, test it on some data, and modify it 
 
 ### Wrapper functions to `ggplot2` or `dplyr`
 
-In the previous section we saw how to write wrapper functions, functions that change a few arguments to some other function. These sort of functions are very helpful because we can save a lot of space by reusing a certain template. Suppose we want to make a plot with `ggplot2`, a scatter plot with a loess smoother line. We can achieve this via (result not shown),
+In the previous section we saw how to write wrapper functions, functions that change a few arguments to some other function. These sort of functions are very helpful because we can save a lot of space by reusing a certain template. Suppose we want to make a plot with `ggplot2`, a simple scatter plot. We can achieve this via (result not shown),
 
 ```{r eval=FALSE}
 data(howell)
@@ -204,52 +198,140 @@ ggplot(howell, aes(x = weight, y = height)) +
   stat_smooth(method = "loess", span = 0.7, col="black")
 ```
 
-We already used quite a bit of code for this simple plot, but imagine you have set various other options, formatting changes, axis limits and so on - you end up with a lot of code for one plot. If we want to reuse the code for another plot, for two other variables from the same dataframe, copy-pasting the code and modifying leads to even more code. Writing wrapper functions for `ggplot2` (or `dplyr`, see below, or many other cases) is more difficult because the arguments in the `ggplot2` code we want to change (height and weight) *are not quoted* - they are variables inside a dataframe (`howell` in our case). We avoid a more technical explanation of this problem, but simply present a solution with the `wrapr` package.
+We already used quite a bit of code for this simple plot, but imagine you have set various other options, formatting changes, axis limits and so on - you end up with a lot of code for one plot. If we want to reuse the code for another plot, for two other variables from the same dataframe, copy-pasting the code and modifying leads to even more code. 
 
-Using `let` from `wrapr`, we can turn our unquoted variables into quoted ones, like so:
+Writing wrapper functions for `ggplot2` (or `dplyr`, see below, or many other cases) is more difficult because the arguments in the `ggplot2` code we want to change (height and weight) *are not quoted* - they are variables inside a dataframe (`howell` in our case). 
+
+Suppose we have defined somewhere (perhaps as arguments in a function) that the following two variables should be used for the plot:
 
 ```{r eval=FALSE}
-library(wrapr)
-
-let(c(xvar = "weight", yvar = "height"), {
-  ggplot(howell, aes(x = xvar, y = yvar)) +
-  geom_point(size = 0.8, col = "dimgrey")
-})
-
+xvar <- "weight"
+yvar <- "height"
 ```
 
-The point of placing our plotting code inside `let` is that we can now write our simple wrapper function like before:
+If we use the same code as in the previous example, it does not work because the variable names need to be *not quoted*. The following (rather obscure) syntax converts the quoted variable name, to a variable to be found within the provided data.
+
+```{r}
+ggplot(howell, aes(x = !!sym(xvar), y = !!sym(yvar))) +
+geom_point(size = 0.8, col = "dimgrey")
+```
+
+
+We can now write a wrapper function for a `ggplot2` plot. The same approach works for many other similar wrapper functions, for example around `dplyr` operations.
 
 ```{r eval=FALSE}
 # Make a scatter plot with the howell data.
 plot_scatter_howell <- function(xcol, ycol){
-  let(c(xvar = xcol, yvar = ycol), {
-    ggplot(howell, aes(x = xvar, y = yvar)) +
+    ggplot(howell, aes(x = !!sym(xvar), y = !!sym(yvar))) +
     geom_point(size = 0.8, col = "dimgrey")
-  })
 }
 
 # The function can be used with quoted names:
-plot_scatter("height", "weight")
+plot_scatter_howell("height", "weight")
 ```
 
-It is important to understand that, in this example, `let` is used *only to turn character arguments into unquoted names*, in this case "height" turns into `height` for use in `ggplot`, and so on. We cannot pass `height` and `weight` as unquoted names, because R would look for those objects directly (from the 'global environment'), rather than as variables in the `howell` dataset.
 
-To also pass the dataset as an argument (making the function more general), we do not have to use `let`, but can immediately set it as an argument (because it is available in the global environment).
+To also pass the dataset as an argument (making the function more general), we do not have to use any special syntax, but can immediately set it as an argument. The special syntax only applies when we are looking for variables in a dataframe.
 
 ```{r eval=FALSE}
 # Our function now also takes a dataset as an argument
-plot_scatter <- function(xcol, ycol, dataset){
-  let(c(xvar = xcol, yvar = ycol), {
-    ggplot(dataset, aes(x = xvar, y = yvar)) +
-    geom_point(size = 0.8, col = "dimgrey")
-  })
+plot_scatter_howell2 <- function(xcol, ycol, dataset){
+  
+  ggplot(dataset, aes(x = !!sym(xvar), y = !!sym(yvar))) +
+  geom_point(size = 0.8, col = "dimgrey")
+  
 }
 
 # We can use it as,
-plot_scatter("height", "weight", howell)
+plot_scatter_howell2("height", "weight", dataset = howell)
 ```
 
+
+
+
+
+## Functions that take vectors as input
+
+Most functions in R are vectorized.
+
+But:
+
+```{r}
+
+multiplex <- function(x){
+  
+  if(x < 5){
+    prod(1:x)
+  } else {
+    sum(1:x)
+  }
+  
+}
+
+
+
+
+
+```
+
+Then try
+
+```{r}
+multiplex(4)
+```
+
+
+But
+
+```{r}
+multiplex(c(4,8))
+```
+
+
+
+```{r}
+multiplex2 <- Vectorize(multiplex)
+multiplex2(c(4,8))
+```
+
+```{r}
+sapply(c(4,8), multiplex)
+mapply(multiplex, x = c(4,8))
+```
+
+
+
+```{r}
+
+multiplex3 <- function(x){
+  
+  if(length(x) == 1){
+    if(x < 5){
+      prod(1:x)
+    } else {
+      sum(1:x)
+    }  
+  } else {
+    sapply(x, multiplex)
+  }
+  
+}
+
+multiplex3(c(4,8))
+
+```
+
+
+
+## Robust functions: defensive programming
+
+match.arg
+stopifnot
+missing
+warning
+stop
+on.exit
+try
 
 
 
