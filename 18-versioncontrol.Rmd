@@ -49,13 +49,39 @@ An important concept when starting with git is that there is a distinction betwe
 Finally, do not confuse 'github' with 'git', the former is a website (github.com) used for hosting remote git repositories, the latter is the actual version control system. There are other websites of that kind (for example bitbucket.org). The inventor of git has nothing to do with these websites.
 
 
+#### Rstudio projects
+
+If you end up working primarily from Rstudio, we very strongly recommend the use of **Projects** in Rstudio to keep your work organized, and to help set the working directory.
+
+Rstudio projects are really just small files added to a certain folder, which "tags" that folder as containing a particular project. You can switch easily between different projects, or have multiple instances of Rstudio open, all with different projects (something I do a lot). When you switch to a project, *it also sets the working directory* to the folder where the .Rproj file is located.
+
+#### Set up a project in Rstudio
+
+In a later section (\@ref(firstgitsession)) we look at setting up a project based on a remote git repository (for example, github), but first we show how to make a new project in Rstudio.
+
+In Rstudio, click on the menu item `File/New Project...`. If you already have a folder for the project, take the 2nd option (`Existing directory`), otherwise create a folder as well by choosing the 1st option (`New project`). We will discuss "version control" in the next chapter.
+
+Browse for the directory you want to create a project in, and click `Choose`. This creates a file with extension `.Rproj`. Whenever you open this project, Rstudio will set the working directory to the location of the project file. If you use projects, you no longer need to set the working directory manually as we showed in Section \@ref(fileswd).
+
+Rstudio has now switched to your new project. Notice in the top-right corner there is a button that shows the current project. For the example project 'facesoil', it looks like this:
+
+```{r echo=FALSE, out.width='30%'}
+knitr::include_graphics("screenshots/projectbutton.png")
+```
+
+**Create a new Rstudio project**
+
+By clicking on that button you can easily switch over to other projects. The working directory is automatically set to the right place, and all files you had open last time are remembered as well. As an additional bonus, the workspace is also cleared. This ensures that if you switch projects, you do not inadvertently load objects from another project.
+
+
+
 ### Installing git
 
 To get started, first install the actual git program from <https://git-scm.com/>. During the installation process, do not change any of the defaults, just press OK when prompted.
 
 The first time you use git on a computer, you have to set your name and email. These will be appended to each time you commit (very useful when collaborating!). 
 
-Normally you can open a 'git bash shell' (a command line window) from Rstudio, as we show in Section \@ref(commandline). This first time, however, you have to find `Git Bash` in the list of installed programs.
+Normally you can open a 'git bash shell' (a command line window) from Rstudio, as we show in Section \@ref(commandline). This first time, however, you *might* have to find `Git Bash` in the list of installed programs.
 
 With the shell open, type the following commands, using the name and email address you want appended to each commit. You can change this setting any time, the current setting will be applied to the next commit.
 
@@ -70,7 +96,7 @@ To check the settings configuration file (which is stored in your home directory
 git config --list
 ```
 
-You can now close the shell.
+You can now close the shell. We return to the shell in a later section. The built-in menu's in Rstudio are fine for 95% of our work with git.
 
 
 ### Using git in Rstudio
@@ -178,7 +204,7 @@ If you accidentally committed a file with sensitive information, such as passwor
 ### A few hints
 
 - The 'SHA' is the unique code given to each commit. You normally don't have to use it in Rstudio, but it is important in the command line commands given below. We never need all characters from the SHA, only the first few (normally 5 or so). You can find the (abbreviated) SHA in the right-hand column of the history.
-- Not all local files are tracked
+- Not all local files are tracked. 
 - You do not have to commit all changes to the files every time (you can select which ones you want by staging them)
 - Write useful commit messages that make sense a long time from now (saying 'changed file.txt' is useless because it will be clear which files you changed anyway). When you reach a particular milestone, include it in the commit message ("version submitted for publication").
 - Commit **often**. Don't wait days to commit all enormous changes to your code. Commit smaller increments of progress ("updated figure 1", "defined new function for barplots"). 
@@ -188,6 +214,8 @@ If you accidentally committed a file with sensitive information, such as passwor
 ### Reverting changes
 
 To undo changes to files in Rstudio, and reset to the last known version of that file (i.e. the the last commit), select the file and click the 'Revert' button (this button is only visible in the Commit window, otherwise it is grouped under the 'More' button).
+Sometimes this menu in Rstudio is a little *buggy*, reverting only one file at a time.
+
 
 ## Remote git repositories {#remotegit}
 
@@ -195,8 +223,7 @@ Version control with git becomes especially useful if you host your code in an o
 
 A few tips to get started:
 
-
-- A remote repository is simply a copy of your local project, think of it as a backup (with some extras).
+- A remote repository is simply a copy of your local project, think of it as a backup (with few extras).
 - It is generally a good idea to organize your local repositories in a single directory, a location with a short path is useful since you will be accessing your repositories via the command line.
 - You can add git version control to an existing project, but the easiest, most fail-safe way is to create a remote repository, then make a new project in Rstudio pulling from that repository, and adding your files into the project. We will follow this approach below.
 
@@ -240,6 +267,19 @@ When using HTTPS, it will look like this:
 ```
 https://remkoduursma@bitbucket.org/remkoduursma/tutorialgit.git
 ```
+
+#### Adding a remote repository to an existing project
+
+To do this, you have to use the command line. If you want to use only Rstudio's menu's, skip to the next section.
+
+With the command line (bash) open in the working directory, type the following two commands where you replace the *github* URL with the one matching your remote repository.
+
+```
+git remote add origin git@github.com:USERNAME/REPOSITORY.git
+git push -u origin master
+```
+
+The remote repository will now be an exact copy of your local one (besides untracked files).
 
 
 #### Cloning : make a local copy of a remote repository
@@ -324,6 +364,44 @@ knitr::include_graphics("screenshots/session2pushbehind.png")
 The solution to this problem is to first do a pull, and then try to push again. The amazing thing about git is that even if your local commits and the commits on the remote that you don't yet have include changes on the same files, they will be automatically merged in the new commit. 
 
 There are cases, however, where **conflicts** arise - if the local and remote changes are on the same line of text. In that case, you will have to fix the conflicts manually. It is however much better to avoid these conflicts by always  **beginning your session with a pull, and ending with a push**. That way you minimize the risk of changing the same line of code twice.  
+
+
+## Ignoring files
+
+As discussed, you don't want all of your local files to be copied to the remote repository. These include private data, large files, most binary files, sensitive information like passwords. 
+
+You can keep a list of files to ignore in the file `.gitignore`, which will most likely already be generated for you in the working directory. 
+
+Here is an example, with some useful settings
+
+```
+# No need to track the Rproj file
+*.Rproj
+
+# Private data: all files in data/ and config/
+data/
+config/
+
+# Ignore all these types
+*.xlsx
+*.pdf
+
+# ... except this file
+!public_result.pdf
+```
+
+
+You can inspect which files are being tracked with the command line:
+
+```
+git ls-files
+```
+
+It is also always a good idea to inspect the remote repository to see if anything was uploaded you did not want to share. If you accidentally do push passwords to a remote repository, the best way is to **delete the remote repository and make a new one with the same name**. 
+
+
+
+
 
 
 ## Using the command line {#commandline}
