@@ -535,6 +535,7 @@ Instead of `--hard`, you can use the `--soft` option to revert back to the old c
 We already saw that when you delete a tracked file from a git repository, you have to stage the change just like you stage a modification to a file. Here are a couple of useful commands related to deleting files locally.
 
 Remove from local repository (i.e. stop tracking) all locally deleted files:
+
 ```
 git rm $(git ls-files --deleted)
 ```

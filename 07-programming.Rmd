@@ -131,209 +131,10 @@ sayhello <- function()message("Hello!")
 sayhello()
 ```
 
-We will return to defining our own functions when we look at applying functions many times to sections of a dataframe (Section \@ref(lapply)).
 
+We now know enough about writing functions to start using them in many real-world applications, but return to writing more advanced functions in Section \@ref(functionsadvanced).
 
-### Wrapper functions {#wrapfunctions}
-
-
-!!!TODO
-
-...
-do.call(function, list)
-
-
-
-We often need to write simple functions that adjust one or two arguments to other functions. For example, suppose we often make plots with filled circles, with our favorit color ("dimgrey") :
-
-```{r eval=FALSE}
-library(lgrdata)
-data(howell)
-plot(age, height, data=howell, pch=19, col="dimgrey")
-```
-
-We could of course *always* specify these arguments, or we can write a function that sets those defaults. It would look like the following, except this function is incomplete, since we have *hardcoded* the other plotting arguments (the dataset, and the x and y variables):
-
-```{r eval=FALSE}
-# This function is not how we want it yet!
-plot_filled_grey <- function(){
-  plot(age, height, data=howell, pch=19, col="dimgrey")
-}
-```
-
-We would like to be able to call the function via `plot_filled_grey(age, height, data=howell)`, in other words all arguments to our *wrapper function* should be passed to the underlying function. We have a very handy utility in R to do this, the three dots (`...`) :
-
-```{r eval=FALSE}
-plot_filled_grey <- function(...){
-  plot(..., pch=19, col="dimgrey")
-}
-```
-
-The function now works as intended. It can be further improved if we realize that the plotting color cannot be changed - it is always "dimgrey". We want the *default* value to be "dimgrey", but with an option to change it. This can be achieved like so,
-
-```{r eval=FALSE}
-plot_filled_grey <- function(..., col="dimgrey"){
-  plot(..., pch=19, col=col)
-}
-```
-
-Here, `col=col` sets the color in the call to `plot` with the default value specified in the wrapper function ("dimgrey"), but the user can also change it as usual.
-
-```{block2 type="rmdtry"}
-Take the `plot_filled_grey` function above, test it on some data, and modify it so that the plotting symbol can also be changed, but has a default value of 19.
-```
-
-
-
-### Wrapper functions to `ggplot2` or `dplyr`
-
-In the previous section we saw how to write wrapper functions, functions that change a few arguments to some other function. These sort of functions are very helpful because we can save a lot of space by reusing a certain template. Suppose we want to make a plot with `ggplot2`, a simple scatter plot. We can achieve this via (result not shown),
-
-```{r eval=FALSE}
-data(howell)
-library(ggplot2)
-
-ggplot(howell, aes(x = weight, y = height)) +
-  geom_point(size = 0.8, col = "dimgrey") +
-  stat_smooth(method = "loess", span = 0.7, col="black")
-```
-
-We already used quite a bit of code for this simple plot, but imagine you have set various other options, formatting changes, axis limits and so on - you end up with a lot of code for one plot. If we want to reuse the code for another plot, for two other variables from the same dataframe, copy-pasting the code and modifying leads to even more code. 
-
-Writing wrapper functions for `ggplot2` (or `dplyr`, see below, or many other cases) is more difficult because the arguments in the `ggplot2` code we want to change (height and weight) *are not quoted* - they are variables inside a dataframe (`howell` in our case). 
-
-Suppose we have defined somewhere (perhaps as arguments in a function) that the following two variables should be used for the plot:
-
-```{r eval=FALSE}
-xvar <- "weight"
-yvar <- "height"
-```
-
-If we use the same code as in the previous example, it does not work because the variable names need to be *not quoted*. The following (rather obscure) syntax converts the quoted variable name, to a variable to be found within the provided data.
-
-```{r}
-ggplot(howell, aes(x = !!sym(xvar), y = !!sym(yvar))) +
-geom_point(size = 0.8, col = "dimgrey")
-```
-
-
-We can now write a wrapper function for a `ggplot2` plot. The same approach works for many other similar wrapper functions, for example around `dplyr` operations.
-
-```{r eval=FALSE}
-# Make a scatter plot with the howell data.
-plot_scatter_howell <- function(xcol, ycol){
-    ggplot(howell, aes(x = !!sym(xvar), y = !!sym(yvar))) +
-    geom_point(size = 0.8, col = "dimgrey")
-}
-
-# The function can be used with quoted names:
-plot_scatter_howell("height", "weight")
-```
-
-
-To also pass the dataset as an argument (making the function more general), we do not have to use any special syntax, but can immediately set it as an argument. The special syntax only applies when we are looking for variables in a dataframe.
-
-```{r eval=FALSE}
-# Our function now also takes a dataset as an argument
-plot_scatter_howell2 <- function(xcol, ycol, dataset){
-  
-  ggplot(dataset, aes(x = !!sym(xvar), y = !!sym(yvar))) +
-  geom_point(size = 0.8, col = "dimgrey")
-  
-}
-
-# We can use it as,
-plot_scatter_howell2("height", "weight", dataset = howell)
-```
-
-
-
-
-
-## Functions that take vectors as input
-
-Most functions in R are vectorized.
-
-But:
-
-```{r}
-
-multiplex <- function(x){
-  
-  if(x < 5){
-    prod(1:x)
-  } else {
-    sum(1:x)
-  }
-  
-}
-
-
-
-
-
-```
-
-Then try
-
-```{r}
-multiplex(4)
-```
-
-
-But
-
-```{r}
-multiplex(c(4,8))
-```
-
-
-
-```{r}
-multiplex2 <- Vectorize(multiplex)
-multiplex2(c(4,8))
-```
-
-```{r}
-sapply(c(4,8), multiplex)
-mapply(multiplex, x = c(4,8))
-```
-
-
-
-```{r}
-
-multiplex3 <- function(x){
-  
-  if(length(x) == 1){
-    if(x < 5){
-      prod(1:x)
-    } else {
-      sum(1:x)
-    }  
-  } else {
-    sapply(x, multiplex)
-  }
-  
-}
-
-multiplex3(c(4,8))
-
-```
-
-
-
-## Robust functions: defensive programming
-
-match.arg
-stopifnot
-missing
-warning
-stop
-on.exit
-try
-
-
+First, we take a close look at the most versatile data structure in R : the list.
 
 
 ## Working with lists {#workinglists}
@@ -720,6 +521,376 @@ for(lev in levels(dataset$species)){
 }
 dev.off()
 ```
+
+
+
+## Writing functions: advanced concepts
+
+
+
+### Wrapper functions {#wrapfunctions}
+
+We often need to write simple functions that adjust one or two arguments to other functions. For example, suppose we often make plots with filled circles, with our favorite color ("dimgrey") :
+
+```{r eval=FALSE}
+library(lgrdata)
+data(howell)
+plot(age, height, data=howell, pch=19, col="dimgrey")
+```
+
+We could of course *always* specify these arguments, or we can write a function that sets those defaults. It would look like the following, except this function is incomplete, since we have *hardcoded* the other plotting arguments (the dataset, and the x and y variables):
+
+```{r eval=FALSE}
+# This function is not how we want it yet!
+plot_filled_grey <- function(){
+  plot(age, height, data=howell, pch=19, col="dimgrey")
+}
+```
+
+We would like to be able to call the function via `plot_filled_grey(age, height, data=howell)`, in other words all arguments to our *wrapper function* should be passed to the underlying function. We have a very handy utility in R to do this, the three dots (`...`) :
+
+```{r eval=FALSE}
+plot_filled_grey <- function(...){
+  plot(..., pch=19, col="dimgrey")
+}
+```
+
+The function now works as intended. It can be further improved if we realize that the plotting color cannot be changed - it is always "dimgrey". We want the *default* value to be "dimgrey", but with an option to change it. This can be achieved like so,
+
+```{r eval=FALSE}
+plot_filled_grey <- function(..., col="dimgrey"){
+  plot(..., pch=19, col=col)
+}
+```
+
+Here, `col=col` sets the color in the call to `plot` with the default value specified in the wrapper function ("dimgrey"), but the user can also change it as usual.
+
+```{block2 type="rmdtry"}
+Take the `plot_filled_grey` function above, test it on some data, and modify it so that the plotting symbol can also be changed, but has a default value of 19.
+```
+
+
+### Wrapper functions to `ggplot2` or `dplyr`
+
+In the previous section we saw how to write wrapper functions, functions that change a few arguments to some other function. These sort of functions are very helpful because we can save a lot of space by reusing a certain template. Suppose we want to make a plot with `ggplot2`, a simple scatter plot. We can achieve this via (result not shown),
+
+```{r eval=FALSE}
+data(howell)
+library(ggplot2)
+
+ggplot(howell, aes(x = weight, y = height)) +
+  geom_point(size = 0.8, col = "dimgrey") +
+  stat_smooth(method = "loess", span = 0.7, col="black")
+```
+
+We already used quite a bit of code for this simple plot, but imagine you have set various other options, formatting changes, axis limits and so on - you end up with a lot of code for one plot. If we want to reuse the code for another plot, for two other variables from the same dataframe, copy-pasting the code and modifying leads to even more code. 
+
+Writing wrapper functions for `ggplot2` (or `dplyr`, see below, or many other cases) is more difficult because the arguments in the `ggplot2` code we want to change (height and weight) *are not quoted* - they are variables inside a dataframe (`howell` in our case). 
+
+Suppose we have defined somewhere (perhaps as arguments in a function) that the following two variables should be used for the plot:
+
+```{r eval=FALSE}
+xvar <- "weight"
+yvar <- "height"
+```
+
+If we use the same code as in the previous example, it does not work because the variable names need to be *not quoted*. The following (rather obscure) syntax converts the quoted variable name, to a variable to be found within the provided data.
+
+```{r}
+ggplot(howell, aes(x = !!sym(xvar), y = !!sym(yvar))) +
+geom_point(size = 0.8, col = "dimgrey")
+```
+
+
+We can now write a wrapper function for a `ggplot2` plot. The same approach works for many other similar wrapper functions, for example around `dplyr` operations.
+
+```{r eval=FALSE}
+# Make a scatter plot with the howell data.
+plot_scatter_howell <- function(xcol, ycol){
+    ggplot(howell, aes(x = !!sym(xcol), y = !!sym(ycol))) +
+    geom_point(size = 0.8, col = "dimgrey")
+}
+
+# The function can be used with quoted names:
+plot_scatter_howell("height", "weight")
+```
+
+
+To also pass the dataset as an argument (making the function more general), we do not have to use any special syntax, but can immediately set it as an argument. The special syntax only applies when we are looking for variables in a dataframe.
+
+```{r eval=FALSE}
+# Our function now also takes a dataset as an argument
+plot_scatter_howell2 <- function(xcol, ycol, dataset){
+  
+  ggplot(dataset, aes(x = !!sym(xvar), y = !!sym(yvar))) +
+  geom_point(size = 0.8, col = "dimgrey")
+  
+}
+
+# We can use it as,
+plot_scatter_howell2("height", "weight", dataset = howell)
+```
+
+
+
+
+
+### Functions that take vectors as input
+
+Many functions in R are *vectorized*, which means you can send a *vector* as an argument and the function will be automatically evaluated for each element of the vector. For example:
+
+```{r}
+# Count nr of characters in one string:
+nchar("A sentence")
+
+# the first argument to nchar() is vectorized:
+nchar(c("A sentence", "is", "useful"))
+```
+
+Not all functions are vectorized, and when you write your own more complex functions you will often run into situations where you would like an argument to be vectorized but run into difficulty.
+
+Take the following example:
+
+```{r}
+
+# A complex calculation. 
+# If x is less than "change_val" (default 5), 
+# return the product, otherwise the sum.
+multiplex <- function(x, change_val = 5){
+  
+  if(x < change_val){
+    prod(1:x)
+  } else {
+    sum(1:x)
+  }
+  
+}
+
+# This should give 4*3*2*1
+multiplex(4)
+```
+
+A function like this is really only useful if it is vectorized over `x`, but it does not work as intended:
+
+```{r}
+# The function is not vectorized over x:
+multiplex(x = c(4,8))
+
+# ... or change_val
+multiplex(x = 5, change_val = c(4,6))
+```
+
+You have at least 3 ways to vectorize any function. If you are only interested in vectorizing one argument at a time, you can use `sapply` as we have seen before:
+
+```{r}
+sapply(c(4,8), multiplex)
+```
+
+
+For more than one argument at a time you can use the flexible `mapply`, which allows us to specify the arguments to the function as vectors or lists:
+
+```{r}
+# First call multiplex(x=4, change_val = 3), then 
+# multiplex(x=8, change_val = 7)
+mapply(multiplex, x = c(4,8), change_val = c(3,7))
+```
+
+Using `mapply` you can write your own wrapper functions (\@ref(wrapfunctions)) quite easily. If this is too much work for you, consider using the rather magical `Vectorize` (which really is itself a wrapper around `mapply`):
+
+```{r}
+multiplex2 <- Vectorize(multiplex)
+multiplex2(c(4,8))
+```
+
+Inspect `?Vectorize` to find that you can specify which arguments will be vecrorized, and whether to *simplify* the result (which works akin to `sapply`, making a vector or a matrix of a result where possible).
+
+
+A final option is to write a *recursive* function that wraps around itself, executing the function once when the argument is not vectorized, and otherwise using `sapply` or `mapply` to return a vector of results:
+
+
+```{r}
+multiplex3 <- function(x){
+  
+  # Make the calculation when a single argument given:
+  if(length(x) == 1){
+    if(x < 5){
+      prod(1:x)
+    } else {
+      sum(1:x)
+    }  
+  } else {
+    
+    # Otherwise use sapply, each time calling *this function*,
+    # recursively.
+    sapply(x, multiplex3)
+  }
+  
+}
+
+multiplex3(c(4,8))
+
+```
+
+This final solution can be found in many base R functions, and is a flexible interface to allow vectorized arguments.
+
+
+
+```{r eval = FALSE, echo = FALSE}
+# three methods same speed
+vals <- sample(3:10, 10^4, replace = TRUE)
+
+library(microbenchmark)
+microbenchmark(
+  mapply(multiplex, x = vals),
+  multiplex2(vals),
+  multiplex3(vals)
+)
+```
+
+
+### If, then, else ... switch
+
+We have already seen the basic `if` statement in many examples, which can be extended with multiple `else if` statements:
+
+```{r}
+# NOT an elegant use of multiple if statements.
+animal_weight <- function(animal){
+  
+  if(animal == "cat"){
+    weight <- 10
+  } else if(animal == "cow"){
+    weight <- 1000
+  } else if(animal == "mouse"){
+    weight <- 1
+  } else if(animal == "dog"){
+    weight <- 20
+  }
+  
+return(weight)
+}
+
+
+animal_weight("dog")
+
+```
+
+The use of many `if` statements like this cause a lot of repetitive code. Usually if you have many `if then else` statements, you can either think of a simpler design for your function, or you can use `switch` where appropriate:
+
+```{r}
+animal_weight <- function(animal){
+  
+  
+  weight <- switch(animal, 
+                   mouse = 1,
+                   cat = 10,
+                   dog = 20,
+                   cow = 1000,
+                   NA)  # Return NA if the animal is not one of those above
+                   
+return(weight)
+}
+
+```
+
+Here `switch` improves the readability of the code a lot. If you want to *switch* a numeric input, `switch` is perhaps not the best solution, unless it makes sense to evaluate the number as a character:
+
+```{r}
+num <- 3
+
+switch(as.character(num),
+       "1" = "Door number one.",
+       "2" = "Door number two.",
+       "3" = "Door number three."
+       )
+```
+
+
+
+
+
+### Robust functions: defensive programming
+
+
+Once you write more functions that perhaps become more generic and widely applicable within your projects, you want these functions to be more robust, that is, to fail less often and more elegantly. Functions fail if the wrong inputs were provided to them (by a careless programmer or data faults), or if some (rare) exception is reached. In this section we will look at a few tools to help you write more robust functions.
+
+
+#### Argument matching
+
+Returning to our `animal_weight` function from the previous section, 
+
+```{r}
+# A slightly shorter version of animal_weight().
+animal_weight <- function(animal){
+  switch(animal, 
+             mouse = 1,
+             cat = 10,
+             dog = 20,
+             cow = 1000,
+             NA)
+              
+}
+```
+
+Here the last argument to `switch` indicates the value to return if the animal does not match any of the above. What if instead we want the function to stop and return a message if the value of the argument is not supported by the function? We can use `match.arg`, as follows:
+
+```{r}
+# Define animal_weight2 as a function which only allows 4 types of animal:
+animal_weight2 <- function(animal = c("mouse","cat","dog","cow")){
+  
+  animal <- match.arg(animal)
+  
+  switch(animal, 
+             mouse = 1,
+             cat = 10,
+             dog = 20,
+             cow = 1000)
+              
+}
+
+# Now see what happens when we give a wrong animal:
+animal_weight2("giraffe")
+```
+
+Using `match.arg` resulted in a *very clear error message*. This sort of message makes it easy to find the source of the error. 
+
+A side-effect of using `match.arg` is that it performs *partial matching*, meaning you can also call the function with only part of the argument value, for example try `animal_weight("mo")`. Personally I dislike partial matching as it rarely benefits us, but can cause problems that are hard to find. Probably best to not rely on it in any real code, though it can help save a few key strokes.
+ 
+
+#### Argument checking
+
+--> exercise: vectorize animal_weight
+
+```{r}
+
+sentence_case <- function(x){
+  
+  stopifnot(is.character(x))
+  
+  w <- sapply(strsplit(x, " "), function(ch){
+    substr(ch,1,1) <- toupper(substr(ch,1,1))  
+    return(ch)
+  })
+  
+  paste(w, collapse = " ")
+  
+}
+
+sentence_case("breaking news: man arrested for everything")
+
+
+sentence_case(100)
+```
+
+stopifnot
+missing
+warning
+stop
+on.exit
+try
+
+
+
+
 
 
 ## Exercises
