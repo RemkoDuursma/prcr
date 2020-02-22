@@ -529,8 +529,6 @@ Now, when you place code similar to the above in a more generic function, you do
 
 ## Writing functions: advanced concepts
 
-
-
 ### Wrapper functions {#wrapfunctions}
 
 We often need to write simple functions that adjust one or two arguments to other functions. For example, suppose we often make plots with filled circles, with our favorite color ("dimgrey") :
@@ -892,6 +890,100 @@ on.exit
 try
 
 
+#### Executing code when the function ends (or fails)
+
+A useful tool to make functions more robust (less likely to fail) is to safely run some code when the function exits unexpectedly. One example arises with sending figures to an open PDF document: after we are done, the PDF needs to be closed with `dev.off()` (see Example in Section \@ref(simpleloops)).
+
+In this example, we have written a function that makes a simple plot in a pdf:
+
+```{r}
+# Plot first 2 columns of a dataset against each other, make a PDF.
+plot_first_2_columns <- function(data, output = "plot.pdf"){
+  
+  pdf(output)
+  plot(data[[1]], data[[2]])
+  dev.off()
+  
+}
+
+```
+
+This is OK, but what if we send a dataset with just one column, or some other corrupted data or wrong argument? The pdf will be opened but not closed, because `plot(data...)` will cause an error, causing the function to exit (and not run the rest of the code).
+
+A better implementation uses `on.exit`, like so:
+
+```{r}
+# Plot first 2 columns of a dataset against each other, make a PDF.
+plot_first_2_columns <- function(data, output = "plot.pdf"){
+  
+  pdf(output)
+  on.exit(dev.off())
+  
+  plot(data[[1]], data[[2]])
+  
+}
+```
+
+Another common and very useful example arises in when reading data from database connections. After we are done with the database, it should be *closed* with `dbDisconnect` (in the DBI package). Sometimes we forget, or code fails, or whatever - leaving extra connections open that can cause various problems (especially in production-ready code).
+
+The following example can be modified to suite your needs (see Section \@ref(???)) :
+
+```{r}
+# A function to make a connection to your database
+# Now, instead of copying this bit of code to all your scripts, you
+# define the function once and run con <- db_connection()
+db_connection <- function(){
+  DBI::dbConnect(drv = PostgreSQL(),
+                 user = "mjvgsdzg",
+                 password = "my_password",
+                 host = "balarama.db.elephantsql.com",
+                 port = 5432,
+                 dbname = "mjvgsdzg")
+}
+
+
+# A function to open a database connection, read and return data:
+read_my_data <- function(tablename, ...){
+  
+  con <- db_connection()
+  on.exit(dbDisconnect(con))
+  
+  data <- dbReadTable(con, tablename, ...)
+  
+}
+
+```
+
+With the above `read_my_data` you can read your favorite table from a database, simply with `mydata <- read_my_data("cooldatatable")`. However, this is a poor function if you are planning to read many tables from this database in a short time, then it makes sense to keep the connection open the entire time (especially for remote databases, as is common).
+
+The following improvement allows passing a connection object, or creating it if it was not passed as an argument:
+
+```{r}
+read_my_data2 <- function(tablename, con = NULL, ...){
+  
+  if(missing(con)){
+    con <- db_connection()
+    on.exit(dbDisconnect(con))
+  }
+  
+  data <- dbReadTable(con, tablename, ...)
+  
+}
+
+```
+
+Now we can do,
+
+```{r}
+my_con <- db_connection()
+
+flowers <- read_my_data2("flower", con = my_con)
+eggs <- read_my_data2("eggs", con = my_con)
+butter <- read_my_data2("butter", con = my_con)
+milk <- read_my_data2("milk", con = my_con)
+
+dbDisconnect(my_con)
+```
 
 
 
