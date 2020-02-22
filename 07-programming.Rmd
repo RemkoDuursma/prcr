@@ -486,30 +486,10 @@ for(i in 1:length(myvec)){
 
 Note that this is only a toy example: the same result can be achieved by simply typing `myvec`.
 
-Now let's look at a useful application of a `for` loop: producing multiple plots in a `pdf`, using the `allomsp` object we created earlier.
+One common application of `for` loops in R arises when producing multiple plots in a `pdf`.
+Consider this template (make your own working example based on any dataset).
 
-This bit of code produces a `pdf` in your current working directory. If you can't find it, recall that you can use `getwd`() to get the current working directory.
-
-```{r eval=FALSE}
-# Open a pdf to send the plots to:
-pdf("Allom plot by species.pdf", onefile=TRUE)
-for(i in 1:3){
-  with(allomsp[[i]],
-       plot(diameter, leafarea, pch=15, xlim=c(0,80), ylim=c(0,450),
-            main=levels(allom$species)[i]))
-}
-# Close the pdf (important!)
-dev.off()
-```
-
-Here, we create three plots (`i` goes from 1 to 3), every time using a different element of the list `allomsp`. First, `i` will have the value 1, so that we end up using the dataframe `allomsp[[1]]`, the first element of the list. And so on. Take a look at the resulting PDF to understand how the code works.
-
-*Note:* On windows (with Adobe reader) If the pdf (`Allom plot by species.pdf`) is open, the above will fail. If you try this anyway, close the pdf and try again. You may have to run the command `dev.off`() another time to make sure the device is ready.
-
-
-Another way to achieve the same result is to avoid splitting the dataframe into a list first, and simply take subsets on the fly. Consider this template (make your own working example based on any dataset).
-
-We assume here you have a dataframe called 'dataset' with a factor 'species', for which you want to create separate plots of Y vs. X.
+We assume here you have a dataframe called 'dataset' with a *factor* 'species', for which you want to create separate plots of Y vs. X.
 
 ```{r eval=FALSE}
 pdf("somefilename.pdf", onefile=TRUE)
@@ -521,6 +501,29 @@ for(lev in levels(dataset$species)){
 }
 dev.off()
 ```
+
+Here, we have to call `dev.off()` to close the pdf.
+
+
+
+### Better indexing
+
+In the first example with `for` loops, we used `1:length(myvec)` to make *indices* for the for loop. This is fine when you know for sure `myvec` exists and isn't `NULL` or `NA` (in which case the indices will not be what you expect - try it out!).
+
+A safer alternative in `for` loops is to use `seq_along` like in the following example. Here we substitute different parts of a string using a `for` loop.
+
+```{r}
+mystring <- "A fish called Wanda"
+
+replacements <- c("fish","called","Wanda")
+
+for(i in seq_along(replacements)){
+  print(gsub(replacements[i], "dog", mystring))
+}
+
+```
+
+Now, when you place code similar to the above in a more generic function, you don't have to worry when `replacements` is empty for some reason, the `for` loop will simply be skipped.
 
 
 
