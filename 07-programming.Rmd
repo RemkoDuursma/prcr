@@ -527,7 +527,7 @@ Now, when you place code similar to the above in a more generic function, you do
 
 
 
-## Writing functions: advanced concepts
+## Advanced concepts
 
 ### Wrapper functions {#wrapfunctions}
 
@@ -590,14 +590,17 @@ Writing wrapper functions for `ggplot2` (or `dplyr`, see below, or many other ca
 
 Suppose we have defined somewhere (perhaps as arguments in a function) that the following two variables should be used for the plot:
 
-```{r eval=FALSE}
+```{r}
 xvar <- "weight"
 yvar <- "height"
 ```
 
 If we use the same code as in the previous example, it does not work because the variable names need to be *not quoted*. The following (rather obscure) syntax converts the quoted variable name, to a variable to be found within the provided data.
 
-```{r}
+```{r, results='hide'}
+library(lgrdata)
+data(howell)
+
 ggplot(howell, aes(x = !!sym(xvar), y = !!sym(yvar))) +
 geom_point(size = 0.8, col = "dimgrey")
 ```
@@ -809,13 +812,13 @@ switch(as.character(num),
 
 
 
-### Robust functions: defensive programming
+## Robust functions: defensive programming
 
 
 Once you write more functions that perhaps become more generic and widely applicable within your projects, you want these functions to be more robust, that is, to fail less often and more elegantly. Functions fail if the wrong inputs were provided to them (by a careless programmer or data faults), or if some (rare) exception is reached. In this section we will look at a few tools to help you write more robust functions.
 
 
-#### Argument matching
+### Argument matching
 
 Returning to our `animal_weight` function from the previous section, 
 
@@ -834,7 +837,7 @@ animal_weight <- function(animal){
 
 Here the last argument to `switch` indicates the value to return if the animal does not match any of the above. What if instead we want the function to stop and return a message if the value of the argument is not supported by the function? We can use `match.arg`, as follows:
 
-```{r}
+```{r, eval = FALSE}
 # Define animal_weight2 as a function which only allows 4 types of animal:
 animal_weight2 <- function(animal = c("mouse","cat","dog","cow")){
   
@@ -852,12 +855,19 @@ animal_weight2 <- function(animal = c("mouse","cat","dog","cow")){
 animal_weight2("giraffe")
 ```
 
+The output of the above will be:
+
+```
+Error in match.arg(animal) : 
+  'arg' should be one of "mouse", "cat", "dog", "cow"
+```
+
 Using `match.arg` resulted in a *very clear error message*. This sort of message makes it easy to find the source of the error. 
 
 A side-effect of using `match.arg` is that it performs *partial matching*, meaning you can also call the function with only part of the argument value, for example try `animal_weight("mo")`. Personally I dislike partial matching as it rarely benefits us, but can cause problems that are hard to find. Probably best to not rely on it in any real code, though it can help save a few key strokes.
  
 
-#### Argument checking
+### Argument checking
 
 Many functions expect a certain argument type, and make no sense or will fail when other argument types are provided. The function below make a sentence into sentence case, with the first letter of each word capitalized. 
 
@@ -891,7 +901,7 @@ sentence_case(100)
 But this one does not (try it out yourself!).
 
 
-#### Sending warnings, errors, messages
+### Sending warnings, errors, messages
 
 In more complex projects, it can be difficult to find which part of your code caused an error or unexpected result. Leaving useful messages, warnings, or exiting when you know things will go wrong can be very useful in developing more debuggable code.
 
@@ -921,7 +931,7 @@ example_function_warnings <- function(data){
 The use of `message` is nice to provide some indication to you where code was executed. Scattering a messages around your code (with an indication where we are in the code) can be invaluable during development of more complex projects, with lots of functions.
 
 
-#### Executing code when the function ends (or fails)
+### Executing code when the function ends (or fails)
 
 A useful tool to make functions more robust (less likely to fail) is to safely run some code when the function exits unexpectedly. One example arises with sending figures to an open PDF document: after we are done, the PDF needs to be closed with `dev.off()` (see Example in Section \@ref(simpleloops)).
 
@@ -956,7 +966,7 @@ plot_first_2_columns <- function(data, output = "plot.pdf"){
 ```
 
 
-#### Catch errors with `try`
+### Catch errors with `try`
 
 The ultimate tool to make functions more robust is `try`, a mechanism to catch errors and avoid termination of your code.
 
@@ -989,7 +999,7 @@ Now `safe_logarithm("a")` returns `NA`, but you do see the error message printed
 
 
 
-#### Writing database wrapper functions
+### Writing database wrapper functions
 
 This example combines various concepts from this section, and is a useful set of functions when you commonly work with databases. First review 'working with databases' if you need to (Section XXX). The functions below will be developed step-by-step. Please carefully review this section if you want to adapt this code to your situation.
 
@@ -997,7 +1007,7 @@ After we are done reading and writing to a (usually remote) database, the connec
 
 The following example can be modified to suite your needs (see Section \@ref(???)) :
 
-```{r}
+```{r, eval = FALSE}
 # A function to make a connection to your database
 # Now, instead of copying this bit of code to all your scripts, you
 # define the function once and run con <- db_connection()
@@ -1027,7 +1037,7 @@ With the above `read_my_data` you can read your favorite table from a database, 
 
 The following improvement allows passing a connection object, or creating it if it was not passed as an argument:
 
-```{r}
+```{r, eval = FALSE}
 read_my_data2 <- function(tablename, con = NULL, ...){
   
   if(missing(con)){
@@ -1043,7 +1053,7 @@ read_my_data2 <- function(tablename, con = NULL, ...){
 
 Now we can do,
 
-```{r}
+```{r, eval = FALSE}
 my_con <- db_connection()
 
 flowers <- read_my_data2("flower", con = my_con)
