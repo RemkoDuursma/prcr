@@ -859,7 +859,7 @@ A side-effect of using `match.arg` is that it performs *partial matching*, meani
 
 #### Argument checking
 
---> exercise: vectorize animal_weight
+Many functions expect a certain argument type, and make no sense or will fail when other argument types are provided. The function below make a sentence into sentence case, with the first letter of each word capitalized. 
 
 ```{r}
 
@@ -875,19 +875,50 @@ sentence_case <- function(x){
   paste(w, collapse = " ")
   
 }
+```
 
+
+Now this function call works fine,
+
+```{r}
 sentence_case("breaking news: man arrested for everything")
+```
 
-
+```{r, eval=FALSE}
 sentence_case(100)
 ```
 
-stopifnot
-missing
-warning
-stop
-on.exit
-try
+But this one does not (try it out yourself!).
+
+
+#### Sending warnings, errors, messages
+
+In more complex projects, it can be difficult to find which part of your code caused an error or unexpected result. Leaving useful messages, warnings, or exiting when you know things will go wrong can be very useful in developing more debuggable code.
+
+```{r}
+example_function_warnings <- function(data){
+  
+  stopifnot(is.vector(data))
+  
+  if(length(data) > 1000){
+    warning("This might take a while!")
+  }
+  
+  if(length(data) == 0){
+    stop("Data is empty")
+  }
+  
+  if(all(is.na(data))){
+    message("Only missing data sent to example_function_warnings()")
+  }
+  
+  # actually do something
+  # ...
+}
+```
+
+
+The use of `message` is nice to provide some indication to you where code was executed. Scattering a messages around your code (with an indication where we are in the code) can be invaluable during development of more complex projects, with lots of functions.
 
 
 #### Executing code when the function ends (or fails)
@@ -924,7 +955,45 @@ plot_first_2_columns <- function(data, output = "plot.pdf"){
 }
 ```
 
-Another common and very useful example arises in when reading data from database connections. After we are done with the database, it should be *closed* with `dbDisconnect` (in the DBI package). Sometimes we forget, or code fails, or whatever - leaving extra connections open that can cause various problems (especially in production-ready code).
+
+#### Catch errors with `try`
+
+The ultimate tool to make functions more robust is `try`, a mechanism to catch errors and avoid termination of your code.
+
+Although you can use `tryCatch` as an interface, I personally prefer the flexible use of `try`, like so:
+
+
+```{r}
+# A wrapper around log(), avoiding an error when the input is bad,
+# and instead returning a missing value.
+safe_logarithm <- function(x){
+  
+  out <- try(log(x))
+  
+  # If log(x) caused an error, out will be a special 
+  # object with class 'try-error'
+  if(inherits(out, "try-error")){
+    
+    return(NA)
+    
+  }
+  
+out
+}
+```
+
+Now `safe_logarithm("a")` returns `NA`, but you do see the error message printed (unless you look around `?try` for a way to suppress the error message).
+
+
+
+
+
+
+#### Writing database wrapper functions
+
+This example combines various concepts from this section, and is a useful set of functions when you commonly work with databases. First review 'working with databases' if you need to (Section XXX). The functions below will be developed step-by-step. Please carefully review this section if you want to adapt this code to your situation.
+
+After we are done reading and writing to a (usually remote) database, the connection to it should be *closed* with `dbDisconnect` (in the DBI package). Sometimes we forget, or code fails, or whatever - leaving extra connections open that can cause various problems (especially in production-ready code).
 
 The following example can be modified to suite your needs (see Section \@ref(???)) :
 
@@ -985,7 +1054,7 @@ milk <- read_my_data2("milk", con = my_con)
 dbDisconnect(my_con)
 ```
 
-
+If we leave out the `con` argument, the connection will be opened and closed for you.
 
 
 ## Exercises
