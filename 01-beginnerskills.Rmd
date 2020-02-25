@@ -581,7 +581,7 @@ expression for a search. My attempts failed."
 
 Sometimes it is useful to search all help files (including all *installed* packages, loaded or not) for a keyword, for example `??ANOVA` will find everything that mentions ANOVAs.
 
-The best advice, though, is simply to **just use Google**. As a search, simply type the question like you would ask someone else, for example "How to place legend outside plot with ggplot2?", "(Is there an) R package for 3D plots?".
+The best advice, though, is simply to **just use Google**. As a search, simply type the question like you would ask someone else, for example "How to place legend outside plot with ggplot2?", "(Is there an) R package for 3D plots?". You usually end up on *Stackoverflow* for the best and most up-to-date answers (but be careful when reading very old posts!).
 
 
 

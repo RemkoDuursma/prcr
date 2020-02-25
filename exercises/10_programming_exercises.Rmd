@@ -122,7 +122,7 @@ all(sapply(veclist,length) == 5)
 sapply(veclist, sum)
 ```
 
-2.  Add an element to the list called 'norms' that is a vector of 10 numbers drawn from the standard normal distribution (recall Section \@ref(distributions)).
+2.  Add an element to the list called 'norms' that is a vector of 10 numbers drawn from the standard normal distribution.
 
 ```{r }
 veclist$norms <- rnorm(10)

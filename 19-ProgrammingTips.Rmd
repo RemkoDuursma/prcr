@@ -1,0 +1,180 @@
+# R Programming Tips {#programmingtips}
+
+
+```{r setup, echo=FALSE, message=FALSE, include=FALSE}
+suppressPackageStartupMessages(library(tibble))
+suppressPackageStartupMessages(library(magrittr))
+#htmltools::tagList(rmarkdown::html_dependency_font_awesome())
+
+library(knitr)
+
+current_output <- opts_knit$get("rmarkdown.pandoc.to")
+
+knit_theme$set("earendel")
+opts_chunk$set(background="grey94", 
+               fig.showtext = TRUE,
+               dev = ifelse(current_output == "latex", "pdf", "svg"))
+```
+
+
+
+## Managing package dependencies with `renv`
+
+First scan through the section on R Packages (\@ref(packages)) to make sure you grasp all the fundamentals.
+
+The most important aspect of scripts is that they can be run from start to finish *without user intervention of any kind*, and produce some sort of useful outputs or side-effects. 
+Besides having to write dependable code (which might require some *defensive programming*, see Section \@ref()), we also have to worry about dependencies of R packages. If we transport the script to another location, how can we be sure that the code will be working? Sometimes, newer versions of packages break old code, and in some cases packages are no longer hosted on CRAN after some time (though this is rare).
+
+Another problem arises because all your R projects normally share the same library of R packages on your machine. That means that if you install a newer version in one project, it might cause code to stop working *in another project*. 
+
+The new `renv` package by Rstudio is at the time of writing the best solution to creating a project that is truly portable, since we can transport the packages alongside with the code.
+
+Please read the documentation and installation instructions here: https://rstudio.github.io/renv/.
+
+In practice, we basically just run this command once in a new (or existing) project:
+
+```{r eval=FALSE}
+renv::init()
+```
+
+
+## Minimizing package dependencies
+
+Although a solution like `renv` can help us to make scripts reproducable, in practice this rule of thumb is a valuable lesson:
+
+**Use as few external packages in your code as possible**
+
+Complicated projects tend to break easily, and often external R packages are to blame. 
+
+- Don't use packages when you only use one simple function from it. In that case, copy the function to your own code base, and `source` it in a script.
+
+- Try to use packages that are still in active development, have a significant user- (or fan-) base, such as the `tidyverse` packages, and are popular.
+
+These warnings should not shy you away from exploring the great universe of >15000 R packages that are now publicly available, chances are some obscure analysis or method is already implemented.
+
+```{block2, type = "rmdreading"}
+A well maintained, popular and critical list of "Top" R packages can be read on https://awesome-r.com/
+```
+
+
+## Write functions, not long scripts
+
+If a script becomes too long, write more functions. Writing your own functions is the most important advise if you want to write and maintain robust, complex projects.
+
+As pointed out in the Chapter on Project management (\@ref(projectman)), save these functions separately, for example "R/functions.R", and `source` them with:
+
+```{r, eval = FALSE}
+source("R/functions.R")
+```
+
+Unfortunately `source` is not vectorized, so to read all R scripts from a subdirectory you can simply do,
+
+```{r, eval = FALSE}
+for(fn in dir("R", pattern = "[.]R$", full.names = TRUE)){
+  source(fn)
+}
+```
+
+
+```{block2, type = "rmdtry"}
+Write the above snippet into a function, which takes the directory to search as an argument.
+```
+
+
+
+
+## A logical structure for your scripts
+
+Dividing your scripts into a few functional blocks can help readability and reliability. 
+With special formatting, you can even improve the *table of contents* (TOC) menu in Rstudio for a script. Run the example below, and then find the TOC button in Rstudio:
+
+```{r echo=FALSE, out.width='30%'}
+knitr::include_graphics("screenshots/tablecontents_button.png")
+```
+
+**Access the (nearly) automatic TOC in Rstudio**
+
+
+In the following example script, note that we load all packages at the beginning of the script, so that when something goes wrong at that stage, we know before executing any of the 'real' code.
+
+Also note the use of `#-----`, this helps to make the TOC as mentioned above.
+
+```{r eval = FALSE}
+# An example script
+# 2020, Author
+
+
+#----- Load packages -----
+library(dplyr)
+library(rvest)
+library(stringr)
+library(glue)
+
+#----- Custom functions -----
+source("R/functions.R")
+source("R/database_functions.R")
+
+#----- Configuration -----
+
+# Load configuration (passwords etc., see next Section!)
+.conf <- yaml::read_yaml(file = "config.yml")
+
+#----- Database -----
+
+# Make database connection
+db_con <- make_database_connection_knmi(.conf)
+
+# Download data
+cloud_data <- download_cloud_data(con = db_con)
+
+# Archive the data
+fn <- glue("archive/out_{Sys.Date()}.rds")
+try(saveRDS(cloud_data, fn), silent = TRUE)
+
+#----- Visualization -----
+
+# Make visuals
+make_cloud_maps(data = cloud_data)
+
+#----- Model -----
+
+# Do some advanced modelling
+model_run <- run_cloudy_model(data = cloud_data)
+
+# Upload the model results to a remote database
+upload_model_db16(model_run, config = .conf)
+
+```
+
+The *fictional* script above is just an example how you can divide a *master script* into logical statements, using functions that perform all the underlying tasks.
+
+One major advantage of the above approach is because functions execute their "inner workings" in a **separate environment**, which means that objects inside a function are not visible either outside the function (like the main script) or in any other script. 
+
+That way, executing the script above does not produce any objects in the environment (the memory) other than the ones *returned* by the functions. All the intermediate objects that were executed inside each function have disappeared, freeing memory and avoiding conflicts.
+
+
+## Pay attention to detail: write clean code
+
+You may not want to spend the time making sure your code is neatly formatted, but it helps tremendously in a) spotting syntax errors while you write, and b) make your code vastly more readable by another person.
+
+Unlike a language like Python, in R you are incredibly free to format your code (with spaces, tabs, newlines) pretty much however you want. Although this gives the programmer a lot of room for creative (and short) code, it can also be frustrating because it makes some code hard to read (when it is "poorly" formatted).
+
+```{block2, type = "rmdreading"}
+I find *Google's style guide* a very neat an readable way to indent and format R code: https://google.github.io/styleguide/Rguide.html
+```
+
+```{block2, type = "rmdtry"}
+If you would like to use a tool that checks your code for various superficial (and some less superficial) problems, try using `lintr` : https://github.com/jimhester/lintr (I find it too restrictive and too opinionated, but you will certainly learn a lot by going through the process).
+```
+
+
+
+
+
+
+
+
+
+
+
+

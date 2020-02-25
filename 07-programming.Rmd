@@ -527,7 +527,7 @@ Now, when you place code similar to the above in a more generic function, you do
 
 
 
-## Advanced concepts
+## Advanced concepts {#functionsadvanced}
 
 ### Wrapper functions {#wrapfunctions}
 

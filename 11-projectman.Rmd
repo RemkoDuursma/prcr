@@ -165,14 +165,9 @@ This script contains all the bits of code that are
 - Reading and pre-processing the raw data
 
 
-Remember that it is important to start with a clean workspace (see Section \@ref(cleanmemory)), as it guarantees that all your work is reproducible (and not dependent on objects that you created ages ago).
-
 It is useful to load all packages in one location in your, which makes it easy to fix problems should they arise (i.e., some packages are not installed, or not available).
 
 ```{r eval=FALSE}
-# Clean workspace
-rm(list=ls())
-
 # Load packages
 library(doBy)
 library(lubridate)
