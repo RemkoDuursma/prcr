@@ -633,7 +633,7 @@ print(summary(cars))
 Although the trick with `print` works, usually you want to switch to `rmarkdown` if you are interested in viewing the outputs. Scripts are more useful for side effects, for example the creation of new datasets (that are saved to disk), production of figures as PDF files, up- or downloading of files, or even converting an rmarkdown file to HTML with various settings. 
 
 
-#### Running R from the command line
+#### Running scripts from the command line
 
 From outside R or Rstudio, you can run your script from the *command line* with `Rscript`, for example:
 
@@ -654,6 +654,23 @@ Rscript -e "sqrt(9)"
 Suppose you have a script that takes a long time to complete. You want to run this script in a background process, so it does not tie up Rstudio for a long time. A nice feature in Rstudio (since late 2018) can be found on the <kbd>Jobs</kbd> tab, in the Console pane.
 
 There, click 'Start Job', and select an R script you would like to run, and the working directory that should be used. The script will be run in the background, and the results will be shown in the Jobs tab. This way you can run an R script for every core you have available to you.
+
+
+
+## Pay attention to detail: write clean code
+
+You may not want to spend the time making sure your code is neatly formatted, but it helps tremendously in a) spotting syntax errors while you write, and b) make your code vastly more readable by another person.
+
+Unlike a language like Python, in R you are incredibly free to format your code (with spaces, tabs, newlines) pretty much however you want. Although this gives the programmer a lot of room for creative (and short) code, it can also be frustrating because it makes some code hard to read (when it is "poorly" formatted).
+
+```{block2, type = "rmdreading"}
+I find *Google's style guide* a very neat an readable way to indent and format R code: https://google.github.io/styleguide/Rguide.html
+```
+
+```{block2, type = "rmdtry"}
+If you would like to use a tool that checks your code for various superficial (and some less superficial) problems, try using `lintr` : https://github.com/jimhester/lintr (I find it too restrictive and too opinionated, but you will certainly learn a lot by going through the process).
+```
+
 
 
 

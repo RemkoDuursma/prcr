@@ -63,14 +63,9 @@ knitr::opts_chunk$set(fig.showtext = TRUE, dev="svg")
 
 ```
 
+# Preface {-#header1}
 
-
-
-
-
-
-
-## About the author
+## About the author {-#aboutauthor}
 
 Remko Duursma is a Data Scientist and R Trainer at [Shinto Labs](http://www.shintolabs.nl). Previously, he was a scientist in the field of forestry and plant ecology, and studied the effects of climate change with the use of data and models. He has published nearly 70 articles in the scientific literature, and more than ten R packages. 
 

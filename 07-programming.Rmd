@@ -90,8 +90,8 @@ SEmean(unifvec)
 ```
 
 
-```{block2 type="rmdtry"}
-You can use functions that you defined yourself just like any other function, for example in `summaryBy`. First read in the `SEmean` function defined in the example above, and then use the cereal data to calculate the mean and SE of `rating` by `Manufacturer` (or use data of your choosing).
+```{block2 type="rmdinfo"}
+In general, avoid using names for your functions that are already in use by base R, or commonly used add-on packages. If two or more functions with the same name have been defined, R will first use the one defined by the user (and available in the 'global environmment'), see Section \@ref(searchpath). 
 ```
 
 
@@ -527,7 +527,7 @@ Now, when you place code similar to the above in a more generic function, you do
 
 
 
-## Advanced concepts {#functionsadvanced}
+## Functions : advanced concepts {#functionsadvanced}
 
 ### Wrapper functions {#wrapfunctions}
 
@@ -706,27 +706,29 @@ multiplex2 <- Vectorize(multiplex)
 multiplex2(c(4,8))
 ```
 
-Inspect `?Vectorize` to find that you can specify which arguments will be vecrorized, and whether to *simplify* the result (which works akin to `sapply`, making a vector or a matrix of a result where possible).
+Inspect `?Vectorize` to find that you can specify which arguments will be vectorized, and whether to *simplify* the result (which works akin to `sapply`, making a vector or a matrix of a result where possible).
 
 
 A final option is to write a *recursive* function that wraps around itself, executing the function once when the argument is not vectorized, and otherwise using `sapply` or `mapply` to return a vector of results:
 
 
 ```{r}
-multiplex3 <- function(x){
+multiplex3 <- function(x, change_val = 5){
   
   # Make the calculation when a single argument given:
   if(length(x) == 1){
-    if(x < 5){
+    
+    if(x < change_val){
       prod(1:x)
     } else {
       sum(1:x)
     }  
+    
   } else {
     
-    # Otherwise use sapply, each time calling *this function*,
+    # Otherwise use mapply, each time calling *this function*,
     # recursively.
-    sapply(x, multiplex3)
+    mapply(multiplex3, x = x, change_val = change_val)
   }
   
 }
@@ -796,16 +798,37 @@ return(weight)
 
 ```
 
-Here `switch` improves the readability of the code a lot. If you want to *switch* a numeric input, `switch` is perhaps not the best solution, unless it makes sense to evaluate the number as a character:
+Here `switch` improves the readability of the code a lot. If you want to *switch* a numeric input, `switch` is perhaps not the best solution.
+
+If you find yourself writing code like this:
 
 ```{r}
+
+# An input value
 num <- 3
 
+# DO NOT do this.
 switch(as.character(num),
        "1" = "Door number one.",
        "2" = "Door number two.",
        "3" = "Door number three."
        )
+```
+
+
+Then you are overthinking this! The above can be accomplished with basic indexing:
+
+```{r}
+num <- 3
+
+door_options <- paste0("Door number ", c("one","two","three"), ".")
+
+door_options[num]
+```
+
+
+```{block2 type = "rmdtry"}
+Write the previous example as a custom R function that takes `num` as an argument, and the noun (here, "Door") as an optional second argument with a default value.
 ```
 
 
@@ -903,7 +926,7 @@ But this one does not (try it out yourself!).
 
 ### Sending warnings, errors, messages
 
-In more complex projects, it can be difficult to find which part of your code caused an error or unexpected result. Leaving useful messages, warnings, or exiting when you know things will go wrong can be very useful in developing more debuggable code.
+In more complex projects, it can be difficult to find which part of your code caused an error or unexpected result. Leaving useful messages, warnings, or exiting when you know things will go wrong later can be very useful in developing more debuggable code.
 
 ```{r}
 example_function_warnings <- function(data){
@@ -930,8 +953,22 @@ example_function_warnings <- function(data){
 
 The use of `message` is nice to provide some indication to you where code was executed. Scattering a messages around your code (with an indication where we are in the code) can be invaluable during development of more complex projects, with lots of functions.
 
+Sometimes you want *fewer* warnings or messages, for example arising from code that works fine but always produces an annoying warning. You can switch them off with these two functions:
 
-### Executing code when the function ends (or fails)
+```{r}
+suppressMessages({
+  # code here that produces messages
+})
+
+suppressWarnings({
+  # Code here with warnings you want to suppress.
+  # Don't use this unless you know what you are doing!
+})
+```
+
+
+
+### Executing code when the function ends (or fails) {#onexit}
 
 A useful tool to make functions more robust (less likely to fail) is to safely run some code when the function exits unexpectedly. One example arises with sending figures to an open PDF document: after we are done, the PDF needs to be closed with `dev.off()` (see Example in Section \@ref(simpleloops)).
 

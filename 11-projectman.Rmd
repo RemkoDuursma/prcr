@@ -24,24 +24,33 @@ opts_chunk$set(background="grey94",
  
 ## Tips on organizing your code
 
-In this chapter, we present a few tips on how to improve your workflow and organization of scripts, functions, raw data, and outputs (figures, processed data, etc.). The structure that we present below is just an example, and will depend on the particular project, and your personal taste. We encourage you to experiment with different workflows and organization of your script(s) and outputs, to declutter your working directory and to be able to keep track of what you have accomplished in your analysis sofar.
+In this chapter, we present a few tips on how to improve your workflow and organization of scripts, functions, raw data, and outputs (figures, processed data, etc.). The structure that we present below is just an example, and will depend on the particular project, your requirements, how much time you have, and personal preference. 
 
-Although much of this is subject to personal preference, we believe that if you follow these rules, management of your code will be much easier and more transparent:
+The main **challenge** in developing more complex workflows, where you have multiple data sources, scripts for various analyses, and outputs of various kinds (figures, markdown documents, prepared data etc.) is to keep things organized, avoid *clutter*, and make sure you know how the outputs were produced.
+
+All projects are different, and we encourage you to experiment with different workflows and organization of your script(s) and outputs. 
+
+The following is a **rule of thumb** list for R project management:
+
+- Use 'projects' in Rstudio to manage your files and workspace.
+- Use *git* version control (see Chapter \@ref(versioncontrol)).
+- Use a logical folder structure inside your projects, keeping similar files together (data, scripts, output, etc.).
+- Avoid writing long scripts, instead break them into a logical collection of shorter scripts.
+- Load all required packages in a separate script.
+- Outputs (figures, processed datasets) are *disposable*, your scripts can always re-produce the output.
+- Keep function declarations separate from other code.
+- Write functions as much as possible.
+- Add a 'README.md' file to your project, markdown-formatted file explaining what the project does, a list of any dependencies, how to run the code, where to find the output, etc.
 
 
-- Use 'projects' in Rstudio to manage your files and workspace
-- Keep raw (original) data in a separate folder, and *never modify raw data*
-- Outputs (figures, processed datasets) are disposable, your scripts can always re-produce the output
-- Keep functions separate from other code
-- Write functions as much as possible
+In this chapter we show an example project structure, which uses most of the above rules to come up with a transparent project workflow. If you follow (something like) the structure we show here, you have the added benefit that your directory is fully portable. That is, you can zip it, email it to someone, they can unzip it and run the entire analysis. 
+
+For effective project management we find using custom functions to organize our work most useful. See Chapter \@ref(programming) for general introduction to functions, and Section \@ref(scriptstructure) on how to organize your code with functions.
 
 
-If you follow (something like) the structure we show here, you have the added benefit that your directory is fully portable. That is, you can zip it, email it to someone, they can unzip it and run the entire analysis. 
+## Set up a project in Rstudio {#rstudioprojects}
 
 The most important tip is to *use projects in Rstudio*. Projects are an efficient method to keep your files organized, and to keep all your different projects separated. There is a natural tendency for analyses to grow over time, to the point where they become too large to manage properly. The way we usually deal with this is to try to split projects into smaller ones, even if there is some overlap between them. 
-
-
-## Set up a project in Rstudio
 
 In Rstudio, click on the menu item `File/New Project...`. If you already have a folder for the project, take the 2nd option (`Existing directory`), otherwise create a folder as well by choosing the 1st option (`New project`). We will discuss "version control" in the next chapter.
 
@@ -53,7 +62,7 @@ Rstudio has now switched to your new project. Notice in the top-right corner the
 knitr::include_graphics("screenshots/projectbutton.png")
 ```
 
-**Folder structure; just an example**
+**The Project button in Rstudio**
 
 By clicking on that button you can easily switch over to other projects. The working directory is automatically set to the right place, and all files you had open last time are remembered as well. As an additional bonus, the workspace is also cleared. This ensures that if you switch projects, you do not inadvertently load objects from another project.
 
@@ -71,7 +80,7 @@ knitr::include_graphics("screenshots/folderstructure.png")
 
 ### `rawdata`
 
-Most importantly, *keep your raw data separate from everything else*. Here we have placed our raw CSV files in the `rawdata` directory.
+If your project contains any raw data files (within ) *keep your raw data separate from everything else*. Here we have placed our raw CSV files in the `rawdata` directory.
 
 In some projects it makes sense to further keep raw data files separate from each other, for example you might have subfolders in the rawdata folder that contain different types of datasets (e.g. 'rawdata/leafdata', 'rawdata/isotopes'). Again, the actual solution will depend on your situation, but it is at least very good practice to store your raw data files in a separate folder.
 
@@ -146,13 +155,50 @@ Here is an example script that makes figures only. Note the use of `dev.copy2pdf
 
 ```{r eval=FALSE}
 # Make a plot of soil water content over time
-windows()
+pdf("./output/figures/facesoil_overtime.pdf")
 with(allTheta, plot(DateTime, R30.mean, pch=19, cex=0.2,
                     col=Ringnr))
-dev.copy2pdf(file="./output/figures/facesoil_overtime.pdf")
+dev.off()
 
 # More figures go here!
 ```
+
+
+The above is OK, but we can do better by writing it into a function, and then calling it to make the PDF. Even better, the PDF making can be done Here we also use `on.exit` to safely close the PDF, see Section \@ref(onexit.
+
+Like so,
+
+```{r, eval=FALSE}
+
+# A function that defines our plot
+# Write functions like these, and collect them in a separate script,
+# for example "figure_definitions.R".
+soilplot_1 <- function(data){
+  with(data, plot(DateTime, R30.mean, pch=19, cex=0.2,
+                    col=Ringnr))  
+}
+
+# A generic function that makes a PDF of a provided function call
+# Place this function in a script with a collection of functions.
+to.pdf <- function(expr, filename, ...) {
+  
+  pdf(filename, ...)
+  on.exit(dev.off())
+  
+  # A trick to run the provided function call in the global environment
+  eval.parent(substitute(expr))
+}
+
+
+# Finally, after having sourced both our function definition, 
+# and the generic function to.pdf, we can make the PDFs.
+to.pdf(
+  soilplot_1(allTheta), 
+  filename = "output/figures/figure1.pdf")
+)
+
+```
+
 
 
 ### `facesoil_load`
@@ -160,7 +206,6 @@ dev.copy2pdf(file="./output/figures/facesoil_overtime.pdf")
 This script contains all the bits of code that are 
 
 - Cleaning the workspace
-- Loading packages 
 - Loading homemade functions
 - Reading and pre-processing the raw data
 
@@ -169,8 +214,7 @@ It is useful to load all packages in one location in your, which makes it easy t
 
 ```{r eval=FALSE}
 # Load packages
-library(doBy)
-library(lubridate)
+source("load_packages.R")
 
 # Source functions (this loads functions but does no actual work)
 source("Rfunctions/rmDup.R")
@@ -178,6 +222,42 @@ source("Rfunctions/rmDup.R")
 # Make the processed data (this runs a script)
 source("facesoil_readdata.R")
 ```
+
+
+### `load_packages.R`
+
+We find it very convenient to collect all `library` calls throughout your project in a single script. The advantage is that at the top of one of the main analysis scripts, we can simply call `source("load_packages.R")`. If any packages are missing, or something else failed, we know before try to we execute any other code.
+
+It may also be convenient to suppress all messages we see when loading packages. An example script may look like:
+
+
+```{r, eval = FALSE}
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(lubridate)
+  library(glue)
+})
+```
+
+The *disadvantage* of a loading script like this is that we assume that the user has installed all of the required packages. In Rstudio, however, if you open this script - a small message will appear at the top of the script, "Would you like to install missing packages?". If you click OK all packages mentioned in the script that you have not installed will be installed for you.
+
+Another approach uses the `pacman` package, which automatically installs missing packages (see also Section \@ref(pacman)):
+
+```{r}
+if(!require(pacman))install.packages("pacman")
+pacman::p_load(gplots, geometry, rgl, remotes, svglite)
+```
+
+```{block2 type = "rmdreading"}
+To learn more about advanced management of R package dependencies, read Section \@ref(masteringpackages)
+```
+
+
+```{block2, type = "rmdcaution"}
+Never include `install.packages` in any of your *scripts* in your project. You do not want to call it more than once, otherwise the execution of the project will be much slower (and require an internet connection).
+```
+
+
 
 
 ### `facesoil_readdata.R`
@@ -217,29 +297,126 @@ If your `processData` folder is very large, this may not be the optimal solution
 
 ### Adding a Date stamp to output files
 
-Another option is to use a slightly different output filename every time, most usefully with the current Date as part of the filename. The following example shows how you can achieve this with the `today` from the `lubridate` package, and `paste0` (which is the same as `paste`, with the argument `sep=""`).
+Another option is to use a slightly different output filename every time, most usefully with the current Date as part of the filename. The following example shows how you can achieve this with the `today` from the `lubridate` package, and the `glue` package:
 
 ```{r }
 # For the following to work, load lubridate
 # Recall that in your workflow, it is best to load all packages in one place.
 library(lubridate)
+library(glue)
 
 # Make a filename with the current Date:
-fn <- paste0("output/figures/FACE_soilfigure1_",today(),".pdf")
+fn <- glue("output/figures/FACE_soilfigure1_{today()}.pdf")
 fn
 
 # Also add the current time, make sure to reformat as ':' is not allowed!
-fn <- paste0("output/figures/FACE_soilfigure1_",format(now(),"%Y-%m-%d_%H-%M"),".pdf")
+fn <- glue("output/figures/FACE_soilfigure1_{format(now(),'%Y-%m-%d_%H-%M')}.pdf")
 fn
 ```
 
-With the above filename, we can now make a PDF, like so:
 
-```{r eval=FALSE}
-windows(7,7)
-# .... make plot here ....
-dev.copy2pdf(file=fn)
+
+
+
+## A logical structure for your scripts {#scriptstructure}
+
+
+### Write functions, not long scripts
+
+If a script becomes too long, write more functions. Writing your own functions is the most important advise if you want to write and maintain robust, complex projects.
+
+As pointed out in the Chapter on Project management (\@ref(projectman)), save these functions separately, for example "R/functions.R", and `source` them with:
+
+```{r, eval = FALSE}
+source("R/functions.R")
 ```
+
+Unfortunately `source` is not vectorized, so to read all R scripts from a subdirectory you can simply do,
+
+```{r, eval = FALSE}
+for(fn in dir("R", pattern = "[.]R$", full.names = TRUE)){
+  source(fn)
+}
+```
+
+
+```{block2, type = "rmdtry"}
+Write the above snippet into a function, which takes the directory to search as an argument.
+```
+
+
+
+
+### Divide your script into functional blocks
+
+
+Dividing your scripts into a few functional blocks can help readability and reliability. 
+With special formatting, you can even improve the *table of contents* (TOC) menu in Rstudio for a script. Run the example below, and then find the TOC button in Rstudio:
+
+```{r echo=FALSE, out.width='30%'}
+knitr::include_graphics("screenshots/tablecontents_button.png")
+```
+
+**Access the (nearly) automatic TOC in Rstudio**
+
+
+In the following example script, note that we load all packages at the beginning of the script, so that when something goes wrong at that stage, we know before executing any of the 'real' code.
+
+Also note the use of `#-----`, this helps to make the TOC as mentioned above.
+
+```{r eval = FALSE}
+# An example script
+# 2020, Author
+
+
+#----- Load packages -----
+library(dplyr)
+library(rvest)
+library(stringr)
+library(glue)
+
+#----- Custom functions -----
+source("R/functions.R")
+source("R/database_functions.R")
+
+#----- Configuration -----
+
+# Load configuration (passwords etc., see next Section!)
+.conf <- yaml::read_yaml(file = "config.yml")
+
+#----- Database -----
+
+# Make database connection
+db_con <- make_database_connection_knmi(.conf)
+
+# Download data
+cloud_data <- download_cloud_data(con = db_con)
+
+# Archive the data
+fn <- glue("archive/out_{Sys.Date()}.rds")
+try(saveRDS(cloud_data, fn), silent = TRUE)
+
+#----- Visualization -----
+
+# Make visuals
+make_cloud_maps(data = cloud_data)
+
+#----- Model -----
+
+# Do some advanced modelling
+model_run <- run_cloudy_model(data = cloud_data)
+
+# Upload the model results to a remote database
+upload_model_db16(model_run, config = .conf)
+
+```
+
+The *fictional* script above is just an example how you can divide a *master script* into logical statements, using functions that perform all the underlying tasks.
+
+One major advantage of the above approach is because functions execute their "inner workings" in a **separate environment**, which means that objects inside a function are not visible either outside the function (like the main script) or in any other script. 
+
+That way, executing the script above does not produce any objects in the environment (the memory) other than the ones *returned* by the functions. All the intermediate objects that were executed inside each function have disappeared, freeing memory and avoiding conflicts.
+
 
 
 

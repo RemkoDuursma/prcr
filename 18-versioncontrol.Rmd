@@ -37,7 +37,7 @@ With git, you can 'store' a snapshot of all the tracked files in your repository
 When we store a snapshot of the repository, this is called a **commit**. When we commit changes to the files in the repository, we do this because we may wish to return to this point, or clearly document the changes we have made. When a commit is made, a message has to be written to document what we have done (as we will see further below). Every time we commit, we can manually select which files should be added to the next snapshot. This process is called **staging**, and it allows you to decide to keep some changes, and undo all other changes, for example. 
 
 ```{block2 type="rmdreading"}
-It needs to be stressed that this chapter is a brief non-technical introduction to the topic. It only covers the basic capabilities of git. A very good collection of tutorials and more advanced books is listed on SixRevisions\footnote{<http://sixrevisions.com/resources/git-tutorials-beginners/}>. 
+It needs to be stressed that this chapter is a brief non-technical introduction to the topic. It only covers the basic capabilities of git, and stresses the use of Rstudio as an interface to git. You can find many *git* tutorials online if you want a bit more depth. 
 ```
 
 
@@ -55,25 +55,7 @@ If you end up working primarily from Rstudio, we very strongly recommend the use
 
 Rstudio projects are really just small files added to a certain folder, which "tags" that folder as containing a particular project. You can switch easily between different projects, or have multiple instances of Rstudio open, all with different projects (something I do a lot). When you switch to a project, *it also sets the working directory* to the folder where the .Rproj file is located.
 
-#### Set up a project in Rstudio
-
-In a later section (\@ref(firstgitsession)) we look at setting up a project based on a remote git repository (for example, github), but first we show how to make a new project in Rstudio.
-
-In Rstudio, click on the menu item `File/New Project...`. If you already have a folder for the project, take the 2nd option (`Existing directory`), otherwise create a folder as well by choosing the 1st option (`New project`). We will discuss "version control" in the next chapter.
-
-Browse for the directory you want to create a project in, and click `Choose`. This creates a file with extension `.Rproj`. Whenever you open this project, Rstudio will set the working directory to the location of the project file. If you use projects, you no longer need to set the working directory manually as we showed in Section \@ref(fileswd).
-
-Rstudio has now switched to your new project. Notice in the top-right corner there is a button that shows the current project. For the example project 'facesoil', it looks like this:
-
-```{r echo=FALSE, out.width='30%'}
-knitr::include_graphics("screenshots/projectbutton.png")
-```
-
-**Create a new Rstudio project**
-
-By clicking on that button you can easily switch over to other projects. The working directory is automatically set to the right place, and all files you had open last time are remembered as well. As an additional bonus, the workspace is also cleared. This ensures that if you switch projects, you do not inadvertently load objects from another project.
-
-
+We make an Rstudio project in Section \@ref(firstgitsession) and also return to projects in Section \@ref(rstudioprojects).
 
 ### Installing git
 
@@ -188,9 +170,11 @@ Let's now look at the history of our first project sofar. Find the 'History' but
 knitr::include_graphics("screenshots/firsthistory.png")
 ```
 
-**History of the project sofar. The HEAD tag means this is the current location of the working directory. As we will see later, we can check out older versions, in which case HEAD will move to whatever commit we are looking at. Shown are the messages we wrote when committing, the author and date (taken from the git configuration), and the SHA (explained in the next section).**
+**History of the project sofar. The HEAD tag means this is the current location of the working directory. As we will see later, we can check out older versions, in which case HEAD will move to whatever commit we are looking at. Shown are the messages we wrote when committing, the author and date (taken from the git configuration), and the SHA.**
 
-Finally, the question marks for `.gitignore` and the `Rproj` files can be annoying, and in many projects you will have a long list of files that are in the working directory but you don't want to track them. 
+The 'SHA' is the unique code given to each commit. You normally don't have to use it in Rstudio, but it is important in the command line commands given below. We never need all characters from the SHA, only the first few (normally 5 or so). You can find the (abbreviated) SHA in the right-hand column of the history.
+
+The question marks for `.gitignore` and the `Rproj` indicate that these files have not been staged in any previous commit. If you do not want to ever track them, see Section \@ref(gitignore).
 
 
 
@@ -199,16 +183,6 @@ Finally, the question marks for `.gitignore` and the `Rproj` files can be annoyi
 Some new users are surprised by how git deals with deleting files in your repository. If you delete a file, git will mark the file as deleted (with a red D in the Rstudio interface), and you can stage the change to also remove the file from git (so it won't be tracked anymore). Even though the file is deleted, it is still contained in the *history* of your repository. That means you (or someone else) can return to a state of the repository that included the file, and read its contents.
 
 If you accidentally committed a file with sensitive information, such as passwords, deleting the file does not remove it from the history. There is also a way to completely remove files, even from the history, but this is a bit cumbersome and best avoided. Normally we do not like to change history unless some of the files are very large or contain sensitive information. 
-
-
-### A few hints
-
-- The 'SHA' is the unique code given to each commit. You normally don't have to use it in Rstudio, but it is important in the command line commands given below. We never need all characters from the SHA, only the first few (normally 5 or so). You can find the (abbreviated) SHA in the right-hand column of the history.
-- Not all local files are tracked. 
-- You do not have to commit all changes to the files every time (you can select which ones you want by staging them)
-- Write useful commit messages that make sense a long time from now (saying 'changed file.txt' is useless because it will be clear which files you changed anyway). When you reach a particular milestone, include it in the commit message ("version submitted for publication").
-- Commit **often**. Don't wait days to commit all enormous changes to your code. Commit smaller increments of progress ("updated figure 1", "defined new function for barplots"). 
-- **only commit code that actually works**. There may be exceptions, but you can see this is a good idea. Basically assume that a commit is a point to which you might want to return (for whatever reason).  
 
 
 ### Reverting changes
@@ -330,7 +304,7 @@ Next, click commit (opens up a new window), write a reasonable message in the te
 Let's **push** this first commit to the remote repository. Just click 'Push' on the git tab, and a new window opens up in Rstudio with the response from the remote. It will say something like,
 
 ```{r echo=FALSE, out.width='75%'}
-knitr::include_graphics("screenshots/session2firstpush")
+knitr::include_graphics("screenshots/session2firstpush.png")
 ```
 
 **Response of the remote after the first push (opens in Rstudio when you click 'push'). Note that a new branch is created because this is the very first commit on the remote repository. All commits will always go to the 'master' branch (in this tutorial, at least).**
@@ -366,7 +340,7 @@ The solution to this problem is to first do a pull, and then try to push again. 
 There are cases, however, where **conflicts** arise - if the local and remote changes are on the same line of text. In that case, you will have to fix the conflicts manually. It is however much better to avoid these conflicts by always  **beginning your session with a pull, and ending with a push**. That way you minimize the risk of changing the same line of code twice.  
 
 
-## Ignoring files
+## Ignoring files {#gitignore}
 
 As discussed, you don't want all of your local files to be copied to the remote repository. These include private data, large files, most binary files, sensitive information like passwords. 
 
