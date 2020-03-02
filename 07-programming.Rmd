@@ -5,12 +5,15 @@
 
 ## Introduction
 
-This chapter demonstrates some building blocks of programming with R. The main purpose here is to allow batch analyses - repeating similar tasks for many subsets of data. To do this, we first have to know how to write our own functions, so that we can apply the custom function to any new subset of data. This approach results in far less, and much more readable code than copy-pasting similar code for different datasets.
+This chapter demonstrates some building blocks of programming with R. The objective is to learn skills that help you with batch analyses - repeating similar tasks for many subsets of data, and to write functions to help you organize your code. 
 
-We also delve into "lists" in R, a versatile data object that you have worked with already - even if you didn't know it. Understanding lists well in R is the key to more complex analyses, and more readable workflows.
+For batch analyses, we first have to know how to write our own functions (Section \@ref(writefunctions)), so that we can apply the custom function to any new subset of data. This approach results in far less, and much more readable code than copy-pasting similar code for different datasets.
 
-Finally we take a brief look at 'for loops', a basic programming utility that we rarely need in R, since almost all functions are vectorized. Sometimes it is however more convenient to use loops, or makes the code just a little more easy to work with.
+We also delve into "lists" in R (Section \@ref(workinglists)), a versatile data object that you have worked with already - even if you didn't know it. Understanding lists well in R is the key to more complex analyses, and more readable workflows.
 
+We also take a brief look at 'for loops' (Section \@ref(simpleloops)), a basic programming utility that we rarely need in R, since almost all functions are vectorized. Sometimes it is however more convenient to use loops, or makes the code just a little more easy to work with.
+
+Finally we introduce many more advanced concepts for writing functions (Section \@ref(functionsadvanced) and \@ref(defensive)), often to make functions more versatile and  less error-prone. 
 
 
 ```{r include=FALSE, message=FALSE, warning=FALSE}
@@ -529,6 +532,23 @@ Now, when you place code similar to the above in a more generic function, you do
 
 ## Functions : advanced concepts {#functionsadvanced}
 
+
+### Why should I write more functions?
+
+
+Organizing your complex work flow into many custom functions, instead of long scripts with just the raw code, has some key advantanges:
+
+- Using functions makes it clear what the **inputs** are, and what are the **outputs**. For example, if you run `result <- myfunction(mydata)`, you know that `mydata` was used to create `result`. Instead, if you place all your code *plain* in a script and use `source("myscript.R")`, what objects are created? Are there any output? If so, where? Using functions this way allows a logical flow of your scripts.
+
+- Using functions is much **safer** because objects created in the body of the function when it is executed only *live* for as long as the function is running. Once the function *returns* a result, all objects inside the function cease to exist. This means the objects do not use memory, and cannot cause conflicts with other objects in the session.
+
+- Using functions allows you to **avoid any duplicated code**. Duplicated code is terrible because when you want to modify your code, you have to repeat the modification (and remember where!). As a rule of thumb, if you do something 3 times, you should write a function. This function can also take some arguments, allowing it to do slightly different operations from different calls.
+
+- For different projects, you often find yourself using the same bits of code, for example to read certain data, format a certain table, or make some plot. It quickly makes sense to collect this sort of code into a collection of your own functions. When these functions become **generic** enough (applicable in many projects), you should consider bundling them in an R package.
+
+
+
+
 ### Wrapper functions {#wrapfunctions}
 
 We often need to write simple functions that adjust one or two arguments to other functions. For example, suppose we often make plots with filled circles, with our favorite color ("dimgrey") :
@@ -835,7 +855,7 @@ Write the previous example as a custom R function that takes `num` as an argumen
 
 
 
-## Robust functions: defensive programming
+## Robust functions: defensive programming {#defensive}
 
 
 Once you write more functions that perhaps become more generic and widely applicable within your projects, you want these functions to be more robust, that is, to fail less often and more elegantly. Functions fail if the wrong inputs were provided to them (by a careless programmer or data faults), or if some (rare) exception is reached. In this section we will look at a few tools to help you write more robust functions.
