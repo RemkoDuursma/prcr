@@ -113,7 +113,7 @@ It is a good idea to send all output from your R scripts to a separate folder. T
 knitr::include_graphics("screenshots/output.png")
 ```
 
-**Contents of Rfunctions folder, example.**
+**Contents of output folder, example.**
 
 
 ## The R scripts
@@ -201,8 +201,9 @@ to.pdf <- function(expr, filename, ...) {
 # and the generic function to.pdf, we can make the PDFs.
 to.pdf(
   soilplot_1(allTheta), 
-  filename = "output/figures/figure1.pdf")
+  filename = "output/figures/figure1.pdf"
 )
+
 
 ```
 
@@ -256,7 +257,7 @@ pacman::p_load(gplots, geometry, rgl, remotes, svglite)
 ```
 
 ```{block2 type = "rmdreading"}
-To learn more about advanced management of R package dependencies, read Section \@ref(masteringpackages)
+To learn more about advanced management of R package dependencies, read Chapter \@ref(masteringpackages)
 ```
 
 
@@ -297,7 +298,7 @@ After a while, that directory may look like this:
 knitr::include_graphics("screenshots/archive.png")
 ```
 
-**Contents of Rfunctions folder, example.**
+**Contents of archive folder, example.**
 
 If your `processData` folder is very large, this may not be the optimal solution. Perhaps the `processedData` can be in a separate output folder, for example.
 

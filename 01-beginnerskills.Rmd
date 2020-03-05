@@ -542,7 +542,7 @@ In fact, it can be considered very good practice to *always* use the `::` (calle
 
 
 
-### Loading many packages
+### Loading many packages {#pacman}
 
 If you are using packages in a script file, it is usually considered a good idea to load any packages you will be using at the *start* of the script. Usually you will see a long list of `library(this)`, and `library(that)`, but we like to use the `pacman` package at the top of a script, like this:
 
