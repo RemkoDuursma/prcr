@@ -7,7 +7,7 @@ A Learning Guide to R: data, analytical, and programming skills
 
 Script `compile_gitbook.R`, renders the book as a gitbook. Output in `_book/index.html`.
 
-Script `compile_pdf.R`, renders the book as PDF via LaTeX. 
+Script `compile_pdf.R`, renders the book as PDF via LaTeX. Makes `_book/prcr.pdf`.
 
 Important input files:
 - index.Rmd: Preface, and includes a block with knitr settings
