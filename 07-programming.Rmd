@@ -505,7 +505,7 @@ for(lev in levels(dataset$species)){
 dev.off()
 ```
 
-Here, we have to call `dev.off()` to close the pdf.
+Here, we have to call `dev.off()` to close the pdf. This sort of use of `dev.off()` after a block of code is dangerous, instead use the approach outlined in Section \@ref(onexit) and place the code inside a function.
 
 
 
@@ -540,7 +540,7 @@ Organizing your complex work flow into many custom functions, instead of long sc
 
 - Using functions makes it clear what the **inputs** are, and what are the **outputs**. For example, if you run `result <- myfunction(mydata)`, you know that `mydata` was used to create `result`. Instead, if you place all your code *plain* in a script and use `source("myscript.R")`, what objects are created? Are there any output? If so, where? Using functions this way allows a logical flow of your scripts.
 
-- Using functions is much **safer** because objects created in the body of the function when it is executed only *live* for as long as the function is running. Once the function *returns* a result, all objects inside the function cease to exist. This means the objects do not use memory, and cannot cause conflicts with other objects in the session.
+- Using functions is much **safer** because objects created in the body of the function when it is executed only *live* for as long as the function is running (in the **function scope**). Once the function *returns* a result, all objects inside the function become cease to exist (see [Memory (Advanced R) by Hadley Wickham](http://adv-r.had.co.nz/memory.html)). This means the objects do not use memory, and cannot cause conflicts with other objects in the session.
 
 - Using functions allows you to **avoid any duplicated code**. Duplicated code is terrible because when you want to modify your code, you have to repeat the modification (and remember where!). As a rule of thumb, if you do something 3 times, you should write a function. This function can also take some arguments, allowing it to do slightly different operations from different calls.
 
@@ -757,7 +757,7 @@ multiplex3(c(4,8))
 
 ```
 
-This final solution can be found in many base R functions, and is a flexible interface to allow vectorized arguments.
+This final solution can be found in many base R functions, and is a flexible  - but more advanced - interface to allow vectorized arguments.
 
 
 
@@ -1023,11 +1023,11 @@ plot_first_2_columns <- function(data, output = "plot.pdf"){
 ```
 
 
-### Catch errors with `try`
+### Catch errors with `try` {#try}
 
 The ultimate tool to make functions more robust is `try`, a mechanism to catch errors and avoid termination of your code.
 
-Although you can use `tryCatch` as an interface, I personally prefer the flexible use of `try`, like so:
+First we show the use of `try`, a flexible interface,  like so:
 
 
 ```{r}
@@ -1052,17 +1052,25 @@ out
 Now `safe_logarithm("a")` returns `NA`, but you do see the error message printed (unless you look around `?try` for a way to suppress the error message).
 
 
+The same thing can be achieved with `tryCatch` :
+
+```{r}
+x <- "a"
+tryCatch(log(x), error = function(e)NA)
+```
+
+Here, we have to define a function (with argument `e`, which contains the error message) for the error. Similarly, functions can be defined that will be called when warnings arise in the code (`warning = function(w)w`), or neither (`finally`).
 
 
 
 
-### Writing database wrapper functions
+### Writing database wrapper functions {#dbiwrappers}
 
-This example combines various concepts from this section, and is a useful set of functions when you commonly work with databases. First review 'working with databases' if you need to (Section XXX). The functions below will be developed step-by-step. Please carefully review this section if you want to adapt this code to your situation.
+This example combines various concepts from this section, and is a useful set of functions when you commonly work with databases. First review Section about the `DBI`package to access data from databases. The functions below will be developed step-by-step. Please carefully review this section if you want to adapt this code to your situation.
 
 After we are done reading and writing to a (usually remote) database, the connection to it should be *closed* with `dbDisconnect` (in the DBI package). Sometimes we forget, or code fails, or whatever - leaving extra connections open that can cause various problems (especially in production-ready code).
 
-The following example can be modified to suite your needs (see Section \@ref(???)) :
+The following example can be modified to suite your needs :
 
 ```{r, eval = FALSE}
 # A function to make a connection to your database
@@ -1121,7 +1129,7 @@ milk <- read_my_data2("milk", con = my_con)
 dbDisconnect(my_con)
 ```
 
-If we leave out the `con` argument, the connection will be opened and closed for you.
+If we leave out the `con` argument, the connection will be opened and closed for you every time you call `read_my_data2`.
 
 
 ## Exercises
