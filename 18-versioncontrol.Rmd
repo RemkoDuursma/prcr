@@ -402,9 +402,6 @@ It is also always a good idea to inspect the remote repository to see if anythin
 
 
 
-
-
-
 ## Using the command line {#commandline}
 
 Rstudio is very convenient for day-to-day version control, but for more advanced options, you must know how to use the command line. You may also find that when you gain more *git skills*, that using the command line is just as convenient while providing more control.
@@ -666,6 +663,61 @@ git log --help
 ```
 
 Perhaps more usefully, if you don't know how to do something in git, simply type your question in Google ("git how to delete untracked files").
+
+
+
+## Branches
+
+
+A powerful feature of git is the ability to maintain parallel versions of code, with the use of branches. A branch (not to be confused with a fork!) keeps its own history of commits, separate from the main branch (usually called the **master** branch). At the point when you make the new branch, the master and the new branch are identical - but when you are working on the new branch, changes files and commit - the two will have different histories.
+
+Branches are very useful for working on alternative versions of your working code base on the master branch. For example, when other users depend on your master branch working (and not being polluted with experimental code), but your new changes will take a long time - and multiple commits - to complete.
+
+To make a new branch, I prefer the use of a small button in Rstudio : 
+
+```{r echo=FALSE, out.width='75%'}
+knitr::include_graphics("screenshots/gitbranchbutton.png")
+```
+
+When you click the button, a menu opens up:
+
+
+```{r echo=FALSE, out.width='75%'}
+knitr::include_graphics("screenshots/gitnewbranch.png")
+```
+
+Keep the checkbox checked if you want the branch to also push to the remote (this is usually what you want, though it can be useful to keep a very experimental branch on your computer only).
+
+Ater you click OK, a new branch will be created locally and on the remote :
+
+```{r echo=FALSE, out.width='75%'}
+knitr::include_graphics("screenshots/gitnewbranchsuccess.png")
+```
+
+This indicates a successful new branch.
+
+You can now work on the new branch as you would on the master branch. Note the label in the topright of the git pane in Rstudio to see which branch you are currently working on.
+
+Git hosting sites like github support multiple branches in a single repository as well, for example here is a repository with two branches:
+
+```{r echo=FALSE, out.width='75%'}
+knitr::include_graphics("screenshots/githubbranches.png")
+```
+
+Branches are best for working on experimental new changes for which you intend to include them in the master branch, at some point, or otherwise abandon the experiment and delete the branch. When you want to update the master branch to include changes from the new branch, you must use the command line and first "checkout" the master branch (this can also be done in the Rstudio git pane),
+
+```
+git checkout master
+```
+
+then, merge the new branch:
+
+```
+git merge newbranch
+``
+
+Just like working with remotes, it is possible you have produced conflicts that may need to be fixed.
+
 
 
 
