@@ -13,7 +13,7 @@ When you use version control, you can do the following:
 - Maintain an online backup of your code base.
 
 
-These are all basic capabilities of version control, and as you can see an absolute requirement for even the somewhat serious coder. Here we use version control with *git*, the most popular system. In this chapter, I will give an informal introduction to version control, and focus on its use in Rstudio. The command line will also be introduced, particularly for somewhat more advanced options.
+These are all basic capabilities of version control, and as you can see an absolute requirement for even the somewhat serious coder. Here we use version control with *git*, the most popular system. In this chapter, I will give an informal introduction to version control, and focus on its use in Rstudio. The command line will also be introduced, particularly for somewhat more advanced options. The built-in menus in Rstudio are fine for most basic uses, although the use of the command line is recommended when you are committing many files at once (when Rstudio can be very slow and unresponsive).
 
 
 ## Basics of git
@@ -190,6 +190,9 @@ If you accidentally committed a file with sensitive information, such as passwor
 To undo changes to files in Rstudio, and reset to the last known version of that file (i.e. the the last commit), select the file and click the 'Revert' button (this button is only visible in the Commit window, otherwise it is grouped under the 'More' button).
 Sometimes this menu in Rstudio is a little *buggy*, reverting only one file at a time.
 
+If you are **100% sure you have made commits you want to delete forever**, see Section \@ref(commandline) for the use of `git reset --hard`.
+
+
 
 ## Remote git repositories {#remotegit}
 
@@ -337,7 +340,31 @@ knitr::include_graphics("screenshots/session2pushbehind.png")
 
 The solution to this problem is to first do a pull, and then try to push again. The amazing thing about git is that even if your local commits and the commits on the remote that you don't yet have include changes on the same files, they will be automatically merged in the new commit. 
 
-There are cases, however, where **conflicts** arise - if the local and remote changes are on the same line of text. In that case, you will have to fix the conflicts manually. It is however much better to avoid these conflicts by always  **beginning your session with a pull, and ending with a push**. That way you minimize the risk of changing the same line of code twice.  
+
+### Conflicts when collaborating
+
+Version control is especially powerful when collaborating on the same code. When you work on separate files, or even different sections of the same file, git knows how to combine commits from one user with commits from another user. You can even see who changed which line of code with the `git blame` command.
+
+There are cases, however, where **conflicts** arise when two users have changed the same line of code. Suppose User 1 makes changes, commits, and pushes to the remote. Then, you make changes to some of the same lines, commit and push, you receive the following error:
+
+```{r echo=FALSE, out.width='75%'}
+knitr::include_graphics("screenshots/gitpullconflict.png")
+```
+
+**When pushing your changes to the remote - but the remote has already incorporated commits on the same lines of code - you have created conflicts**
+
+You now have to fix the conflicts in the code - hoping there are only a few. Look in the Git pane in Rstudio to see which files have conflicts (they will be marked with an orange U), and then look for sections of code that look like this:
+
+
+```{r echo=FALSE, out.width='75%'}
+knitr::include_graphics("screenshots/gitconflictfixing.png")
+```
+
+**Code conflicts are automatically marked by git. Notice how there are two versions of the same line of code, above and below line 21**
+
+Now, simply fix the code by keeping the version you want - make sure to delete all extra code that git has added, commit the file, and push.
+
+It is however much better to avoid these conflicts by always  **beginning your session with a pull, and ending with a push**. That way you minimize the risk of changing the same line of code twice.  
 
 
 ## Ignoring files {#gitignore}
@@ -396,7 +423,80 @@ Note that **if the output is longer than the screen, output will end  with a ':'
 
 ### Basic commands
 
-I will not cover git via the command line in detail here, there are many excellent resources available. Needless to say, everything you can do in Rstudio with a click of a button can be achieved in the command line, and much, much more. Quite useful is a sort of 'history', 
+When using the command line, you will often repeat this command:
+
+```
+git status
+```
+
+The output is basically what you see in the Git pane in Rstudio, but in text instead of colored icons (sometimes it is easier to understand what is happening!):
+
+
+```{r echo=FALSE, out.width='75%'}
+knitr::include_graphics("screenshots/gitstatus.png")
+```
+
+In this example, we have two commits locally that we have not pushed yet, and one previously commited file that has been modified. 
+
+If you want to commit from the command line, the first step is to **stage** the files for the next commit. This is equivalent to using the check boxes in the Git pane in Rstudio. To stage all files that have previously been commited (that is, the files that are being tracked by git in this repository):
+
+```
+git add -u
+```
+
+This command is equivalent to checking all check boxes in Rstudio, *except* the ones with a question mark (untracked files). This is the preferred command, because you will never commit files you do not want to commit (remember to keep a close eye on the `.gitignore` file!). If you are sure you want to stage all files that git "sees" (i.e. not in `.gitignore`), use the command:
+
+```
+git add .
+```
+
+This command is equivalent to checking *all* check boxes (including the question marks) in Rstudio.
+
+With files staged (remember to first look at `git status`, repeat that after every step!), you can commit with:
+
+```
+git commit -m "improved config files"
+```
+
+Writing a commit message is mandatory.
+
+To see if you have a remote repository configured (and where), use the command:
+
+```
+git remote -v
+```
+
+```{r echo=FALSE, out.width='75%'}
+knitr::include_graphics("screenshots/gitremotev.png")
+```
+
+You can now push to the remote with,
+
+```
+git push
+```
+
+If there are no conflicts, you are done. See advanced examples below for pushing to a remote when you want to overwrite what is on the remote with local changes.
+
+To pull changes from the remote, obviously:
+
+```
+git pull
+```
+
+
+
+
+
+
+### Useful tasks
+
+This section lists a number of useful things you can do with git from the command line. It is by no means exhaustive.
+
+
+#### History
+
+Look at the history of the repository with,
 
 ```
 git log
@@ -409,11 +509,6 @@ git log -2
 ```
 
 and remember to press `q` when the output is longer than the window to return to the prompt.
-
-
-### Useful tasks
-
-This section lists a number of useful things you can do with git from the command line. It is by no means exhaustive.
 
 
 #### Adding a remote to a local repository
@@ -472,6 +567,7 @@ git checkout master
 ```
 
 
+
 #### Undoing uncommited changes
 
 Suppose you have committed your work, then made a bunch more changes that you are very unhappy with. But, luckily, you haven't committed them yet. You can use the 'Revert' button in Rstudio (as mentioned previously), but this really removes any chance that you *maybe* want to use the new edits.
@@ -502,6 +598,18 @@ git reset --hard hu88e
 ```
 
 Instead of `--hard`, you can use the `--soft` option to revert back to the old commit, but keep the changes since then as unstaged changes to the files. This is useful if you want to keep some of the changes, but manually remove or fix some other changes. 
+
+
+#### Force-updating the remote
+
+Sometimes your local version of the code is the only correct version, and you want to completely overwrite the remote repository. This arises when you did a "hard reset" to an old commit as in the previous section. If you are sure you want to overwrite the remote, do:
+
+```
+git push --force
+```
+
+Be careful, there is no "undo" option.
+
 
 
 #### Deleting files
