@@ -714,7 +714,7 @@ then, merge the new branch:
 
 ```
 git merge newbranch
-``
+```
 
 Just like working with remotes, it is possible you have produced conflicts that may need to be fixed.
 
