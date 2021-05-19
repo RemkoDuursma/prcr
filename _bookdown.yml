@@ -12,7 +12,7 @@ rmd_files:
   #- "03-reporting.Rmd"
   #- "05-linearregression.Rmd"
   - "07-programming.Rmd"
-  - "08-webservices.Rmd"
+  #- "08-webservices.Rmd"
   - "18-versioncontrol.Rmd"
   - "11-projectman.Rmd"
   - "19-RPackages.Rmd"

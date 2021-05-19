@@ -246,9 +246,6 @@ Hmisc::contents(comment_data)
 ```
 
 
-### (No)SQL databases
-
-We show examples of how to obtain data from SQL and NoSQL databases in Chapter \@ref(webservices).
 
 
 ### Excel spreadsheets
@@ -268,9 +265,6 @@ Here, `sheet` will specify the sheet by number, alternatively you can refer to t
 
 Many statistical software packages store data in their own format, not just text files. For data from **SPSS**, **SAS** or **Stata**, we recommend the `haven` package for reading the data into dataframes, and the `foreign` package provides further support for Minitab, **Systat**, and **Weka.** 
 
-### Web services
-
-Nowadays many data are available via a 'RESTful' API, which is now by far the most common way to download publicly available (open) data (and many other services as well). We discuss reading data from a REST service, as well as setting up our REST service in Chapter \@ref(webservices).
 
 
 

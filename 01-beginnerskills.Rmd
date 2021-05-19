@@ -606,8 +606,6 @@ On the other hand, you should use an **rmarkdown document** if you:
 - Output formats include HTML, PDF (if LaTeX is installed) and MS Word. 
 - Make not just simple documents, but also HTML presentations (in many formats), blogs (with `blogdown`), books (with `bookdown`), auto-generated websites documenting R packages (with `pkgdown`), and many more templates provided by add-on packages.
 
-We give more information in Section \@ref(rmarkdown).
-
 ### Using R scripts {#scripts}
 
 Clearly, R markdown is the right solution if you are interested in writing fully reproducable reports or presentations. For everything else, we use R scripts - simply text files that include R code. A script is meant to be fully executable, so that you can run the entire script, producing the desired results, files, objects, or side-effects. In Rstudio, you can open a new R script with `File/New File/R script`, simply a text file that is saved with extension `.R`.
